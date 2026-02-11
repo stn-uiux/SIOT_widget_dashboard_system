@@ -1,23 +1,4 @@
-
-import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, LayoutConfig } from './types';
-
-export const DEFAULT_THEME: DashboardTheme = {
-  primaryColor: '#3b82f6',
-  mode: ThemeMode.LIGHT,
-  chartLibrary: ChartLibrary.RECHARTS,
-  borderRadius: 24,
-  spacing: 16,
-  titleSize: 18,
-  titleWeight: '700',
-  contentSize: 12,
-};
-
-export const DEFAULT_LAYOUT: LayoutConfig = {
-  columns: 3,
-  rows: 4,
-  fitToScreen: false,
-  defaultRowHeight: 300,
-};
+import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment } from './types';
 
 export const MOCK_CHART_DATA = [
   { name: 'Jan', value: 400, secondary: 240 },
@@ -28,6 +9,142 @@ export const MOCK_CHART_DATA = [
   { name: 'Jun', value: 239, secondary: 380 },
   { name: 'Jul', value: 349, secondary: 430 },
 ];
+
+export const DEFAULT_THEME: DashboardTheme = {
+  primaryColor: '#3b82f6',
+  mode: ThemeMode.LIGHT,
+  chartLibrary: ChartLibrary.RECHARTS,
+  borderRadius: 16,
+  spacing: 16,
+  titleSize: 18,
+  titleWeight: '700',
+  contentSize: 12
+};
+
+export const DEFAULT_HEADER: HeaderConfig = {
+  show: true,
+  position: HeaderPosition.TOP,
+  height: 64,
+  width: 240,
+  margin: 0,
+  padding: 16,
+  backgroundColor: 'var(--surface)',
+  textColor: 'var(--text-main)',
+  textAlignment: TextAlignment.LEFT,
+  title: 'My Custom Dashboard'
+};
+
+export const DEFAULT_PAGE: DashboardPage = {
+  id: 'page_1',
+  name: 'Main Page',
+  layout: {
+    columns: 12,
+    rows: 6,
+    defaultRowHeight: 180,
+    fitToScreen: true
+  },
+  widgets: [], // Initial widgets can be populated later
+  header: DEFAULT_HEADER,
+  tabs: []
+};
+
+export const INITIAL_PROJECT_LIST: Project[] = [
+  {
+    id: 'project_1',
+    name: 'My Dashboard',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Overview',
+      widgets: [
+        {
+          id: '1',
+          type: WidgetType.CHART_BAR,
+          title: 'Global Revenue',
+          colSpan: 8,
+          rowSpan: 2,
+          config: {
+            xAxisKey: 'name',
+            xAxisLabel: 'Month',
+            yAxisKey: 'value',
+            showLegend: true,
+            showGrid: true,
+            showXAxis: true,
+            showYAxis: true,
+            showUnit: true,
+            showUnitInLegend: true,
+            showLabels: false,
+            unit: '$',
+            series: [
+              { key: 'value', label: 'Europe', color: 'var(--primary-color)' },
+              { key: 'secondary', label: 'North America', color: 'var(--primary-70)' },
+              { key: 'asia', label: 'Asia', color: 'var(--primary-30)' }
+            ]
+          },
+          data: MOCK_CHART_DATA.map(d => ({ ...d, asia: Math.floor(d.value * 0.5) }))
+        },
+        {
+          id: '2',
+          type: WidgetType.SUMMARY,
+          title: 'Total Active Users',
+          mainValue: '12,480',
+          subValue: 'Last 30 days increase',
+          colSpan: 4,
+          rowSpan: 1,
+          config: {
+            xAxisKey: 'name',
+            yAxisKey: 'value',
+            showLegend: false,
+            showGrid: false,
+            showXAxis: false,
+            showYAxis: false,
+            showUnit: false,
+            showUnitInLegend: false,
+            showLabels: false,
+            unit: '',
+            series: []
+          },
+          data: []
+        },
+        {
+          id: '3',
+          type: WidgetType.TABLE,
+          title: 'Recent Transactions',
+          colSpan: 4,
+          rowSpan: 1,
+          config: {
+            xAxisKey: 'name',
+            xAxisLabel: 'Customer',
+            yAxisKey: 'value',
+            showLegend: false,
+            showGrid: false,
+            showXAxis: true,
+            showYAxis: true,
+            showUnit: true,
+            showUnitInLegend: false,
+            showLabels: false,
+            unit: '$',
+            series: [{ key: 'value', label: 'Amount', color: 'var(--primary-color)' }]
+          },
+          data: [
+            { name: 'John Doe', value: 120 },
+            { name: 'Jane Smith', value: 450 },
+            { name: 'Bob Wilson', value: 300 }
+          ]
+        }
+      ]
+    }],
+    activePageId: 'page_1',
+    theme: DEFAULT_THEME
+  }
+];
+
+export const DEFAULT_LAYOUT: LayoutConfig = {
+  columns: 3,
+  rows: 4,
+  fitToScreen: false,
+  defaultRowHeight: 300,
+};
 
 export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string }> = {
   [WidgetType.SUMMARY_CHART]: {

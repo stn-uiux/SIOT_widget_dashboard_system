@@ -4,10 +4,11 @@ import {
   BarChart3, TrendingUp, Activity, ChevronDown, EyeOff, CheckCircle2
 } from 'lucide-react';
 import {
-  Widget, WidgetType, DashboardTheme, LayoutConfig, ThemeMode, ChartLibrary
+  Widget, WidgetType, DashboardTheme, LayoutConfig, ThemeMode, ChartLibrary,
+  Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment
 } from './types';
 import {
-  DEFAULT_THEME, DEFAULT_LAYOUT, MOCK_CHART_DATA
+  INITIAL_PROJECT_LIST, MOCK_CHART_DATA, DEFAULT_PAGE, DEFAULT_HEADER, DEFAULT_THEME
 } from './constants';
 import WidgetCard from './components/WidgetCard';
 import DesignSidebar from './components/DesignSidebar';
@@ -16,9 +17,13 @@ import ExcelModal from './components/ExcelModal';
 import DesignSystem from './DesignSystem';
 
 const App: React.FC = () => {
-  const [widgets, setWidgets] = useState<Widget[]>([]);
-  const [theme, setTheme] = useState<DashboardTheme>(DEFAULT_THEME);
-  const [layout, setLayout] = useState<LayoutConfig>(DEFAULT_LAYOUT);
+  // Navigation & Project State
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECT_LIST);
+  const [activeProjectId, setActiveProjectId] = useState<string>(INITIAL_PROJECT_LIST[0].id);
+
+  const currentProject = projects.find(p => p.id === activeProjectId) || projects[0];
+  const currentPage = currentProject.pages.find(p => p.id === currentProject.activePageId) || currentProject.pages[0];
+
   const [isEditMode, setIsEditMode] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDesignSidebarOpen, setIsDesignSidebarOpen] = useState(false);
@@ -30,115 +35,50 @@ const App: React.FC = () => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    const initialWidgets: Widget[] = [
-      {
-        id: '1',
-        type: WidgetType.CHART_BAR,
-        title: 'Global Revenue',
-        titleSize: 18,
-        titleWeight: '700',
-        contentSize: 12,
-        colSpan: 2,
-        rowSpan: 1,
-        config: {
-          xAxisKey: 'name',
-          xAxisLabel: 'Month',
-          yAxisKey: 'value',
-          showLegend: true,
-          showGrid: true,
-          showXAxis: true,
-          showYAxis: true,
-          showUnit: true,
-          showUnitInLegend: true,
-          showLabels: false,
-          unit: '$',
-          series: [
-            { key: 'value', label: 'Europe', color: 'var(--primary-color)' },
-            { key: 'secondary', label: 'North America', color: 'var(--primary-70)' },
-            { key: 'asia', label: 'Asia', color: 'var(--primary-30)' }
-          ]
-        },
-        data: MOCK_CHART_DATA.map(d => ({ ...d, asia: Math.floor(Math.random() * 500) }))
-      },
-      {
-        id: '3',
-        type: WidgetType.SUMMARY,
-        title: 'Total Sales',
-        titleSize: 14,
-        titleWeight: '500',
-        contentSize: 14,
-        colSpan: 1,
-        rowSpan: 1,
-        mainValue: '$45,231',
-        subValue: '+18.2% since last month',
-        config: {
-          xAxisKey: '',
-          yAxisKey: '',
-          showLegend: false,
-          showGrid: false,
-          showXAxis: false,
-          showYAxis: false,
-          showUnit: false,
-          showUnitInLegend: false,
-          showLabels: false,
-          unit: '',
-          series: []
-        },
-        data: []
-      },
-      {
-        id: '4',
-        type: WidgetType.TABLE,
-        title: 'Project Status',
-        titleSize: 16,
-        titleWeight: '700',
-        contentSize: 12,
-        colSpan: 3,
-        rowSpan: 1,
-        config: {
-          xAxisKey: 'name',
-          xAxisLabel: 'Project Name',
-          yAxisKey: 'value',
-          showLegend: false,
-          showGrid: false,
-          showXAxis: true,
-          showYAxis: true,
-          showUnit: false,
-          showUnitInLegend: false,
-          showLabels: false,
-          unit: '',
-          series: [
-            { key: 'value', label: 'Progress (%)', color: 'var(--primary-color)' },
-            { key: 'secondary', label: 'Score', color: 'var(--secondary-color)' }
-          ]
-        },
-        data: [
-          { name: 'Alpha', value: 85, secondary: 92 },
-          { name: 'Beta', value: 60, secondary: 78 },
-          { name: 'Gamma', value: 30, secondary: 45 },
-        ]
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
+
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Shortcuts to current state for components
+  const { theme } = currentProject;
+  const { widgets, layout, header } = currentPage;
+
+  const updateCurrentPage = (updates: Partial<DashboardPage>) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === activeProjectId) {
+        return {
+          ...p,
+          pages: p.pages.map(pg => pg.id === p.activePageId ? { ...pg, ...updates } : pg)
+        };
       }
-    ];
-    setWidgets(initialWidgets);
-  }, []);
+      return p;
+    }));
+  };
+
+  const updateProjectTheme = (newTheme: Partial<DashboardTheme>) => {
+    setProjects(prev => prev.map(p =>
+      p.id === activeProjectId ? { ...p, theme: { ...p.theme, ...newTheme } } : p
+    ));
+  };
+
 
   const addWidget = () => {
     const newWidget: Widget = {
-      id: Date.now().toString(),
-      type: WidgetType.SUMMARY,
-      title: 'New Widget',
-      titleSize: 16,
-      titleWeight: '600',
-      contentSize: 14,
-      colSpan: 1,
-      rowSpan: 1,
-      mainValue: '0',
-      subValue: 'New Label',
+      id: `widget_${Date.now()}`,
+      type: WidgetType.CHART_BAR,
+      title: 'New Analysis',
+      colSpan: 4,
+      rowSpan: 2,
       config: {
         xAxisKey: 'name',
         yAxisKey: 'value',
-        showLegend: false,
+        showLegend: true,
         showGrid: true,
         showXAxis: true,
         showYAxis: true,
@@ -146,51 +86,65 @@ const App: React.FC = () => {
         showUnitInLegend: false,
         showLabels: false,
         unit: '',
-        series: [{ key: 'value', label: 'Series 1', color: 'var(--primary-color)' }]
+        series: [{ key: 'value', label: 'Revenue', color: 'var(--primary-color)' }]
       },
-      data: [{ name: 'Jan', value: 10 }]
+      data: MOCK_CHART_DATA
     };
-    setWidgets([...widgets, newWidget]);
-    setSelectedWidgetId(newWidget.id);
+    updateCurrentPage({ widgets: [...widgets, newWidget] });
   };
 
-  const updateWidget = useCallback((id: string, updates: Partial<Widget>) => {
-    setWidgets(prev => prev.map(w => w.id === id ? { ...w, ...updates } : w));
-  }, []);
-
-  const handleThemeChange = useCallback((newTheme: DashboardTheme) => {
-    setTheme(newTheme);
-  }, []);
-
-  const handleUpdateLayout = useCallback((updates: Partial<LayoutConfig>) => {
-    setLayout(prev => ({ ...prev, ...updates }));
-  }, []);
-
-  const handleExcelUpload = (id: string, newData: any[]) => {
-    updateWidget(id, { data: newData });
+  const updateWidget = (id: string, updates: Partial<Widget>) => {
+    updateCurrentPage({
+      widgets: widgets.map(w => w.id === id ? { ...w, ...updates } : w)
+    });
   };
 
-  const handleWidgetSelect = (id: string) => {
+  const deleteWidget = (id: string) => {
+    updateCurrentPage({
+      widgets: widgets.filter(w => w.id !== id)
+    });
+  };
+
+  const handleWidgetSelect = (id: string | null) => {
     setSelectedWidgetId(id);
-    setIsDesignSidebarOpen(false);
-  };
-
-  const handleToggleDesignSidebar = () => {
-    const nextState = !isDesignSidebarOpen;
-    setIsDesignSidebarOpen(nextState);
-    if (nextState) {
-      setIsEditMode(false);
-      setSelectedWidgetId(null);
-    }
+    if (!id) setIsDesignSidebarOpen(false);
   };
 
   const handleToggleEditMode = () => {
-    const nextState = !isEditMode;
-    setIsEditMode(nextState);
-    if (nextState) {
-      setIsDesignSidebarOpen(false);
-      setSelectedWidgetId(null);
-    }
+    setIsEditMode(!isEditMode);
+    setSelectedWidgetId(null);
+  };
+
+  const handleToggleDesignSidebar = () => {
+    setIsDesignSidebarOpen(!isDesignSidebarOpen);
+    setSelectedWidgetId(null);
+  };
+
+  const handleThemeChange = (newTheme: Partial<DashboardTheme>) => {
+    updateProjectTheme(newTheme);
+  };
+
+  const handleUpdateLayout = (updates: Partial<LayoutConfig>) => {
+    updateCurrentPage({ layout: { ...layout, ...updates } });
+  };
+
+  const handlePageChange = (pageId: string) => {
+    setProjects(prev => prev.map(p =>
+      p.id === activeProjectId ? { ...p, activePageId: pageId } : p
+    ));
+    setSelectedWidgetId(null);
+  };
+
+  const addPage = () => {
+    const newId = `page_${Date.now()}`;
+    const newPage: DashboardPage = {
+      ...DEFAULT_PAGE,
+      id: newId,
+      name: `New Page ${currentProject.pages.length + 1}`
+    };
+    setProjects(prev => prev.map(p =>
+      p.id === activeProjectId ? { ...p, pages: [...p.pages, newPage], activePageId: newId } : p
+    ));
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -213,14 +167,43 @@ const App: React.FC = () => {
     const draggedItem = newWidgets[draggedIndex];
     newWidgets.splice(draggedIndex, 1);
     newWidgets.splice(targetIndex, 0, draggedItem);
-    setWidgets(newWidgets);
+    updateCurrentPage({ widgets: newWidgets });
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
 
-  const showSidebar = !isPreviewMode && (isEditMode || isDesignSidebarOpen || selectedWidgetId !== null);
+  const addProject = () => {
+    const newId = `project_${Date.now()}`;
+    const newProject: Project = {
+      id: newId,
+      name: `New Project ${projects.length + 1}`,
+      pages: [{ ...DEFAULT_PAGE, id: 'page_1', name: 'Dashboard' }],
+      activePageId: 'page_1',
+      theme: DEFAULT_THEME
+    };
+    setProjects(prev => [...prev, newProject]);
+    setActiveProjectId(newId);
+    setIsProjectDropdownOpen(false);
+  };
 
-  const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
+  const handleProjectSave = () => {
+    if (isEditMode) {
+      showToast('Project configuration saved successfully');
+      setIsEditMode(false);
+    } else {
+      setIsEditMode(true);
+    }
+  };
+
+  const updateHeader = (newHeader: Partial<HeaderConfig>) => {
+    updateCurrentPage({ header: { ...header, ...newHeader } });
+  };
+
+  const handleExcelUpload = (id: string, newData: any[]) => {
+    updateWidget(id, { data: newData });
+  };
+
+  const showSidebar = !isPreviewMode && (isEditMode || isDesignSidebarOpen || selectedWidgetId !== null);
 
   const libraryOptions = [
     { value: ChartLibrary.RECHARTS, label: 'Recharts', icon: BarChart3, color: '#3b82f6' },
@@ -231,24 +214,69 @@ const App: React.FC = () => {
   const currentLibrary = libraryOptions.find(opt => opt.value === theme.chartLibrary) || libraryOptions[0];
 
   return (
-    <div className="h-screen flex flex-col transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)]">
+    <div className="h-screen flex flex-col transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)] overflow-hidden">
       <DesignSystem theme={theme} />
+
+      {/* 1. Global Navigation Bar (Brand, Project Switcher, and Main Actions) */}
       {!isPreviewMode && (
-        <header className="z-50 border-b px-6 py-3 flex items-center justify-between backdrop-blur-md bg-[var(--surface)]/80 border-[var(--border-base)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl shadow-lg bg-primary">
-              <Layout className="text-white w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-bold leading-tight text-main">
-                STN infotech <span className="text-[10px] bg-[var(--primary-subtle)] text-primary px-1.5 py-0.5 rounded ml-2 font-black">PRO</span>
-              </h1>
-              <p className="text-[10px] text-muted uppercase tracking-widest font-semibold">Custom Widget Dashboard</p>
+        <header className="z-50 border-b px-6 py-3 flex items-center justify-between backdrop-blur-md bg-[var(--surface)]/80 border-[var(--border-base)] shrink-0">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl shadow-lg bg-primary">
+                <Layout className="text-white w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="font-bold leading-tight text-main flex items-center">
+                  STN infotech <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded ml-2 font-black">PRO</span>
+                </h1>
+                <div className="relative">
+                  <button
+                    onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                    className="flex items-center gap-1.5 group"
+                  >
+                    <span className="text-[10px] uppercase font-bold text-muted transition-colors group-hover:text-primary">{currentProject.name}</span>
+                    <ChevronDown className={`w-3 h-3 text-muted group-hover:text-primary transition-transform ${isProjectDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isProjectDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsProjectDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-2 w-64 rounded-2xl p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)]">
+                        <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
+                          <p className="text-[10px] uppercase font-bold text-muted tracking-widest">Select Project</p>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                          {projects.map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => {
+                                setActiveProjectId(p.id);
+                                setIsProjectDropdownOpen(false);
+                              }}
+                              className={`btn-base btn-ghost w-full justify-start px-4 py-2.5 rounded-xl mb-1 ${activeProjectId === p.id ? 'active' : ''}`}
+                            >
+                              <div className="flex-1 text-left">
+                                <p className="font-bold text-xs uppercase tracking-tight">{p.name}</p>
+                                <p className="text-[8px] text-muted uppercase font-bold">{p.pages.length} Pages</p>
+                              </div>
+                              {activeProjectId === p.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="p-1 mt-1 border-t border-[var(--border-muted)]">
+                          <button onClick={addProject} className="btn-base btn-ghost w-full px-4 py-2.5 rounded-xl text-primary">
+                            <Plus className="w-4 h-4" /> <span className="text-[10px] font-bold uppercase">New Project</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Custom Premium Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
@@ -296,8 +324,8 @@ const App: React.FC = () => {
             <button onClick={handleToggleDesignSidebar} className={`btn-base btn-surface ${isDesignSidebarOpen ? 'active' : ''}`}>
               <Palette className="w-4 h-4" /> <span>Design</span>
             </button>
-            <button onClick={handleToggleEditMode} className={`btn-base btn-surface ${isEditMode ? 'active' : ''}`}>
-              <Edit3 className="w-4 h-4" /> <span>{isEditMode ? 'Save Layout' : 'Edit Layout'}</span>
+            <button onClick={handleProjectSave} className={`btn-base btn-surface ${isEditMode ? 'active' : ''}`}>
+              <Edit3 className="w-4 h-4" /> <span>{isEditMode ? 'Save Project' : 'Edit Project'}</span>
             </button>
             <button
               disabled={isEditMode}
@@ -310,64 +338,166 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main className="flex-1 flex overflow-hidden">
-        <div className={`flex-1 p-8 relative custom-scrollbar transition-all ${layout.fitToScreen ? 'h-full overflow-hidden' : 'overflow-y-auto'
-          }`}>
-          {isPreviewMode && (
-            <button
-              onClick={() => setIsPreviewMode(false)}
-              className="fixed bottom-8 right-8 z-50 btn-base btn-surface active px-8 py-4 rounded-full shadow-premium hover:scale-105 transition-transform"
-              style={{ borderRadius: '999px' }}
+      {/* 2. Main Workspace (Flex-Row for Left Sidebar / Content / Right Sidebar) */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* Left Side Header (if positioned LEFT) */}
+        {header.show && header.position === HeaderPosition.LEFT && (
+          <aside
+            style={{
+              width: `${header.width}px`,
+              backgroundColor: header.backgroundColor,
+              color: header.textColor,
+              padding: `${header.padding}px`,
+              margin: `${header.margin}px`,
+            }}
+            className="h-full border-r border-[var(--border-base)] flex flex-col z-20 transition-all shadow-sm shrink-0"
+          >
+            <div className={`mb-8 flex flex-col items-${header.textAlignment === TextAlignment.CENTER ? 'center' : header.textAlignment === TextAlignment.RIGHT ? 'end' : 'start'} ${header.textAlignment === TextAlignment.CENTER ? 'text-center' : header.textAlignment === TextAlignment.RIGHT ? 'text-right' : 'text-left'}`}>
+              {header.logo && (
+                <img src={header.logo} alt="Logo" className="h-8 w-auto mb-4 object-contain" />
+              )}
+              <h2 className="text-lg font-black tracking-tighter uppercase">{header.title}</h2>
+            </div>
+
+            <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
+              {currentProject.pages.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePageChange(p.id)}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight transition-all ${currentPage.id === p.id ? 'bg-primary text-white shadow-lg' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+              {isEditMode && (
+                <button onClick={addPage} className="w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight border-2 border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:border-primary hover:text-primary transition-all flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> New Page
+                </button>
+              )}
+            </nav>
+          </aside>
+        )}
+
+        {/* Central Dashboard Area (Top Fixed Header + Scrollable Content) */}
+        <div className="flex-1 flex flex-col relative overflow-hidden bg-[var(--background)]">
+
+          {/* Top Header (if positioned TOP) */}
+          {header.show && header.position === HeaderPosition.TOP && (
+            <header
+              style={{
+                height: `${header.height}px`,
+                backgroundColor: header.backgroundColor,
+                color: header.textColor,
+                padding: `0 ${header.padding}px`,
+                margin: `${header.margin}px`,
+              }}
+              className="flex items-center border-b border-[var(--border-base)] z-20 transition-all shadow-sm shrink-0"
             >
-              <EyeOff className="w-5 h-5" /> Exit Preview
-            </button>
+              <div className={`flex-1 flex items-center gap-8 ${header.textAlignment === TextAlignment.CENTER ? 'justify-center' : header.textAlignment === TextAlignment.RIGHT ? 'justify-end' : 'justify-start'}`}>
+                <div className="flex items-center gap-3">
+                  {header.logo && (
+                    <img src={header.logo} alt="Logo" className="h-6 w-auto object-contain" />
+                  )}
+                  <h2 className="text-lg font-black tracking-tighter uppercase whitespace-nowrap">{header.title}</h2>
+                </div>
+
+                <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                  {currentProject.pages.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => handlePageChange(p.id)}
+                      className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                  {isEditMode && (
+                    <button onClick={addPage} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  )}
+                </nav>
+              </div>
+            </header>
           )}
 
-          <div
-            className="grid transition-all duration-300"
-            style={{
-              gridTemplateColumns: `repeat(${layout.columns}, 1fr)`,
-              gridTemplateRows: layout.fitToScreen
-                ? `repeat(${layout.rows}, 1fr)`
-                : `repeat(${layout.rows}, ${layout.defaultRowHeight}px)`,
-              height: layout.fitToScreen ? '100%' : 'auto',
-              minHeight: layout.fitToScreen ? '0' : 'auto',
-              gridAutoRows: layout.fitToScreen ? '1fr' : `${layout.defaultRowHeight}px`,
-              gap: 'var(--spacing)'
-            }}
-          >
-            {widgets.map((widget, index) => (
-              <div key={widget.id} draggable={isEditMode} onDragStart={(e) => handleDragStart(e, index)} onDragOver={(e) => handleDragOver(e, index)} onDrop={(e) => handleDrop(e, index)} className={`transition-all duration-200 ${selectedWidgetId === widget.id ? 'ring-2 ring-blue-500 rounded-[inherit]' : ''} ${draggedIndex === index ? 'opacity-30 scale-95 cursor-grabbing' : 'opacity-100'} ${dragOverIndex === index ? 'scale-[1.02] ring-2 ring-dashed ring-blue-300' : ''}`} style={{ gridColumn: `span ${Math.min(widget.colSpan, layout.columns)}`, gridRow: `span ${widget.rowSpan}` }}>
-                <WidgetCard
-                  widget={widget}
-                  theme={theme}
-                  isEditMode={isEditMode}
-                  onEdit={handleWidgetSelect}
-                  onUpdate={updateWidget}
-                  onOpenExcel={(id) => setExcelWidgetId(id)}
-                />
-              </div>
-            ))}
-
-            {isEditMode && (
+          {/* Widgets Grid Container */}
+          <main className={`flex-1 p-8 relative custom-scrollbar transition-all ${layout.fitToScreen ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
+            {isPreviewMode && (
               <button
-                onClick={addWidget}
-                style={{ borderRadius: 'var(--border-radius)' }}
-                className="h-full flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group"
+                onClick={() => setIsPreviewMode(false)}
+                className="fixed bottom-8 right-8 z-50 btn-base btn-surface active px-8 py-4 rounded-full shadow-premium hover:scale-105 transition-transform"
+                style={{ borderRadius: '999px' }}
               >
-                <div className="w-12 h-12 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Plus className="w-6 h-6 text-primary" />
-                </div>
-                <span className="font-semibold text-xs uppercase tracking-tighter">Add Widget</span>
+                <EyeOff className="w-5 h-5" /> Exit Preview
               </button>
             )}
-          </div>
+
+            <div
+              className="grid transition-all duration-300 min-h-full"
+              style={{
+                gridTemplateColumns: `repeat(${layout.columns}, 1fr)`,
+                gridTemplateRows: layout.fitToScreen
+                  ? `repeat(${layout.rows}, 1fr)`
+                  : `repeat(${layout.rows}, ${layout.defaultRowHeight}px)`,
+                height: layout.fitToScreen ? '100%' : 'auto',
+                minHeight: layout.fitToScreen ? '0' : 'auto',
+                gridAutoRows: layout.fitToScreen ? '1fr' : `${layout.defaultRowHeight}px`,
+                gap: 'var(--spacing)'
+              }}
+            >
+              {(widgets || []).map((widget, index) => (
+                <div
+                  key={widget.id}
+                  draggable={isEditMode}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`transition-all duration-200 ${selectedWidgetId === widget.id ? 'ring-2 ring-blue-500 rounded-[inherit]' : ''} ${draggedIndex === index ? 'opacity-30 scale-95 cursor-grabbing' : 'opacity-100'} ${dragOverIndex === index ? 'scale-[1.02] ring-2 ring-dashed ring-blue-300' : ''}`}
+                  style={{ gridColumn: `span ${Math.min(widget.colSpan, layout.columns)}`, gridRow: `span ${widget.rowSpan}` }}
+                >
+                  <WidgetCard
+                    widget={widget}
+                    theme={theme}
+                    isEditMode={isEditMode}
+                    onEdit={handleWidgetSelect}
+                    onUpdate={updateWidget}
+                    onDelete={deleteWidget}
+                    onOpenExcel={(id) => setExcelWidgetId(id)}
+                  />
+                </div>
+              ))}
+
+              {isEditMode && (
+                <button
+                  onClick={addWidget}
+                  style={{ borderRadius: 'var(--border-radius)' }}
+                  className="h-full flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group min-h-[150px]"
+                >
+                  <div className="w-12 h-12 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Plus className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="font-semibold text-xs uppercase tracking-tighter">Add Widget</span>
+                </button>
+              )}
+            </div>
+          </main>
         </div>
 
+        {/* 3. Right Sidebar (Design or Settings) */}
         {showSidebar && (
-          <div className="flex h-full shadow-2xl transition-all duration-300 z-30">
+          <div className="h-full shadow-2xl transition-all duration-300 z-30 shrink-0 border-l border-[var(--border-base)] bg-[var(--surface)]">
             {isDesignSidebarOpen ? (
-              <DesignSidebar isOpen={isDesignSidebarOpen} onClose={() => setIsDesignSidebarOpen(false)} theme={theme} setTheme={handleThemeChange} />
+              <DesignSidebar
+                theme={theme}
+                header={header}
+                currentPage={currentPage}
+                updateTheme={handleThemeChange}
+                updateHeader={updateHeader}
+                updatePage={updateCurrentPage}
+                onClose={() => setIsDesignSidebarOpen(false)}
+              />
             ) : selectedWidgetId ? (
               <Sidebar selectedWidget={widgets.find(w => w.id === selectedWidgetId) || null} layout={layout} onUpdateWidget={updateWidget} onUpdateLayout={handleUpdateLayout} onClose={() => setSelectedWidgetId(null)} />
             ) : isEditMode ? (
@@ -375,7 +505,7 @@ const App: React.FC = () => {
             ) : null}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Excel Integration Modal */}
       <ExcelModal
@@ -385,6 +515,24 @@ const App: React.FC = () => {
         onUpload={handleExcelUpload}
         isDark={theme.mode === ThemeMode.DARK}
       />
+
+      {/* Premium Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded-2xl min-w-[320px]">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+              {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <Activity className="w-5 h-5" />}
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] uppercase font-bold text-muted tracking-widest mb-0.5">System Notification</p>
+              <p className="text-sm font-bold text-main">{toast.message}</p>
+            </div>
+            <button onClick={() => setToast(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+              <Plus className="w-4 h-4 rotate-45 text-muted" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

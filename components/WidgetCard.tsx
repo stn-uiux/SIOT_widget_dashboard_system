@@ -12,7 +12,7 @@ import * as am5percent from "@amcharts/amcharts5/percent";
 import * as am5radar from "@amcharts/amcharts5/radar";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
-import { Settings, GripVertical, FileSpreadsheet } from 'lucide-react';
+import { Settings, GripVertical, FileSpreadsheet, X } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 
 const AmChartComponent: React.FC<{
@@ -212,10 +212,11 @@ interface WidgetCardProps {
   isEditMode: boolean;
   onEdit: (id: string) => void;
   onUpdate?: (id: string, updates: Partial<Widget>) => void;
+  onDelete: (id: string) => void;
   onOpenExcel: (id: string) => void;
 }
 
-const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEdit, onUpdate, onOpenExcel }) => {
+const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEdit, onUpdate, onDelete, onOpenExcel }) => {
   const isDark = theme.mode === ThemeMode.DARK;
 
   const contentSize = theme.contentSize;
@@ -797,6 +798,12 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
               className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-gray-100 text-gray-500'}`}
             >
               <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete(widget.id)}
+              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-900/40 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}

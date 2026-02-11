@@ -63,6 +63,53 @@ export interface Widget {
   icon?: string;
 }
 
+export enum HeaderPosition {
+  TOP = 'top',
+  LEFT = 'left'
+}
+
+export enum TextAlignment {
+  LEFT = 'left',
+  CENTER = 'center',
+  RIGHT = 'right'
+}
+
+export interface HeaderConfig {
+  show: boolean;
+  position: HeaderPosition;
+  height: number;
+  width: number; // For vertical header
+  margin: number;
+  padding: number;
+  backgroundColor: string;
+  textColor: string;
+  textAlignment: TextAlignment;
+  title: string;
+  logo?: string;
+}
+
+export interface TabConfig {
+  id: string;
+  label: string;
+}
+
+export interface DashboardPage {
+  id: string;
+  name: string;
+  layout: LayoutConfig;
+  widgets: Widget[];
+  header: HeaderConfig;
+  tabs: TabConfig[];
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  pages: DashboardPage[];
+  activePageId: string;
+  theme: DashboardTheme;
+}
+
 export interface DashboardTheme {
   primaryColor: string;
   mode: ThemeMode;
