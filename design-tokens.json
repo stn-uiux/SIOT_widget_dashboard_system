@@ -1,0 +1,129 @@
+{
+    "project": "STN infotech PRO Dashboard",
+    "version": "1.0.0",
+    "tokens": {
+        "colors": {
+            "brand": {
+                "primary": {
+                    "value": "#3b82f6",
+                    "type": "color",
+                    "description": "Main brand color used for primary actions and highlights"
+                },
+                "primary_subtle": {
+                    "value": "rgba(59, 130, 246, 0.1)",
+                    "type": "color"
+                }
+            },
+            "semantic": {
+                "light": {
+                    "background": {
+                        "value": "#f8fafc",
+                        "type": "color"
+                    },
+                    "surface": {
+                        "value": "#ffffff",
+                        "type": "color"
+                    },
+                    "text_main": {
+                        "value": "#0f172a",
+                        "type": "color"
+                    },
+                    "text_muted": {
+                        "value": "#64748b",
+                        "type": "color"
+                    },
+                    "border_base": {
+                        "value": "#e2e8f0",
+                        "type": "color"
+                    },
+                    "border_muted": {
+                        "value": "#f1f5f9",
+                        "type": "color"
+                    }
+                },
+                "dark": {
+                    "background": {
+                        "value": "#020617",
+                        "type": "color"
+                    },
+                    "surface": {
+                        "value": "#0f172a",
+                        "type": "color"
+                    },
+                    "text_main": {
+                        "value": "#f8fafc",
+                        "type": "color"
+                    },
+                    "text_muted": {
+                        "value": "#94a3b8",
+                        "type": "color"
+                    },
+                    "border_base": {
+                        "value": "#334155",
+                        "type": "color"
+                    },
+                    "border_muted": {
+                        "value": "#1e293b",
+                        "type": "color"
+                    }
+                }
+            }
+        },
+        "layout": {
+            "borderRadius": {
+                "value": "16px",
+                "type": "dimension"
+            },
+            "spacing": {
+                "value": "16px",
+                "type": "dimension"
+            }
+        },
+        "typography": {
+            "fontFamily": {
+                "value": "'Inter', sans-serif",
+                "type": "fontFamily"
+            },
+            "title": {
+                "size": {
+                    "value": "18px",
+                    "type": "dimension"
+                },
+                "weight": {
+                    "value": "700",
+                    "type": "fontWeight"
+                }
+            },
+            "content": {
+                "size": {
+                    "value": "12px",
+                    "type": "dimension"
+                }
+            }
+        },
+        "effects": {
+            "shadow": {
+                "base": {
+                    "light": {
+                        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        "type": "shadow"
+                    },
+                    "dark": {
+                        "value": "0 4px 6px -1px rgb(0 0 0 / 0.5)",
+                        "type": "shadow"
+                    }
+                },
+                "premium": {
+                    "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                    "type": "shadow"
+                }
+            },
+            "transition": {
+                "speed": {
+                    "value": "0.2s",
+                    "type": "duration"
+                }
+            }
+        }
+    }
+}
