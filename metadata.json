@@ -1,0 +1,7 @@
+{
+  "name": "SIOT Widget Dashboard Pro",
+  "description": "A comprehensive dashboard builder for creating data-rich widgets, charts, and custom layouts with AI-powered design suggestions.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
