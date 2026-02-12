@@ -12,7 +12,7 @@ import * as am5percent from "@amcharts/amcharts5/percent";
 import * as am5radar from "@amcharts/amcharts5/radar";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
-import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image } from 'lucide-react';
+import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image, Trash2 } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 import MapWidget from './MapWidget';
 
@@ -603,20 +603,25 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
+
       case WidgetType.MAP:
         // Parse lat, lng from subValue (e.g. "37.5665, 126.9780")
         const [lat, lng] = (widget.subValue || '37.5665, 126.9780').split(',').map(s => parseFloat(s.trim()));
         return (
-          <div className="h-full w-full relative bg-[var(--border-muted)] rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-base)]">
+          <div className={`h-full w-full relative bg-[var(--border-muted)] overflow-hidden ${widget.noBezel ? '' : 'rounded-[var(--radius-md)] border border-[var(--border-base)]'}`}>
             {/* Dynamic Import or standard import if possible. Here we use standard import but wrapped */}
-            <div className="h-full w-full z-0 pointer-events-none group-hover:pointer-events-auto">
+            <div className="h-full w-full z-0">
               <MapWidget lat={lat || 37.5665} lng={lng || 126.9780} zoom={13} provider="osm" />
             </div>
-            <div className="absolute top-2 left-2 z-[1000] bg-white/90 dark:bg-black/80 px-2 py-1 rounded text-[10px] font-bold shadow-sm pointer-events-none">
-              {widget.mainValue}
-            </div>
+            {!widget.noBezel && (
+              <div className="absolute top-2 left-2 z-[1000] bg-white/90 dark:bg-black/80 px-2 py-1 rounded text-[10px] font-bold shadow-sm pointer-events-none">
+                {widget.mainValue}
+              </div>
+            )}
           </div>
         );
+
+
 
       case WidgetType.CHART_BAR:
         return (
@@ -841,52 +846,80 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   };
 
   return (
-    <div className="relative h-full flex flex-col p-5 shadow-base border transition-all duration-300 group overflow-hidden rounded-design bg-surface text-main border-main hover:shadow-premium hover:shadow-[var(--primary-color)]/5">
-      <div className="flex items-center justify-between mb-2 shrink-0 z-20">
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
+    <div className={`relative h-full flex flex-col shadow-base border transition-all duration-300 group overflow-hidden bg-surface text-main border-main hover:shadow-premium hover:shadow-[var(--primary-color)]/5 rounded-design ${widget.noBezel ? 'p-0 !border-0 !shadow-none bg-transparent' : 'p-5'}`}>
+
+      {!widget.noBezel && (
+        <div className="flex items-center justify-between mb-2 shrink-0 z-20">
+          <div className="flex items-center gap-2 overflow-hidden flex-1">
+
+            {isEditMode && (
+              <div className="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500 transition-colors shrink-0">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 overflow-hidden">
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={widget.title}
+                  onChange={(e) => onUpdate?.(widget.id, { title: e.target.value })}
+                  className="bg-transparent border-none p-0 title-text tracking-tight leading-tight focus:ring-0 outline-none rounded px-1 transition-colors min-w-[50px] text-primary hover:bg-[var(--primary-subtle)]"
+                />
+              ) : (
+                <h3 className="truncate select-none title-text tracking-tight leading-tight transition-opacity text-primary">
+                  {widget.title}
+                </h3>
+              )}
+            </div>
+          </div>
           {isEditMode && (
-            <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500 transition-colors shrink-0">
-              <GripVertical className="w-4 h-4" />
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => onOpenExcel(widget.id)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-emerald-400' : 'hover:bg-gray-100 text-green-600'}`}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onEdit(widget.id)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-gray-100 text-gray-500'}`}
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(widget.id)}
+                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-900/40 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
-          <div className="flex items-center gap-2 overflow-hidden">
-            {isEditMode ? (
-              <input
-                type="text"
-                value={widget.title}
-                onChange={(e) => onUpdate?.(widget.id, { title: e.target.value })}
-                className="bg-transparent border-none p-0 title-text tracking-tight leading-tight focus:ring-0 outline-none rounded px-1 transition-colors min-w-[50px] text-primary hover:bg-[var(--primary-subtle)]"
-              />
-            ) : (
-              <h3 className="truncate select-none title-text tracking-tight leading-tight transition-opacity text-primary">
-                {widget.title}
-              </h3>
-            )}
-          </div>
         </div>
-        {isEditMode && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => onOpenExcel(widget.id)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-emerald-400' : 'hover:bg-gray-100 text-green-600'}`}
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-            </button>
+      )}
+      {/* Invisible Drag Handle for No Bezel Mode in Edit Mode */}
+      {widget.noBezel && isEditMode && (
+        <div className="absolute top-0 left-0 right-0 h-10 z-[2000] group/handle opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="drag-handle cursor-grab active:cursor-grabbing text-white p-2">
+            <GripVertical className="w-6 h-6" />
+          </div>
+          <div className="flex-1" />
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onEdit(widget.id)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-gray-100 text-gray-500'}`}
+              className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white transition-colors"
             >
               <Settings className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(widget.id)}
-              className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-900/40 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+              className="p-1.5 bg-red-500/20 rounded-lg hover:bg-red-500/40 text-red-200 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="flex-1 min-h-0 select-none">
         {renderChart()}
       </div>

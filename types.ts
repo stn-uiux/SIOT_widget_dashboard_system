@@ -65,6 +65,7 @@ export interface Widget {
   mainValue?: string;
   subValue?: string;
   icon?: string;
+  noBezel?: boolean;
 }
 
 export enum HeaderPosition {
