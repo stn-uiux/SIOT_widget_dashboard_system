@@ -14,6 +14,7 @@ import WidgetCard from './components/WidgetCard';
 import DesignSidebar from './components/DesignSidebar';
 import Sidebar from './components/Sidebar';
 import ExcelModal from './components/ExcelModal';
+import ConfirmModal from './components/ConfirmModal';
 import DesignSystem from './DesignSystem';
 
 const App: React.FC = () => {
@@ -37,6 +38,7 @@ const App: React.FC = () => {
 
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
@@ -100,9 +102,16 @@ const App: React.FC = () => {
   };
 
   const deleteWidget = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteWidget = () => {
+    if (!deleteConfirmId) return;
     updateCurrentPage({
-      widgets: widgets.filter(w => w.id !== id)
+      widgets: widgets.filter(w => w.id !== deleteConfirmId)
     });
+    setDeleteConfirmId(null);
+    showToast('Widget removed successfully', 'success');
   };
 
   const handleWidgetSelect = (id: string | null) => {
@@ -517,6 +526,16 @@ const App: React.FC = () => {
       />
 
       {/* Premium Toast Notification */}
+      <ConfirmModal
+        isOpen={deleteConfirmId !== null}
+        title="Widget 삭제"
+        message="이 위젯을 정말로 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다."
+        confirmText="삭제하기"
+        cancelText="취소"
+        onConfirm={confirmDeleteWidget}
+        onCancel={() => setDeleteConfirmId(null)}
+        isDark={theme.mode === ThemeMode.DARK}
+      />
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded-2xl min-w-[320px]">

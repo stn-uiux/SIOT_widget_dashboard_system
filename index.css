@@ -12,6 +12,7 @@
     --text-muted: #64748b;
     --border-base: #e2e8f0;
     --border-muted: #f1f5f9;
+    --border-strong: #cbd5e1;
 
     /* Layout Tokens */
     --border-radius: 16px;
@@ -33,8 +34,9 @@
     --surface: #0f172a;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --border-base: #334155;
-    --border-muted: #1e293b;
+    --border-base: rgba(255, 255, 255, 0.08);
+    --border-muted: rgba(255, 255, 255, 0.05);
+    --border-strong: rgba(255, 255, 255, 0.15);
     --shadow-base: 0 4px 6px -1px rgb(0 0 0 / 0.5);
 }
 
@@ -111,7 +113,7 @@ body {
 .btn-surface {
     background-color: var(--surface);
     color: var(--text-main);
-    border-color: var(--border-base);
+    border-color: var(--border-strong);
     box-shadow: var(--shadow-base);
 }
 

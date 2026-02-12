@@ -112,7 +112,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
                   type="text"
                   value={header.title}
                   onChange={(e) => updateHeader({ title: e.target.value })}
-                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
                   placeholder="Enter header title..."
                 />
                 <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary" />
@@ -126,7 +126,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
                   type="text"
                   value={currentPage.name}
                   onChange={(e) => updatePage({ name: e.target.value })}
-                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
                   placeholder="Enter page name..."
                 />
                 <Layers className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary" />
@@ -135,8 +135,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
 
             <div className="space-y-2">
               <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Header Logo</span>
-              <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border dark:border-gray-700 border-dashed hover:border-primary transition-all group overflow-hidden">
-                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 border dark:border-gray-600 relative overflow-hidden">
+              <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-[var(--border-base)] border-dashed hover:border-primary transition-all group overflow-hidden">
+                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 border border-[var(--border-base)] relative overflow-hidden">
                   {header.logo ? (
                     <img src={header.logo} alt="Logo Preview" className="w-full h-full object-contain" />
                   ) : (
@@ -239,7 +239,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
               <select
                 value={theme.titleWeight}
                 onChange={(e) => updateTheme({ titleWeight: e.target.value })}
-                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="400">Normal (400)</option>
                 <option value="500">Medium (500)</option>
@@ -266,7 +266,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
         </section>
 
         {/* Layout Constants */}
-        <section className="space-y-6 pt-4 border-t dark:border-gray-800">
+        <section className="space-y-6 pt-4 border-t border-[var(--border-base)]">
           <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Grid & Radius</h3>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -298,7 +298,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
         </section>
 
         {/* AI Style Generator Section */}
-        <section className="space-y-4 pt-4 border-t dark:border-gray-800">
+        <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
           <div className="flex items-center gap-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
             <Sparkles className="w-4 h-4" /> AI Style Generator
           </div>
@@ -307,7 +307,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
               value={siteInfo}
               onChange={(e) => setSiteInfo(e.target.value)}
               placeholder="Modern tech company focused on sustainability..."
-              className="w-full p-3 text-sm bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl resize-none focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+              className="w-full p-3 text-sm bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl resize-none focus:ring-1 focus:ring-blue-500 outline-none transition-all"
               rows={3}
             />
             <button
@@ -325,7 +325,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
                 <button
                   key={idx}
                   onClick={() => updateTheme(t)}
-                  className="p-3 border dark:border-gray-700 rounded-xl hover:border-blue-500 transition-colors bg-gray-50 dark:bg-gray-800 group text-left"
+                  className="p-3 border border-[var(--border-base)] rounded-xl hover:border-blue-500 transition-colors bg-gray-50 dark:bg-gray-800 group text-left"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-6 rounded-md shadow-inner" style={{ backgroundColor: t.primaryColor }} />
@@ -341,7 +341,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({ theme, header, currentPag
         </section>
       </div >
 
-      <div className="p-6 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+      <div className="p-6 border-t border-[var(--border-base)] bg-gray-50 dark:bg-opacity-10">
         <div className="text-[10px] text-gray-500 text-center italic">
           Design System affects all widgets globally.
         </div>

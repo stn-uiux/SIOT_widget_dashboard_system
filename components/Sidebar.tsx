@@ -20,7 +20,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidget, onUpdateLayout, onClose }) => {
   if (!selectedWidget) return (
-    <div className="w-80 h-full bg-[var(--card-bg)] border-l border-[var(--border-color)] p-6 space-y-8 flex flex-col shadow-2xl text-[var(--text-color)] transition-all">
+    <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 flex flex-col shadow-2xl transition-all">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Grid Settings</h2>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 type="number" min="1" max="6"
                 value={layout.columns}
                 onChange={(e) => onUpdateLayout({ columns: parseInt(e.target.value) || 1 })}
-                className="w-full p-2 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-lg outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
             <div className="space-y-1">
@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 type="number" min="1" max="8"
                 value={layout.rows}
                 onChange={(e) => onUpdateLayout({ rows: parseInt(e.target.value) || 1 })}
-                className="w-full p-2 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="w-full p-2 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-lg outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
           {/* Fit to Screen Option */}
           <div
             onClick={() => onUpdateLayout({ fitToScreen: !layout.fitToScreen })}
-            className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all group"
+            className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all group"
           >
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-blue-500" />
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               step="10"
               value={layout.defaultRowHeight}
               onChange={(e) => onUpdateLayout({ defaultRowHeight: parseInt(e.target.value) || 100 })}
-              className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+              className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
             />
           </div>
 
@@ -209,7 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
   ].filter(opt => opt.visible);
 
   return (
-    <div className="w-80 h-full bg-[var(--card-bg)] border-l border-[var(--border-color)] p-6 space-y-8 overflow-y-auto custom-scrollbar shadow-2xl text-[var(--text-color)] transition-all">
+    <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 overflow-y-auto custom-scrollbar shadow-2xl transition-all">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Widget Settings</h2>
         <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -238,7 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               onClick={() => handleTypeChange(type.id as WidgetType)}
               className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${selectedWidget.type === type.id
                 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
-                : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
                 }`}
             >
               <type.icon className="w-4 h-4" />
@@ -249,7 +249,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
       </section>
 
       {isSummary && (
-        <section className="space-y-4 border-t dark:border-gray-800 pt-6">
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <Smile className="w-4 h-4" /> Icon Settings
           </label>
@@ -301,7 +301,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
       )}
 
       {isChart && !isSummary && !isSummaryChart && (
-        <section className="space-y-4 border-t dark:border-gray-800 pt-6">
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
               <Palette className="w-4 h-4" /> Data Series
@@ -316,7 +316,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
           </div>
           <div className="space-y-2">
             {(selectedWidget.config.series || []).map((s, idx) => (
-              <div key={s.key} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border dark:border-gray-700 flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm">
+              <div key={s.key} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm">
                 <div className="flex flex-col gap-0.5 mr-1">
                   <button
                     disabled={idx === 0}
@@ -336,7 +336,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
 
                 <div className="relative group/picker shrink-0">
                   <div
-                    className="w-5 h-5 rounded-md border border-white/20 shadow-sm cursor-pointer"
+                    className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
                     style={{ backgroundColor: s.color?.startsWith('var') ? `var(${s.color.match(/var\(([^)]+)\)/)?.[1] || s.color})` : s.color }}
                   />
                   <input
@@ -379,7 +379,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                   type="text"
                   value={selectedWidget.config.xAxisLabel || ''}
                   onChange={(e) => onUpdateWidget(selectedWidget.id, { config: { ...selectedWidget.config, xAxisLabel: e.target.value } })}
-                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
                   placeholder="e.g. Month, Project Name"
                 />
                 <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
@@ -393,7 +393,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               type="text"
               value={selectedWidget.config.unit || ''}
               onChange={(e) => onUpdateWidget(selectedWidget.id, { config: { ...selectedWidget.config, unit: e.target.value } })}
-              className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
               placeholder="e.g. 명, $, %"
             />
           </div>
@@ -406,7 +406,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                   type="text"
                   value={selectedWidget.mainValue || ''}
                   onChange={(e) => onUpdateWidget(selectedWidget.id, { mainValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
                 />
               </div>
               <div className="space-y-1">
@@ -415,7 +415,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                   type="text"
                   value={selectedWidget.subValue || ''}
                   onChange={(e) => onUpdateWidget(selectedWidget.id, { subValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
               </div>
             </>
@@ -425,8 +425,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
         {!isSummary && (
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
             {selectedWidget.data.map((item, idx) => (
-              <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border dark:border-gray-700 space-y-2 group/row shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center justify-between border-b dark:border-gray-700 pb-1.5 mb-1.5">
+              <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
                   <input
                     type="text"
                     value={item[selectedWidget.config.xAxisKey] || item.name}
@@ -443,7 +443,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                       type="number"
                       value={item[s.key] ?? 0}
                       onChange={(e) => handleDataChange(idx, s.key, parseFloat(e.target.value) || 0)}
-                      className="w-20 p-1 bg-gray-50 dark:bg-gray-900 border dark:border-gray-700 rounded text-xs text-right font-mono font-bold dark:text-white"
+                      className="w-20 p-1 bg-gray-50 dark:bg-gray-900 border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white"
                     />
                   </div>
                 ))}
@@ -461,13 +461,13 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Width</span>
-            <select value={selectedWidget.colSpan} onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })} className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
+            <select value={selectedWidget.colSpan} onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })} className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
               {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val}>{val} Cols</option>))}
             </select>
           </div>
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Height</span>
-            <select value={selectedWidget.rowSpan} onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })} className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
+            <select value={selectedWidget.rowSpan} onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })} className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
               {[1, 2, 3, 4].map(val => (<option key={val} value={val}>{val} Rows</option>))}
             </select>
           </div>
