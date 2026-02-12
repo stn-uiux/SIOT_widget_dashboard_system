@@ -1,11 +1,10 @@
-
 import React from 'react';
 import {
   X, Layers, BarChart3, TrendingUp, PieChart as PieIcon,
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
-  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin
+  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA } from '../constants';
@@ -92,8 +91,13 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     </div>
   );
 
-  const toggleConfig = (key: keyof typeof selectedWidget.config) => {
-    const currentValue = selectedWidget.config[key];
+  const toggleConfig = (key: string) => {
+    if (key === 'noBezel') {
+      onUpdateWidget(selectedWidget.id, { noBezel: !selectedWidget.noBezel });
+      return;
+    }
+
+    const currentValue = (selectedWidget.config as any)[key];
     const updates: any = { [key]: !currentValue };
 
     // "Show Legend"를 끌 때 "Show Unit in Legend"도 함께 끄도록 처리
@@ -195,7 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
   ].includes(selectedWidget.type);
 
   const isGridChart = isAxisChart || selectedWidget.type === WidgetType.CHART_RADAR;
-  const canShowLegend = !isSummary && !isSummaryChart && !isTable;
+  const canShowLegend = isChart && !isTable && !isSummaryChart;
 
   // 위젯 타입별 가용 옵션 필터링
   const appearanceOptions = [
@@ -207,7 +211,10 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     { key: 'showGrid', label: 'Show Grid Lines', visible: isGridChart },
     { key: 'showXAxis', label: 'Show X-Axis', visible: isAxisChart },
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
+    { key: 'noBezel', label: 'No Bezel', visible: selectedWidget.type === WidgetType.MAP || selectedWidget.type === WidgetType.IMAGE || selectedWidget.type === WidgetType.WEATHER },
   ].filter(opt => opt.visible);
+
+  const canShowNoBezel = [WidgetType.MAP, WidgetType.IMAGE, WidgetType.WEATHER].includes(selectedWidget.type);
 
   return (
     <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 overflow-y-auto custom-scrollbar shadow-2xl transition-all">
@@ -369,11 +376,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {option.label}
                 </span>
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${selectedWidget.config[option.key as keyof typeof selectedWidget.config]
+                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(option.key === 'noBezel' ? selectedWidget.noBezel : selectedWidget.config[option.key as keyof typeof selectedWidget.config])
                   ? 'bg-blue-600 border-blue-600'
                   : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                   }`}>
-                  {selectedWidget.config[option.key as keyof typeof selectedWidget.config] && (
+                  {(option.key === 'noBezel' ? selectedWidget.noBezel : selectedWidget.config[option.key as keyof typeof selectedWidget.config]) && (
                     <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
                   )}
                 </div>
@@ -383,7 +390,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
         </section>
       )}
 
+
+
       {isChart && !isSummary && !isSummaryChart && (
+
+
         <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">

@@ -2,11 +2,10 @@
 trigger: always_on
 ---
 
-# ui/ux and design system governance
-
 # CRITICAL: STOP AND ASK
 - BEFORE generating any UI code, analyze if the required tokens exist.
 - IF tokens are missing or you are tempted to use Tailwind's arbitrary values (e.g., p-4, bg-white/90), you MUST stop and ask for a token mapping first.
+- **NEW COMPONENT REVIEW**: Specifically for Checkboxes, Radio buttons, or new Input types, you MUST propose the style and tokens before implementation for cross-review.
 
 ## single source of truth
 - # zero tolerance for hard-coding: never use raw values (hex, px, rem) for any reason. 

@@ -34,9 +34,7 @@ const App: React.FC = () => {
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
 
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
   const [isDesignDocsOpen, setIsDesignDocsOpen] = useState(false);
@@ -92,7 +90,8 @@ const App: React.FC = () => {
         unit: '',
         series: [{ key: 'value', label: 'Revenue', color: 'var(--primary-color)' }]
       },
-      data: MOCK_CHART_DATA
+      data: MOCK_CHART_DATA,
+      noBezel: false,
     };
     updateCurrentPage({ widgets: [...widgets, newWidget] });
   };
@@ -158,8 +157,18 @@ const App: React.FC = () => {
     ));
   };
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    if (!isEditMode) return;
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handlePointerDown = (widgetId: string) => {
+    setActiveDragId(widgetId);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number, widgetId: string) => {
+    if (!isEditMode || activeDragId !== widgetId) {
+      e.preventDefault();
+      return;
+    }
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -169,6 +178,12 @@ const App: React.FC = () => {
     e.preventDefault();
     if (draggedIndex === index) return;
     setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    setActiveDragId(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetIndex: number) => {
@@ -181,6 +196,7 @@ const App: React.FC = () => {
     updateCurrentPage({ widgets: newWidgets });
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setActiveDragId(null);
   };
 
   const addProject = () => {
@@ -461,9 +477,18 @@ const App: React.FC = () => {
               {(widgets || []).map((widget, index) => (
                 <div
                   key={widget.id}
-                  draggable={isEditMode}
-                  onDragStart={(e) => handleDragStart(e, index)}
+                  draggable={isEditMode && activeDragId === widget.id}
+                  onPointerDown={(e) => {
+                    const isHandle = (e.target as HTMLElement).closest('.drag-handle');
+                    if (isHandle) {
+                      setActiveDragId(widget.id);
+                    } else {
+                      setActiveDragId(null);
+                    }
+                  }}
+                  onDragStart={(e) => handleDragStart(e, index, widget.id)}
                   onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
                   onDrop={(e) => handleDrop(e, index)}
                   className={`transition-all duration-200 ${selectedWidgetId === widget.id ? 'ring-2 ring-blue-500 rounded-[inherit]' : ''} ${draggedIndex === index ? 'opacity-30 scale-95 cursor-grabbing' : 'opacity-100'} ${dragOverIndex === index ? 'scale-[1.02] ring-2 ring-dashed ring-blue-300' : ''}`}
                   style={{ gridColumn: `span ${Math.min(widget.colSpan, layout.columns)}`, gridRow: `span ${widget.rowSpan}` }}
