@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Layout, Edit3, Eye, Plus, Palette, Settings2,
+  Layout, Edit3, Eye, Plus, Palette, Settings2, BookOpen,
   BarChart3, TrendingUp, Activity, ChevronDown, EyeOff, CheckCircle2
 } from 'lucide-react';
 import {
@@ -15,6 +15,7 @@ import DesignSidebar from './components/DesignSidebar';
 import Sidebar from './components/Sidebar';
 import ExcelModal from './components/ExcelModal';
 import ConfirmModal from './components/ConfirmModal';
+import DesignDocs from './components/DesignDocs';
 import DesignSystem from './DesignSystem';
 
 const App: React.FC = () => {
@@ -38,6 +39,7 @@ const App: React.FC = () => {
 
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
+  const [isDesignDocsOpen, setIsDesignDocsOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
@@ -374,13 +376,13 @@ const App: React.FC = () => {
                 <button
                   key={p.id}
                   onClick={() => handlePageChange(p.id)}
-                  className={`w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight transition-all ${currentPage.id === p.id ? 'bg-primary text-white shadow-lg' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                  className={`w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight transition-all ${currentPage.id === p.id ? 'bg-primary text-white shadow-lg' : 'hover:bg-[var(--border-muted)] text-secondary'}`}
                 >
                   {p.name}
                 </button>
               ))}
               {isEditMode && (
-                <button onClick={addPage} className="w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight border-2 border-dashed border-gray-200 dark:border-gray-800 text-gray-400 hover:border-primary hover:text-primary transition-all flex items-center gap-2">
+                <button onClick={addPage} className="w-full text-left px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-tight border-2 border-dashed border-[var(--border-base)] text-muted hover:border-primary hover:text-primary transition-all flex items-center gap-2">
                   <Plus className="w-4 h-4" /> New Page
                 </button>
               )}
@@ -416,13 +418,13 @@ const App: React.FC = () => {
                     <button
                       key={p.id}
                       onClick={() => handlePageChange(p.id)}
-                      className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                      className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : 'hover:bg-[var(--border-muted)] text-secondary'}`}
                     >
                       {p.name}
                     </button>
                   ))}
                   {isEditMode && (
-                    <button onClick={addPage} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                    <button onClick={addPage} className="p-2 rounded-xl text-muted hover:bg-[var(--border-muted)] transition-all">
                       <Plus className="w-4 h-4" />
                     </button>
                   )}
@@ -504,7 +506,8 @@ const App: React.FC = () => {
                 currentPage={currentPage}
                 updateTheme={handleThemeChange}
                 updateHeader={updateHeader}
-                updatePage={updateCurrentPage}
+                onUpdatePage={updateCurrentPage}
+                onOpenDocs={() => setIsDesignDocsOpen(true)}
                 onClose={() => setIsDesignSidebarOpen(false)}
               />
             ) : selectedWidgetId ? (
@@ -551,6 +554,10 @@ const App: React.FC = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {isDesignDocsOpen && (
+        <DesignDocs onClose={() => setIsDesignDocsOpen(false)} />
       )}
     </div>
   );

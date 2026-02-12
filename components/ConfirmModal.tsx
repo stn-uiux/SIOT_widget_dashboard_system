@@ -32,18 +32,17 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 onClick={onCancel}
             />
 
-            <div className={`relative w-full max-w-sm rounded-3xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300 ${isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white'
-                }`}>
+            <div className="relative w-full max-w-sm rounded-[var(--border-radius)] shadow-premium overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300 bg-[var(--surface)] border border-[var(--border-base)]">
                 <div className="p-6 text-center space-y-4">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-[var(--error)]/10 flex items-center justify-center text-[var(--error)] mb-2">
                         <AlertTriangle size={32} />
                     </div>
 
                     <div className="space-y-1">
-                        <h2 className={`text-xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        <h2 className="text-xl font-black tracking-tight text-main">
                             {title}
                         </h2>
-                        <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className="text-sm font-medium text-muted">
                             {message}
                         </p>
                     </div>
@@ -51,16 +50,13 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <div className="grid grid-cols-2 gap-3 pt-2">
                         <button
                             onClick={onCancel}
-                            className={`py-3.5 px-6 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${isDark
-                                    ? 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                }`}
+                            className="py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-widest transition-all bg-[var(--border-muted)] text-muted hover:bg-[var(--border-base)]"
                         >
                             {cancelText}
                         </button>
                         <button
                             onClick={onConfirm}
-                            className="py-3.5 px-6 rounded-2xl bg-red-500 text-white font-bold text-xs uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/25 transition-all"
+                            className="py-3.5 px-6 rounded-xl bg-[var(--error)] text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 shadow-lg shadow-red-500/25 transition-all"
                         >
                             {confirmText}
                         </button>
@@ -69,7 +65,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
                 <button
                     onClick={onCancel}
-                    className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400"
+                    className="absolute top-4 right-4 p-2 hover:bg-[var(--border-muted)] rounded-full transition-colors text-muted"
                 >
                     <X size={18} />
                 </button>

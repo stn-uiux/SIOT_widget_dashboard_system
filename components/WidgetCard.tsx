@@ -288,7 +288,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       })));
     };
 
-    const PIE_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981'];
+    const PIE_COLORS = [
+      'var(--primary-color)',
+      'var(--secondary-color)',
+      'var(--success)',
+      'var(--warning)',
+      '#8b5cf6',
+      '#ec4899',
+      '#f43f5e'
+    ];
 
     const renderApexChart = () => {
       const { xAxisKey, showLegend, showGrid, showXAxis, showYAxis, unit } = widget.config;
@@ -647,10 +655,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       <text
                         x={x}
                         y={y}
-                        fill={isDark ? '#f1f5f9' : '#475569'}
+                        fill="var(--text-secondary)"
                         textAnchor={x > cx ? 'start' : 'end'}
                         dominantBaseline="central"
-                        style={{ fontSize: `${contentSize}px`, fontWeight: 'bold' }}
+                        style={{ fontSize: `${contentSize}px`, fontWeight: 'var(--title-weight)' }}
                       >
                         {labelText}
                       </text>
@@ -658,7 +666,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   } : false}
                 >
                   {widget.data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke={isDark ? '#1e293b' : '#fff'} strokeWidth={2} />
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="var(--surface)" strokeWidth={2} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -734,10 +742,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 </thead>
                 <tbody>
                   {widget.data.map((row, idx) => (
-                    <tr key={idx} className={`border-b last:border-0 transition-colors ${isDark ? 'border-slate-800 hover:bg-slate-800/40 text-slate-200' : 'border-gray-100 hover:bg-gray-50 text-gray-700'}`}>
-                      <td className="py-3 px-3 font-semibold">{row[xAxisKey] || row.name}</td>
+                    <tr key={idx} className="border-b border-[var(--border-muted)] last:border-0 transition-colors hover:bg-[var(--border-muted)] text-secondary">
+                      <td className="py-3 px-3 font-semibold text-main">{row[xAxisKey] || row.name}</td>
                       {series.map(s => (
-                        <td key={s.key} className={`py-3 px-3 text-right font-mono font-bold ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
+                        <td key={s.key} className="py-3 px-3 text-right font-mono font-bold text-primary">
                           {row[s.key]?.toLocaleString()}
                         </td>
                       ))}

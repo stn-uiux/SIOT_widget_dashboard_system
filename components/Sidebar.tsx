@@ -29,12 +29,12 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
       </div>
       <div className="space-y-6">
         <div className="space-y-4">
-          <label className="text-sm font-semibold text-gray-500 uppercase flex items-center gap-2">
+          <label className="text-sm font-semibold text-muted uppercase flex items-center gap-2">
             <LayoutGrid className="w-4 h-4" /> Layout Config
           </label>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <span className="text-xs text-gray-400 font-medium">Columns</span>
+              <span className="text-xs text-muted font-medium">Columns</span>
               <input
                 type="number" min="1" max="6"
                 value={layout.columns}
@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               />
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-gray-400 font-medium">Rows</span>
+              <span className="text-xs text-muted font-medium">Rows</span>
               <input
                 type="number" min="1" max="8"
                 value={layout.rows}
@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
           >
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Fit to Screen</span>
+              <span className="text-xs font-bold text-secondary">Fit to Screen</span>
             </div>
             <div className={`w-8 h-4 rounded-full relative transition-colors ${layout.fitToScreen ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${layout.fitToScreen ? 'right-0.5' : 'left-0.5'}`} />
@@ -69,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
 
           {/* Row Height Config (Active only when fitToScreen is FALSE) */}
           <div className={`space-y-1 pt-1 transition-opacity ${layout.fitToScreen ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-            <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 flex items-center gap-1.5">
+            <span className="text-[10px] uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
               <MoveVertical className="w-3 h-3" /> Default Row Height (px)
             </span>
             <input
@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             />
           </div>
 
-          <p className="text-[10px] text-gray-400 italic px-1 leading-relaxed">
+          <p className="text-[10px] text-muted italic px-1 leading-relaxed">
             * <strong>Fit ON</strong>: 위젯 크기가 화면 비율에 맞춰 자동 조절됨<br />
             * <strong>Fit OFF</strong>: 지정된 Row Height만큼 위젯 크기 고정 (스크롤 발생)
           </p>

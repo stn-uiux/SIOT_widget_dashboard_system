@@ -1,6 +1,6 @@
 {
     "project": "STN infotech PRO Dashboard",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "tokens": {
         "colors": {
             "brand": {
@@ -9,8 +9,30 @@
                     "type": "color",
                     "description": "Main brand color used for primary actions and highlights"
                 },
+                "secondary": {
+                    "value": "#6366f1",
+                    "type": "color"
+                },
                 "primary_subtle": {
                     "value": "rgba(59, 130, 246, 0.1)",
+                    "type": "color"
+                }
+            },
+            "status": {
+                "success": {
+                    "value": "#10b981",
+                    "type": "color"
+                },
+                "error": {
+                    "value": "#ef4444",
+                    "type": "color"
+                },
+                "warning": {
+                    "value": "#f59e0b",
+                    "type": "color"
+                },
+                "info": {
+                    "value": "#3b82f6",
                     "type": "color"
                 }
             },
@@ -28,6 +50,10 @@
                         "value": "#0f172a",
                         "type": "color"
                     },
+                    "text_secondary": {
+                        "value": "#334155",
+                        "type": "color"
+                    },
                     "text_muted": {
                         "value": "#64748b",
                         "type": "color"
@@ -38,6 +64,10 @@
                     },
                     "border_muted": {
                         "value": "#f1f5f9",
+                        "type": "color"
+                    },
+                    "border_strong": {
+                        "value": "#cbd5e1",
                         "type": "color"
                     }
                 },
@@ -54,16 +84,24 @@
                         "value": "#f8fafc",
                         "type": "color"
                     },
+                    "text_secondary": {
+                        "value": "#cbd5e1",
+                        "type": "color"
+                    },
                     "text_muted": {
                         "value": "#94a3b8",
                         "type": "color"
                     },
                     "border_base": {
-                        "value": "#334155",
+                        "value": "rgba(255, 255, 255, 0.08)",
                         "type": "color"
                     },
                     "border_muted": {
-                        "value": "#1e293b",
+                        "value": "rgba(255, 255, 255, 0.05)",
+                        "type": "color"
+                    },
+                    "border_strong": {
+                        "value": "rgba(255, 255, 255, 0.15)",
                         "type": "color"
                     }
                 }
@@ -71,33 +109,107 @@
         },
         "layout": {
             "borderRadius": {
-                "value": "16px",
-                "type": "dimension"
+                "none": {
+                    "value": "0px",
+                    "type": "dimension"
+                },
+                "sm": {
+                    "value": "8px",
+                    "type": "dimension"
+                },
+                "md": {
+                    "value": "12px",
+                    "type": "dimension"
+                },
+                "lg": {
+                    "value": "16px",
+                    "type": "dimension"
+                },
+                "xl": {
+                    "value": "24px",
+                    "type": "dimension"
+                },
+                "full": {
+                    "value": "9999px",
+                    "type": "dimension"
+                }
             },
             "spacing": {
-                "value": "16px",
-                "type": "dimension"
+                "xs": {
+                    "value": "4px",
+                    "type": "dimension"
+                },
+                "sm": {
+                    "value": "8px",
+                    "type": "dimension"
+                },
+                "md": {
+                    "value": "16px",
+                    "type": "dimension"
+                },
+                "lg": {
+                    "value": "24px",
+                    "type": "dimension"
+                },
+                "xl": {
+                    "value": "32px",
+                    "type": "dimension"
+                }
             }
         },
         "typography": {
             "fontFamily": {
-                "value": "'Inter', sans-serif",
-                "type": "fontFamily"
+                "sans": {
+                    "value": "'Inter', sans-serif",
+                    "type": "fontFamily"
+                },
+                "mono": {
+                    "value": "'JetBrains Mono', monospace",
+                    "type": "fontFamily"
+                }
             },
-            "title": {
-                "size": {
+            "scale": {
+                "xs": {
+                    "value": "10px",
+                    "type": "dimension"
+                },
+                "sm": {
+                    "value": "12px",
+                    "type": "dimension"
+                },
+                "base": {
+                    "value": "14px",
+                    "type": "dimension"
+                },
+                "lg": {
                     "value": "18px",
                     "type": "dimension"
                 },
-                "weight": {
-                    "value": "700",
-                    "type": "fontWeight"
+                "xl": {
+                    "value": "24px",
+                    "type": "dimension"
                 }
             },
-            "content": {
-                "size": {
-                    "value": "12px",
-                    "type": "dimension"
+            "weight": {
+                "normal": {
+                    "value": "400",
+                    "type": "fontWeight"
+                },
+                "medium": {
+                    "value": "500",
+                    "type": "fontWeight"
+                },
+                "semibold": {
+                    "value": "600",
+                    "type": "fontWeight"
+                },
+                "bold": {
+                    "value": "700",
+                    "type": "fontWeight"
+                },
+                "black": {
+                    "value": "900",
+                    "type": "fontWeight"
                 }
             }
         },
