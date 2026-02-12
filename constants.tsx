@@ -146,7 +146,7 @@ export const DEFAULT_LAYOUT: LayoutConfig = {
   defaultRowHeight: 300,
 };
 
-export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string }> = {
+export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string, icon?: string }> = {
   [WidgetType.SUMMARY_CHART]: {
     mainValue: '2,345,678',
     subValue: '행사 기간 누적 방문',
@@ -271,6 +271,61 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
       showUnitInLegend: true,
       showLabels: false,
       series: [{ key: 'value', label: 'Progress', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.WEATHER]: {
+    mainValue: '24°C',
+    subValue: 'Seoul, Partly Cloudy',
+    icon: 'partly_cloudy_day',
+    data: [],
+    config: {
+      xAxisKey: '',
+      yAxisKey: '',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: []
+    }
+  },
+  [WidgetType.IMAGE]: {
+    mainValue: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop',
+    subValue: 'Dash Image Preview',
+    data: [],
+    config: {
+      xAxisKey: '',
+      yAxisKey: '',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: []
+    }
+  },
+  [WidgetType.MAP]: {
+    mainValue: 'Seoul, South Korea',
+    subValue: '37.5665, 126.9780',
+    data: [],
+    config: {
+      xAxisKey: '',
+      yAxisKey: '',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: []
     }
   }
 

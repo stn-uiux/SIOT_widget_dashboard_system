@@ -5,7 +5,7 @@ import {
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
-  Hexagon, Monitor, MoveVertical
+  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA } from '../constants';
@@ -232,6 +232,32 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             { id: WidgetType.CHART_PIE, icon: PieIcon, label: 'Pie' },
             { id: WidgetType.TABLE, icon: TableIcon, label: 'Table' },
             { id: WidgetType.SUMMARY, icon: Database, label: 'Stat' },
+          ].map((type) => (
+            <button
+              key={type.id}
+              onClick={() => handleTypeChange(type.id as WidgetType)}
+              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${selectedWidget.type === type.id
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
+                : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
+                }`}
+            >
+              <type.icon className="w-4 h-4" />
+              <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{type.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* General Widgets Section */}
+      <section className="space-y-4">
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <LayoutGrid className="w-4 h-4" /> General Components
+        </label>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { id: WidgetType.WEATHER, icon: CloudSun, label: 'Weather' },
+            { id: WidgetType.IMAGE, icon: Image, label: 'Image' },
+            { id: WidgetType.MAP, icon: MapPin, label: 'Map' },
           ].map((type) => (
             <button
               key={type.id}
