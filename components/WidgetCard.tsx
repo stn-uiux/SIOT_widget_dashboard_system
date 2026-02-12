@@ -12,7 +12,7 @@ import * as am5percent from "@amcharts/amcharts5/percent";
 import * as am5radar from "@amcharts/amcharts5/radar";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
-import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image as ImageIcon } from 'lucide-react';
+import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 import MapWidget from './MapWidget';
 
@@ -568,57 +568,37 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       case WidgetType.IMAGE:
         return (
           <div className="h-full w-full relative group overflow-hidden rounded-[var(--radius-md)] bg-[var(--border-muted)]">
-            {isEditMode ? (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 cursor-pointer relative" onClick={() => document.getElementById(`file-upload-${widget.id}`)?.click()}>
-                {widget.mainValue ? (
-                  <img
-                    src={widget.mainValue}
-                    alt="Preview"
-                    className="w-full h-full object-cover opacity-50"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center text-muted">
-                    <ImageIcon className="w-8 h-8 mb-2" />
-                    <span className="text-xs font-bold">Click to Upload Image</span>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  id={`file-upload-${widget.id}`}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        onUpdate?.(widget.id, { mainValue: reader.result as string, subValue: file.name });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/30 transition-opacity">
-                  <span className="text-white font-bold text-xs uppercase border border-white px-3 py-1 rounded-full">Change Image</span>
-                </div>
+            <img
+              src={widget.mainValue}
+              alt={widget.subValue}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {widget.subValue && (
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-[10px] font-bold uppercase tracking-wider">{widget.subValue}</p>
               </div>
-            ) : (
-              <>
-                <img
-                  src={widget.mainValue}
-                  alt={widget.subValue}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                  }}
-                />
-                {widget.subValue && (
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-[10px] font-bold uppercase tracking-wider">{widget.subValue}</p>
-                  </div>
-                )}
-              </>
+            )}
+            {isEditMode && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                <label className="btn-base btn-surface p-2.5 rounded-xl cursor-pointer">
+                  <Image className="w-5 h-5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          onUpdate?.(widget.id, { mainValue: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
             )}
           </div>
         );
