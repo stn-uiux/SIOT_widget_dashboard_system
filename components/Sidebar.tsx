@@ -183,6 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
   const isSummaryChart = selectedWidget.type === WidgetType.SUMMARY_CHART;
   const isTable = selectedWidget.type === WidgetType.TABLE;
   const isPie = selectedWidget.type === WidgetType.CHART_PIE;
+  const isImage = selectedWidget.type === WidgetType.IMAGE;
   const isChart = selectedWidget.type.includes('CHART') || isTable;
 
   const isAxisChart = [
@@ -292,6 +293,62 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
                 {selectedWidget.icon || 'star'}
               </span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isImage && (
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Image className="w-4 h-4" /> Image Settings
+          </label>
+
+          <div className="space-y-4">
+            {/* File Upload */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Upload Image</span>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        onUpdateWidget(selectedWidget.id, { mainValue: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                />
+              </div>
+            </div>
+
+            {/* URL Input */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
+              <input
+                type="text"
+                value={selectedWidget.mainValue || ''}
+                onChange={(e) => onUpdateWidget(selectedWidget.id, { mainValue: e.target.value })}
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            {/* Caption */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
+              <input
+                type="text"
+                value={selectedWidget.subValue || ''}
+                onChange={(e) => onUpdateWidget(selectedWidget.id, { subValue: e.target.value })}
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                placeholder="Image description..."
+              />
             </div>
           </div>
         </section>
