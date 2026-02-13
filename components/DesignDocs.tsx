@@ -291,6 +291,26 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="docs-section">
+                                    <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest">Toggles & Switches</h3>
+                                    <div className="preview-box flex-col gap-4 items-start">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" checked readOnly />
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                            </div>
+                                            <span className="text-xs font-bold text-main">Active State</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" className="sr-only peer" />
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                            </div>
+                                            <span className="text-xs font-bold text-muted">Inactive State</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 

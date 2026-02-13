@@ -162,7 +162,7 @@ const AmChartComponent: React.FC<{
             fill: am5.color(resolveColor(s.color)),
             stroke: am5.color(resolveColor(s.color))
           }));
-          series.columns.template.setAll({ cornerRadiusBR: 5, cornerRadiusTR: 5 });
+          series.columns.template.setAll({ cornerRadiusBR: theme.chartRadius, cornerRadiusTR: theme.chartRadius });
         } else if (widget.type === WidgetType.CHART_BAR) {
           series = chart.series.push(am5xy.ColumnSeries.new(root, {
             name: s.label,
@@ -173,7 +173,7 @@ const AmChartComponent: React.FC<{
             fill: am5.color(resolveColor(s.color)),
             stroke: am5.color(resolveColor(s.color))
           }));
-          series.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5 });
+          series.columns.template.setAll({ cornerRadiusTL: theme.chartRadius, cornerRadiusTR: theme.chartRadius });
         } else {
           series = chart.series.push(am5xy.LineSeries.new(root, {
             name: s.label,
@@ -383,7 +383,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         dataLabels: { enabled: false },
         plotOptions: {
           bar: {
-            borderRadius: 6,
+            borderRadius: theme.chartRadius,
             columnWidth: '60%',
           }
         }
@@ -624,7 +624,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         // Parse lat, lng from subValue (e.g. "37.5665, 126.9780")
         const [lat, lng] = (widget.subValue || '37.5665, 126.9780').split(',').map(s => parseFloat(s.trim()));
         return (
-          <div className={`h-full w-full relative bg-[var(--border-muted)] overflow-hidden ${widget.noBezel ? '' : 'rounded-[var(--radius-md)] border border-[var(--border-base)]'}`}>
+          <div className={`h-full w-full relative bg-[var(--border-muted)] overflow-hidden ${widget.noBezel ? '' : 'rounded-[var(--radius-md)]'}`}
+            style={{
+              borderWidth: widget.noBezel ? '0' : 'var(--widget-border-width)',
+              borderColor: 'var(--widget-border-color)',
+              borderStyle: 'solid'
+            }}
+          >
             {/* Dynamic Import or standard import if possible. Here we use standard import but wrapped */}
             <div className="h-full w-full z-0">
               <MapWidget lat={lat || 37.5665} lng={lng || 126.9780} zoom={13} provider="osm" />
@@ -650,7 +656,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[6, 6, 0, 0]} />
+                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[theme.chartRadius, theme.chartRadius, 0, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -668,7 +674,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[0, 6, 6, 0]} />
+                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[0, theme.chartRadius, theme.chartRadius, 0]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -862,10 +868,20 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   };
 
   return (
-    <div className={`relative h-full flex flex-col shadow-base border transition-all duration-300 group overflow-hidden bg-surface text-main border-main hover:shadow-premium hover:shadow-[var(--primary-color)]/5 rounded-design ${widget.noBezel ? 'p-0 !border-0 !shadow-none bg-transparent' : 'p-5'}`}>
+    <div
+      className={`relative h-full flex flex-col shadow-base transition-all duration-300 group overflow-hidden bg-surface text-main hover:shadow-premium hover:shadow-[var(--primary-color)]/5 rounded-design ${widget.noBezel ? 'p-0 !shadow-none bg-transparent' : 'p-5'}`}
+      style={{
+        borderWidth: widget.noBezel ? '0' : 'var(--widget-border-width)',
+        borderColor: 'var(--widget-border-color)',
+        borderStyle: 'solid'
+      }}
+    >
 
       {!widget.noBezel && (
-        <div className="flex items-center justify-between mb-2 shrink-0 z-20">
+        <div
+          className="flex items-center justify-between px-5 py-3 mb-4 -mx-5 -mt-5 border-b border-[var(--border-muted)] shrink-0 z-20"
+          style={{ backgroundColor: 'var(--widget-header-color)' }}
+        >
           <div className="flex items-center gap-2 overflow-hidden flex-1">
 
             {isEditMode && (

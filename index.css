@@ -58,16 +58,28 @@
     --border-base: rgba(255, 255, 255, 0.08);
     --border-muted: rgba(255, 255, 255, 0.05);
     --border-strong: rgba(255, 255, 255, 0.15);
-    --shadow-base: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+}
+
+.glass-enabled .bg-surface,
+.glass-enabled .btn-surface:not(.active) {
+    background-color: rgba(var(--surface-rgb), var(--surface-opacity)) !important;
+    backdrop-filter: blur(var(--surface-blur));
+    -webkit-backdrop-filter: blur(var(--surface-blur));
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.glass-enabled .bg-surface.no-bezel {
+    backdrop-filter: none;
+    background-color: transparent !important;
 }
 
 /* Base Styles */
 body {
-    background-color: var(--background);
+    background: var(--background);
     color: var(--text-main);
     font-family: var(--font-family);
     margin: 0;
-    transition: background-color var(--transition-speed), color var(--transition-speed);
+    transition: background var(--transition-speed), color var(--transition-speed);
 }
 
 /* Design System Utility Classes */

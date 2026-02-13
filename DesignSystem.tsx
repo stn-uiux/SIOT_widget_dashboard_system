@@ -17,9 +17,36 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         // Apply Primary Palette
         applyColorPalette(root, 'primary', theme.primaryColor);
 
+        // Core Colors
+        if (theme.useGradient && theme.backgroundGradientColor) {
+            root.style.setProperty('--background', `linear-gradient(135deg, ${theme.backgroundColor}, ${theme.backgroundGradientColor})`);
+        } else {
+            root.style.setProperty('--background', theme.backgroundColor);
+        }
+        root.style.setProperty('--surface', theme.surfaceColor);
+        root.style.setProperty('--surface-rgb', hexToRgb(theme.surfaceColor));
+        root.style.setProperty('--text-main', theme.titleColor);
+        root.style.setProperty('--text-secondary', theme.textColor);
+        root.style.setProperty('--shadow-base', theme.cardShadow);
+
+        // Glassmorphism
+        if (theme.glassmorphism) {
+            root.style.setProperty('--surface-blur', `${theme.glassBlur}px`);
+            root.style.setProperty('--surface-opacity', `${theme.glassOpacity}`);
+            root.classList.add('glass-enabled');
+        } else {
+            root.style.setProperty('--surface-blur', '0px');
+            root.style.setProperty('--surface-opacity', '1');
+            root.classList.remove('glass-enabled');
+        }
+
         // Layout & Surface Variables
         root.style.setProperty('--border-radius', `${theme.borderRadius}px`);
         root.style.setProperty('--spacing', `${theme.spacing}px`);
+        root.style.setProperty('--dashboard-padding', `${theme.dashboardPadding}px`);
+        root.style.setProperty('--widget-border-width', `${theme.borderWidth}px`);
+        root.style.setProperty('--widget-border-color', theme.borderColor);
+        root.style.setProperty('--widget-header-color', theme.widgetHeaderColor || 'transparent');
 
         // Typography
         root.style.setProperty('--title-size', `${theme.titleSize}px`);

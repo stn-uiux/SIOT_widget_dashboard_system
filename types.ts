@@ -105,6 +105,7 @@ export interface HeaderConfig {
   textAlignment: TextAlignment;
   title: string;
   logo?: string;
+  showDivider?: boolean;
 }
 
 export interface TabConfig {
@@ -130,14 +131,46 @@ export interface Project {
 }
 
 export interface DashboardTheme {
+  name?: string;
   primaryColor: string;
+  backgroundColor: string;
+  useGradient?: boolean;
+  backgroundGradientColor?: string;
+  surfaceColor: string;
+  widgetHeaderColor?: string;
   mode: ThemeMode;
   chartLibrary: ChartLibrary;
   borderRadius: number;
+  chartRadius: number;
+  borderWidth: number;
+  borderColor: string;
   spacing: number;
+  dashboardPadding: number;
   titleSize: number;
   titleWeight: string;
   contentSize: number;
+  // Glassmorphism & Effects
+  glassmorphism: boolean;
+  glassBlur: number;
+  glassOpacity: number;
+  cardShadow: string;
+  // Typography Colors
+  titleColor: string;
+  textColor: string;
+  // Multi-Mode Support
+  dualModeSupport?: boolean;
+  modeStyles?: {
+    light?: Partial<DashboardTheme>;
+    dark?: Partial<DashboardTheme>;
+  };
+  showPageTabs?: boolean;
+  transparentTabs?: boolean;
+}
+
+export interface ThemePreset {
+  id: string;
+  name: string;
+  theme: DashboardTheme;
 }
 
 export interface LayoutConfig {

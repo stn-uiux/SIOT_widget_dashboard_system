@@ -4,12 +4,12 @@ import {
   BarChart3, TrendingUp, Activity, ChevronDown, EyeOff, CheckCircle2
 } from 'lucide-react';
 import {
-  Widget, WidgetType, DashboardTheme, LayoutConfig, ThemeMode, ChartLibrary,
+  INITIAL_PROJECT_LIST, MOCK_CHART_DATA, DEFAULT_PAGE, DEFAULT_HEADER, DEFAULT_THEME, THEME_PRESETS
+} from './constants';
+import {
+  Widget, WidgetType, DashboardTheme, ThemePreset, LayoutConfig, ThemeMode, ChartLibrary,
   Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment
 } from './types';
-import {
-  INITIAL_PROJECT_LIST, MOCK_CHART_DATA, DEFAULT_PAGE, DEFAULT_HEADER, DEFAULT_THEME
-} from './constants';
 import WidgetCard from './components/WidgetCard';
 import DesignSidebar from './components/DesignSidebar';
 import Sidebar from './components/Sidebar';
@@ -128,6 +128,23 @@ const App: React.FC = () => {
   const handleToggleDesignSidebar = () => {
     setIsDesignSidebarOpen(!isDesignSidebarOpen);
     setSelectedWidgetId(null);
+  };
+
+  const [presets, setPresets] = useState<ThemePreset[]>(THEME_PRESETS);
+
+  const handleApplyPreset = (preset: ThemePreset) => {
+    updateProjectTheme(preset.theme);
+    showToast(`Applied preset: ${preset.name}`);
+  };
+
+  const handleSavePreset = (name: string) => {
+    const newPreset: ThemePreset = {
+      id: `preset_${Date.now()}`,
+      name,
+      theme: { ...currentProject.theme, name }
+    };
+    setPresets(prev => [...prev, newPreset]);
+    showToast(`Saved new preset: ${name}`);
   };
 
   const handleThemeChange = (newTheme: Partial<DashboardTheme>) => {
@@ -378,7 +395,7 @@ const App: React.FC = () => {
               padding: `${header.padding}px`,
               margin: `${header.margin}px`,
             }}
-            className="h-full border-r border-[var(--border-base)] flex flex-col z-20 transition-all shadow-sm shrink-0"
+            className={`h-full flex flex-col z-20 transition-all shadow-sm shrink-0 ${header.showDivider !== false ? 'border-r border-[var(--border-base)]' : ''}`}
           >
             <div className={`mb-8 flex flex-col items-${header.textAlignment === TextAlignment.CENTER ? 'center' : header.textAlignment === TextAlignment.RIGHT ? 'end' : 'start'} ${header.textAlignment === TextAlignment.CENTER ? 'text-center' : header.textAlignment === TextAlignment.RIGHT ? 'text-right' : 'text-left'}`}>
               {header.logo && (
@@ -419,38 +436,45 @@ const App: React.FC = () => {
                 padding: `0 ${header.padding}px`,
                 margin: `${header.margin}px`,
               }}
-              className="flex items-center border-b border-[var(--border-base)] z-20 transition-all shadow-sm shrink-0"
+              className={`flex items-center z-20 transition-all shadow-sm shrink-0 ${header.showDivider !== false ? 'border-b border-[var(--border-base)]' : ''}`}
             >
-              <div className={`flex-1 flex items-center gap-8 ${header.textAlignment === TextAlignment.CENTER ? 'justify-center' : header.textAlignment === TextAlignment.RIGHT ? 'justify-end' : 'justify-start'}`}>
-                <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-8 w-full ${header.textAlignment === TextAlignment.CENTER ? 'justify-center' : header.textAlignment === TextAlignment.RIGHT ? 'justify-between' : 'justify-between'}`}>
+                {/* Title */}
+                <div className={`flex items-center gap-3 ${header.textAlignment === TextAlignment.CENTER ? 'absolute left-1/2 -translate-x-1/2' : ''}`}>
                   {header.logo && (
                     <img src={header.logo} alt="Logo" className="h-6 w-auto object-contain" />
                   )}
                   <h2 className="text-lg font-black tracking-tighter uppercase whitespace-nowrap">{header.title}</h2>
                 </div>
 
-                <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  {currentProject.pages.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => handlePageChange(p.id)}
-                      className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : 'hover:bg-[var(--border-muted)] text-secondary'}`}
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                  {isEditMode && (
-                    <button onClick={addPage} className="p-2 rounded-xl text-muted hover:bg-[var(--border-muted)] transition-all">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  )}
-                </nav>
+                {/* Navigation Tabs */}
+                {theme.showPageTabs !== false && (
+                  <nav className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded-xl ${theme.transparentTabs ? 'bg-transparent' : 'bg-[var(--surface-muted)]'} ${header.textAlignment === TextAlignment.CENTER ? 'ml-auto' : ''}`}>
+                    {currentProject.pages.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => handlePageChange(p.id)}
+                        className={` px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : theme.transparentTabs ? 'text-muted hover:bg-black/5 dark:hover:bg-white/5' : 'bg-transparent text-muted hover:bg-[var(--surface)] hover:shadow-sm'}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {isEditMode && (
+                      <button onClick={addPage} className="p-2 rounded-lg text-muted hover:text-primary transition-all">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </nav>
+                )}
               </div>
             </header>
           )}
 
           {/* Widgets Grid Container */}
-          <main className={`flex-1 p-8 relative custom-scrollbar transition-all ${layout.fitToScreen ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
+          <main
+            className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}
+            style={{ padding: 'var(--dashboard-padding)' }}
+          >
             {isPreviewMode && (
               <button
                 onClick={() => setIsPreviewMode(false)}
@@ -532,6 +556,9 @@ const App: React.FC = () => {
                 updateTheme={handleThemeChange}
                 updateHeader={updateHeader}
                 onUpdatePage={updateCurrentPage}
+                presets={presets}
+                onSavePreset={handleSavePreset}
+                onApplyPreset={handleApplyPreset}
                 onOpenDocs={() => setIsDesignDocsOpen(true)}
                 onClose={() => setIsDesignSidebarOpen(false)}
               />

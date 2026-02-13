@@ -1,4 +1,4 @@
-import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment } from './types';
+import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, ThemePreset, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment } from './types';
 
 export const MOCK_CHART_DATA = [
   { name: 'Jan', value: 400, secondary: 240 },
@@ -11,15 +11,58 @@ export const MOCK_CHART_DATA = [
 ];
 
 export const DEFAULT_THEME: DashboardTheme = {
+  name: 'Default',
   primaryColor: '#3b82f6',
+  backgroundColor: '#f8fafc',
+  surfaceColor: '#ffffff',
   mode: ThemeMode.LIGHT,
   chartLibrary: ChartLibrary.RECHARTS,
   borderRadius: 16,
+  chartRadius: 6,
+  borderWidth: 1,
+  borderColor: '#e2e8f0',
   spacing: 16,
+  dashboardPadding: 32,
   titleSize: 18,
   titleWeight: '700',
-  contentSize: 12
+  contentSize: 12,
+  glassmorphism: false,
+  glassBlur: 10,
+  glassOpacity: 0.8,
+  cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+  titleColor: '#0f172a',
+  textColor: '#334155',
+  showPageTabs: true,
+  transparentTabs: false
 };
+
+export const THEME_PRESETS: ThemePreset[] = [
+  {
+    id: 'preset_default',
+    name: 'STN Standard',
+    theme: DEFAULT_THEME
+  },
+  {
+    id: 'preset_dark_pro',
+    name: 'Midnight Pro',
+    theme: {
+      ...DEFAULT_THEME,
+      name: 'Midnight Pro',
+      mode: ThemeMode.DARK,
+      backgroundColor: '#020617',
+      surfaceColor: '#0f172a',
+      primaryColor: '#6366f1',
+      titleColor: '#f8fafc',
+      textColor: '#94a3b8',
+      cardShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
+      widgetHeaderColor: 'transparent', // Default for Midnight Pro
+      borderWidth: 1,
+      borderColor: '#1e293b',
+      chartRadius: 6,
+      transparentTabs: true // Midnight Pro looks better with transparent tabs
+    }
+  }
+];
 
 export const DEFAULT_HEADER: HeaderConfig = {
   show: true,
@@ -31,7 +74,8 @@ export const DEFAULT_HEADER: HeaderConfig = {
   backgroundColor: 'var(--surface)',
   textColor: 'var(--text-main)',
   textAlignment: TextAlignment.LEFT,
-  title: 'My Custom Dashboard'
+  title: 'My Custom Dashboard',
+  showDivider: true
 };
 
 export const DEFAULT_PAGE: DashboardPage = {
