@@ -66,6 +66,20 @@ export interface Widget {
   subValue?: string;
   icon?: string;
   noBezel?: boolean;
+  // Dual Chart Support
+  isDual?: boolean;
+  dualLayout?: 'horizontal' | 'vertical';
+  dualGap?: number;
+  secondaryType?: WidgetType;
+  secondaryConfig?: ChartConfig;
+  secondaryData?: any[];
+  showSubTitles?: boolean;
+  subTitle1?: string;
+  subTitle2?: string;
+  secondaryMainValue?: string;
+  secondarySubValue?: string;
+  secondaryIcon?: string;
+  secondaryNoBezel?: boolean;
 }
 
 export enum HeaderPosition {

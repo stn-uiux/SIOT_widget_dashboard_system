@@ -18,6 +18,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidget, onUpdateLayout, onClose }) => {
+  const [activeDualTab, setActiveDualTab] = React.useState<0 | 1>(0);
+
   if (!selectedWidget) return (
     <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 flex flex-col shadow-2xl transition-all">
       <div className="flex items-center justify-between mb-4">
@@ -91,62 +93,83 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     </div>
   );
 
+  const isSec = selectedWidget.isDual && activeDualTab === 1;
+
+  const currentType = isSec ? (selectedWidget.secondaryType || selectedWidget.type) : selectedWidget.type;
+  const currentConfig = isSec ? (selectedWidget.secondaryConfig || selectedWidget.config) : selectedWidget.config;
+  const currentData = isSec ? (selectedWidget.secondaryData || selectedWidget.data || []) : (selectedWidget.data || []);
+  const currentMainValue = isSec ? (selectedWidget.secondaryMainValue || '0') : (selectedWidget.mainValue || '0');
+  const currentSubValue = isSec ? (selectedWidget.secondarySubValue || '') : (selectedWidget.subValue || '');
+
+  const updateCurrentWidget = (updates: Partial<Widget>) => {
+    if (!isSec) {
+      onUpdateWidget(selectedWidget.id, updates);
+    } else {
+      const secUpdates: any = {};
+      if (updates.type) secUpdates.secondaryType = updates.type;
+      if (updates.config) secUpdates.secondaryConfig = { ...selectedWidget.secondaryConfig, ...updates.config };
+      if (updates.data) secUpdates.secondaryData = updates.data;
+      if (updates.mainValue !== undefined) secUpdates.secondaryMainValue = updates.mainValue;
+      if (updates.subValue !== undefined) secUpdates.secondarySubValue = updates.subValue;
+      onUpdateWidget(selectedWidget.id, secUpdates);
+    }
+  };
+
   const toggleConfig = (key: string) => {
     if (key === 'noBezel') {
       onUpdateWidget(selectedWidget.id, { noBezel: !selectedWidget.noBezel });
       return;
     }
 
-    const currentValue = (selectedWidget.config as any)[key];
+    const currentValue = (currentConfig as any)[key];
     const updates: any = { [key]: !currentValue };
 
-    // "Show Legend"를 끌 때 "Show Unit in Legend"도 함께 끄도록 처리
     if (key === 'showLegend' && currentValue === true) {
       updates.showUnitInLegend = false;
     }
 
-    onUpdateWidget(selectedWidget.id, {
-      config: { ...selectedWidget.config, ...updates }
+    updateCurrentWidget({
+      config: { ...currentConfig, ...updates }
     });
   };
 
   const handleTypeChange = (newType: WidgetType) => {
     const defaultData = TYPE_DEFAULT_DATA[newType];
     if (defaultData) {
-      onUpdateWidget(selectedWidget.id, {
+      updateCurrentWidget({
         type: newType,
         data: defaultData.data,
-        config: { ...selectedWidget.config, ...defaultData.config },
-        mainValue: defaultData.mainValue || selectedWidget.mainValue,
-        subValue: defaultData.subValue || selectedWidget.subValue
+        config: { ...currentConfig, ...defaultData.config },
+        mainValue: defaultData.mainValue,
+        subValue: defaultData.subValue
       });
     } else {
-      onUpdateWidget(selectedWidget.id, { type: newType });
+      updateCurrentWidget({ type: newType });
     }
   };
 
   const handleDataChange = (index: number, key: string, value: any) => {
-    const newData = [...selectedWidget.data];
+    const newData = [...currentData];
     newData[index] = { ...newData[index], [key]: value };
-    onUpdateWidget(selectedWidget.id, { data: newData });
+    updateCurrentWidget({ data: newData });
   };
 
   const addDataRow = () => {
-    const xAxisKey = selectedWidget.config.xAxisKey || 'name';
-    const defaultObj: any = { [xAxisKey]: `Item ${selectedWidget.data.length + 1}` };
-    const seriesKeys = selectedWidget.config.series?.length > 0 ? selectedWidget.config.series.map(s => s.key) : ['value'];
+    const xAxisKey = currentConfig.xAxisKey || 'name';
+    const defaultObj: any = { [xAxisKey]: `Item ${currentData.length + 1}` };
+    const seriesKeys = currentConfig.series?.length > 0 ? currentConfig.series.map(s => s.key) : ['value'];
     seriesKeys.forEach(k => defaultObj[k] = 0);
-    onUpdateWidget(selectedWidget.id, { data: [...selectedWidget.data, defaultObj] });
+    updateCurrentWidget({ data: [...currentData, defaultObj] });
   };
 
   const removeDataRow = (index: number) => {
-    onUpdateWidget(selectedWidget.id, { data: selectedWidget.data.filter((_, i) => i !== index) });
+    updateCurrentWidget({ data: currentData.filter((_, i) => i !== index) });
   };
 
   const handleAddSeries = () => {
     const newKey = `value_${Date.now()}`;
     const shades = [50, 70, 30, 90, 10, 60, 40, 80, 20];
-    const currentLen = selectedWidget.config.series?.length || 0;
+    const currentLen = currentConfig.series?.length || 0;
     const shadeStep = shades[currentLen % shades.length];
 
     const newSeries: ChartSeries = {
@@ -154,41 +177,41 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
       label: `Series ${currentLen + 1}`,
       color: currentLen === 0 ? 'var(--primary-color)' : `var(--primary-${shadeStep})`
     };
-    onUpdateWidget(selectedWidget.id, {
-      config: { ...selectedWidget.config, series: [...(selectedWidget.config.series || []), newSeries] },
-      data: selectedWidget.data.map(d => ({ ...d, [newKey]: 0 }))
+    updateCurrentWidget({
+      config: { ...currentConfig, series: [...(currentConfig.series || []), newSeries] },
+      data: currentData.map(d => ({ ...d, [newKey]: 0 }))
     });
   };
 
   const handleUpdateSeries = (key: string, updates: Partial<ChartSeries>) => {
-    onUpdateWidget(selectedWidget.id, {
-      config: { ...selectedWidget.config, series: selectedWidget.config.series.map(s => s.key === key ? { ...s, ...updates } : s) }
+    updateCurrentWidget({
+      config: { ...currentConfig, series: currentConfig.series.map(s => s.key === key ? { ...s, ...updates } : s) }
     });
   };
 
   const handleRemoveSeries = (key: string) => {
-    onUpdateWidget(selectedWidget.id, {
-      config: { ...selectedWidget.config, series: selectedWidget.config.series.filter(s => s.key !== key) }
+    updateCurrentWidget({
+      config: { ...currentConfig, series: currentConfig.series.filter(s => s.key !== key) }
     });
   };
 
   const moveSeries = (index: number, direction: 'up' | 'down') => {
-    const newSeries = [...(selectedWidget.config.series || [])];
+    const newSeries = [...(currentConfig.series || [])];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newSeries.length) return;
 
     [newSeries[index], newSeries[targetIndex]] = [newSeries[targetIndex], newSeries[index]];
-    onUpdateWidget(selectedWidget.id, {
-      config: { ...selectedWidget.config, series: newSeries }
+    updateCurrentWidget({
+      config: { ...currentConfig, series: newSeries }
     });
   };
 
-  const isSummary = selectedWidget.type === WidgetType.SUMMARY;
-  const isSummaryChart = selectedWidget.type === WidgetType.SUMMARY_CHART;
-  const isTable = selectedWidget.type === WidgetType.TABLE;
-  const isPie = selectedWidget.type === WidgetType.CHART_PIE;
-  const isImage = selectedWidget.type === WidgetType.IMAGE;
-  const isChart = selectedWidget.type.includes('CHART') || isTable;
+  const isSummary = currentType === WidgetType.SUMMARY;
+  const isSummaryChart = currentType === WidgetType.SUMMARY_CHART;
+  const isTable = currentType === WidgetType.TABLE;
+  const isPie = currentType === WidgetType.CHART_PIE;
+  const isImage = currentType === WidgetType.IMAGE;
+  const isChart = currentType.includes('CHART') || isTable;
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
@@ -196,9 +219,9 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     WidgetType.CHART_LINE,
     WidgetType.CHART_AREA,
     WidgetType.CHART_COMPOSED
-  ].includes(selectedWidget.type);
+  ].includes(currentType);
 
-  const isGridChart = isAxisChart || selectedWidget.type === WidgetType.CHART_RADAR;
+  const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
   const canShowLegend = isChart && !isTable && !isSummaryChart;
 
   // 위젯 타입별 가용 옵션 필터링
@@ -206,15 +229,15 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     // 'Show Unit' 체크박스는 사용자의 요청에 의해 제거됨 (unit 텍스트 입력 유무로 판단)
     { key: 'showLegend', label: 'Show Legend', visible: canShowLegend },
     // Legend가 켜져있을 때만 Unit in Legend 옵션을 노출함
-    { key: 'showUnitInLegend', label: 'Show Unit in Legend', visible: canShowLegend && selectedWidget.config.showLegend },
+    { key: 'showUnitInLegend', label: 'Show Unit in Legend', visible: canShowLegend && currentConfig.showLegend },
     { key: 'showLabels', label: 'Show Labels', visible: isPie },
     { key: 'showGrid', label: 'Show Grid Lines', visible: isGridChart },
     { key: 'showXAxis', label: 'Show X-Axis', visible: isAxisChart },
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
-    { key: 'noBezel', label: 'No Bezel', visible: selectedWidget.type === WidgetType.MAP || selectedWidget.type === WidgetType.IMAGE || selectedWidget.type === WidgetType.WEATHER },
+    { key: 'noBezel', label: 'No Bezel', visible: currentType === WidgetType.MAP || currentType === WidgetType.IMAGE || currentType === WidgetType.WEATHER },
   ].filter(opt => opt.visible);
 
-  const canShowNoBezel = [WidgetType.MAP, WidgetType.IMAGE, WidgetType.WEATHER].includes(selectedWidget.type);
+  const canShowNoBezel = [WidgetType.MAP, WidgetType.IMAGE, WidgetType.WEATHER].includes(currentType);
 
   return (
     <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 overflow-y-auto custom-scrollbar shadow-2xl transition-all">
@@ -224,6 +247,117 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
           <X className="w-5 h-5" />
         </button>
       </div>
+
+      <div className="space-y-4 pt-2 pb-2">
+        <div
+          onClick={() => {
+            const isDual = !selectedWidget.isDual;
+            onUpdateWidget(selectedWidget.id, {
+              isDual,
+              dualLayout: selectedWidget.dualLayout || 'horizontal',
+              dualGap: selectedWidget.dualGap ?? 16,
+              secondaryType: selectedWidget.secondaryType || selectedWidget.type,
+              secondaryConfig: selectedWidget.secondaryConfig || selectedWidget.config,
+              secondaryData: selectedWidget.secondaryData || selectedWidget.data,
+              showSubTitles: selectedWidget.showSubTitles ?? false,
+              subTitle1: selectedWidget.subTitle1 || 'Primary',
+              subTitle2: selectedWidget.subTitle2 || 'Secondary'
+            });
+          }}
+          className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all group"
+        >
+          <div className="flex items-center gap-2">
+            <LayoutGrid className={`w-4 h-4 ${selectedWidget.isDual ? 'text-blue-500' : 'text-gray-400'}`} />
+            <span className="text-sm font-black uppercase tracking-tighter">Dual Mode</span>
+          </div>
+          <div className={`w-10 h-6 rounded-full relative transition-colors ${selectedWidget.isDual ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedWidget.isDual ? 'right-1' : 'left-1'}`} />
+          </div>
+        </div>
+
+        {selectedWidget.isDual && (
+          <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-xl">
+            <button
+              onClick={() => setActiveDualTab(0)}
+              className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeDualTab === 0 ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Left Graph
+            </button>
+            <button
+              onClick={() => setActiveDualTab(1)}
+              className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeDualTab === 1 ? 'bg-white dark:bg-gray-800 text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              Right Graph
+            </button>
+          </div>
+        )}
+      </div>
+
+      {selectedWidget.isDual && (
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Layers className="w-4 h-4" /> Dual Layout Config
+          </label>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => onUpdateWidget(selectedWidget.id, { dualLayout: 'horizontal' })}
+                className={`p-2.5 rounded-xl border text-[10px] font-bold uppercase transition-all ${selectedWidget.dualLayout === 'horizontal' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-gray-50 border-[var(--border-base)] text-gray-400'}`}
+              >
+                Horizontal
+              </button>
+              <button
+                onClick={() => onUpdateWidget(selectedWidget.id, { dualLayout: 'vertical' })}
+                className={`p-2.5 rounded-xl border text-[10px] font-bold uppercase transition-all ${selectedWidget.dualLayout === 'vertical' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-gray-50 border-[var(--border-base)] text-gray-400'}`}
+              >
+                Vertical
+              </button>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 flex justify-between">
+                Gap (Spacing) <span>{selectedWidget.dualGap ?? 16}px</span>
+              </span>
+              <input
+                type="range" min="0" max="64" step="4"
+                value={selectedWidget.dualGap ?? 16}
+                onChange={(e) => onUpdateWidget(selectedWidget.id, { dualGap: parseInt(e.target.value) })}
+                className="w-full accent-blue-600 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+
+            <div className="pt-2 border-t border-[var(--border-muted)] space-y-3">
+              <div
+                onClick={() => onUpdateWidget(selectedWidget.id, { showSubTitles: !selectedWidget.showSubTitles })}
+                className="flex items-center justify-between cursor-pointer group"
+              >
+                <span className="text-xs font-black text-muted uppercase tracking-tighter">Show Subtitles</span>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${selectedWidget.showSubTitles ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-gray-800 border-gray-300'}`}>
+                  {selectedWidget.showSubTitles && <Check className="w-3 h-3 text-white stroke-[3px]" />}
+                </div>
+              </div>
+
+              {selectedWidget.showSubTitles && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={selectedWidget.subTitle1 || ''}
+                    onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle1: e.target.value })}
+                    className="p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] rounded-lg text-[10px] font-bold outline-none"
+                    placeholder="Left Label"
+                  />
+                  <input
+                    type="text"
+                    value={selectedWidget.subTitle2 || ''}
+                    onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle2: e.target.value })}
+                    className="p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] rounded-lg text-[10px] font-bold outline-none"
+                    placeholder="Right Label"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="space-y-4">
         <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -244,7 +378,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             <button
               key={type.id}
               onClick={() => handleTypeChange(type.id as WidgetType)}
-              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${selectedWidget.type === type.id
+              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${currentType === type.id
                 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
                 : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
                 }`}
@@ -270,7 +404,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             <button
               key={type.id}
               onClick={() => handleTypeChange(type.id as WidgetType)}
-              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${selectedWidget.type === type.id
+              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${currentType === type.id
                 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
                 : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
                 }`}
@@ -282,6 +416,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
         </div>
       </section>
 
+
       {isSummary && (
         <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -292,13 +427,13 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             <div className="relative group">
               <input
                 type="text"
-                value={selectedWidget.icon || ''}
-                onChange={(e) => onUpdateWidget(selectedWidget.id, { icon: e.target.value })}
+                value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
+                onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
                 className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
                 placeholder="e.g. group, monitoring, star"
               />
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
-                {selectedWidget.icon || 'star'}
+                {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
               </span>
             </div>
           </div>
@@ -324,7 +459,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                     if (file) {
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        onUpdateWidget(selectedWidget.id, { mainValue: reader.result as string });
+                        updateCurrentWidget({ mainValue: reader.result as string });
                       };
                       reader.readAsDataURL(file);
                     }
@@ -339,8 +474,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
               <input
                 type="text"
-                value={selectedWidget.mainValue || ''}
-                onChange={(e) => onUpdateWidget(selectedWidget.id, { mainValue: e.target.value })}
+                value={currentMainValue || ''}
+                onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
                 placeholder="https://example.com/image.jpg"
               />
@@ -351,8 +486,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
               <input
                 type="text"
-                value={selectedWidget.subValue || ''}
-                onChange={(e) => onUpdateWidget(selectedWidget.id, { subValue: e.target.value })}
+                value={currentSubValue || ''}
+                onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
                 placeholder="Image description..."
               />
@@ -376,11 +511,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {option.label}
                 </span>
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(option.key === 'noBezel' ? selectedWidget.noBezel : selectedWidget.config[option.key as keyof typeof selectedWidget.config])
+                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) : (currentConfig as any)[option.key])
                   ? 'bg-blue-600 border-blue-600'
                   : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                   }`}>
-                  {(option.key === 'noBezel' ? selectedWidget.noBezel : selectedWidget.config[option.key as keyof typeof selectedWidget.config]) && (
+                  {(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) : (currentConfig as any)[option.key]) && (
                     <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
                   )}
                 </div>
@@ -409,7 +544,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             </button>
           </div>
           <div className="space-y-2">
-            {(selectedWidget.config.series || []).map((s, idx) => (
+            {(currentConfig.series || []).map((s, idx) => (
               <div key={s.key} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm">
                 <div className="flex flex-col gap-0.5 mr-1">
                   <button
@@ -420,7 +555,7 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                     <ChevronUp className="w-3 h-3 text-gray-500" />
                   </button>
                   <button
-                    disabled={idx === (selectedWidget.config.series?.length || 0) - 1}
+                    disabled={idx === (currentConfig.series?.length || 0) - 1}
                     onClick={() => moveSeries(idx, 'down')}
                     className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-0 transition-all"
                   >
@@ -471,8 +606,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
               <div className="relative group">
                 <input
                   type="text"
-                  value={selectedWidget.config.xAxisLabel || ''}
-                  onChange={(e) => onUpdateWidget(selectedWidget.id, { config: { ...selectedWidget.config, xAxisLabel: e.target.value } })}
+                  value={currentConfig.xAxisLabel || ''}
+                  onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
                   className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
                   placeholder="e.g. Month, Project Name"
                 />
@@ -485,8 +620,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Unit</span>
             <input
               type="text"
-              value={selectedWidget.config.unit || ''}
-              onChange={(e) => onUpdateWidget(selectedWidget.id, { config: { ...selectedWidget.config, unit: e.target.value } })}
+              value={currentConfig.unit || ''}
+              onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
               className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
               placeholder="e.g. 명, $, %"
             />
@@ -498,8 +633,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Current Value</span>
                 <input
                   type="text"
-                  value={selectedWidget.mainValue || ''}
-                  onChange={(e) => onUpdateWidget(selectedWidget.id, { mainValue: e.target.value })}
+                  value={currentMainValue || ''}
+                  onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
                   className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
                 />
               </div>
@@ -507,8 +642,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Description</span>
                 <input
                   type="text"
-                  value={selectedWidget.subValue || ''}
-                  onChange={(e) => onUpdateWidget(selectedWidget.id, { subValue: e.target.value })}
+                  value={currentSubValue || ''}
+                  onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
                   className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
               </div>
@@ -518,19 +653,19 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
 
         {!isSummary && (
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
-            {selectedWidget.data.map((item, idx) => (
+            {currentData.map((item, idx) => (
               <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
                   <input
                     type="text"
-                    value={item[selectedWidget.config.xAxisKey] || item.name}
-                    onChange={(e) => handleDataChange(idx, selectedWidget.config.xAxisKey || 'name', e.target.value)}
+                    value={item[currentConfig.xAxisKey] || item.name}
+                    onChange={(e) => handleDataChange(idx, currentConfig.xAxisKey || 'name', e.target.value)}
                     className="bg-transparent border-none p-0 text-xs font-black text-blue-600 dark:text-blue-400 focus:ring-0 w-full"
                     placeholder="Label..."
                   />
                   <button onClick={() => removeDataRow(idx)} className="opacity-0 group-hover/row:opacity-100 text-red-400 hover:text-red-500 transition-opacity"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
-                {(selectedWidget.config.series || [{ key: 'value', label: 'Value' }]).map((s) => (
+                {(currentConfig.series || [{ key: 'value', label: 'Value' }]).map((s) => (
                   <div key={s.key} className="flex items-center justify-between gap-4">
                     <span className="text-[9px] font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
                     <input
