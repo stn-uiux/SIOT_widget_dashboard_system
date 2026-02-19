@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { GridLayout, useContainerWidth } from 'react-grid-layout';
+import type { LayoutItem } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
 import {
-  Layout, Edit3, Eye, Plus, Palette, Settings2, BookOpen,
+  Layout, Edit3, Eye, Plus, Palette,
   BarChart3, TrendingUp, Activity, ChevronDown, EyeOff, CheckCircle2
 } from 'lucide-react';
 import {
-  INITIAL_PROJECT_LIST, MOCK_CHART_DATA, DEFAULT_PAGE, DEFAULT_HEADER, DEFAULT_THEME, THEME_PRESETS
+  INITIAL_PROJECT_LIST, MOCK_CHART_DATA, DEFAULT_PAGE, DEFAULT_THEME, THEME_PRESETS
 } from './constants';
 import {
   Widget, WidgetType, DashboardTheme, ThemePreset, LayoutConfig, ThemeMode, ChartLibrary,
@@ -19,6 +22,19 @@ import DesignDocs from './components/DesignDocs';
 import DesignSystem from './DesignSystem';
 import WidgetPicker from './components/WidgetPicker';
 import { TYPE_DEFAULT_DATA } from './constants';
+
+/** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
+const computeInitialLayout = (pageWidgets: Widget[], cols: number): LayoutItem[] => {
+  let curX = 0, curY = 0, rowH = 0;
+  return pageWidgets.map((w) => {
+    const wCols = Math.min(w.colSpan, cols);
+    if (curX + wCols > cols) { curX = 0; curY += rowH; rowH = 0; }
+    rowH = Math.max(rowH, w.rowSpan);
+    const item: LayoutItem = { i: w.id, x: curX, y: curY, w: wCols, h: w.rowSpan };
+    curX += wCols;
+    return item;
+  });
+};
 
 const App: React.FC = () => {
   // Navigation & Project State
@@ -36,7 +52,15 @@ const App: React.FC = () => {
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
 
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  // react-grid-layout state (pageId → LayoutItem[])
+  const [rglLayouts, setRglLayouts] = useState<Record<string, LayoutItem[]>>({});
+
+  // useContainerWidth: container ref + measured width
+  const { containerRef: gridContainerRef, width: gridWidth } = useContainerWidth({ initialWidth: 1280 });
+  // separate ref for height measurement (fitToScreen)
+  const mainAreaRef = useRef<HTMLDivElement>(null);
+  const [mainAreaHeight, setMainAreaHeight] = useState(600);
+
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
   const [isDesignDocsOpen, setIsDesignDocsOpen] = useState(false);
@@ -191,47 +215,42 @@ const App: React.FC = () => {
     ));
   };
 
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const handlePointerDown = (widgetId: string) => {
-    setActiveDragId(widgetId);
-  };
+  // ── react-grid-layout helpers ─────────────────────────────────────────
+  const currentRglLayout = useMemo<LayoutItem[]>(() => {
+    const saved = rglLayouts[currentPage.id] ?? [];
+    const savedMap = new Map<string, LayoutItem>(saved.map(l => [l.i, l]));
+    if (saved.length === 0) return computeInitialLayout(widgets, layout.columns);
+    return widgets.map((w): LayoutItem => {
+      const s = savedMap.get(w.id);
+      // x,y from saved; w,h always from widget (sidebar edits take effect immediately)
+      if (s) return { i: s.i, x: s.x, y: s.y, w: w.colSpan, h: w.rowSpan };
+      return { i: w.id, x: 0, y: 9999, w: w.colSpan, h: w.rowSpan };
+    });
+  }, [rglLayouts, currentPage.id, widgets, layout.columns]);
 
-  const handleDragStart = (e: React.DragEvent, index: number, widgetId: string) => {
-    if (!isEditMode || activeDragId !== widgetId) {
-      e.preventDefault();
-      return;
+  const rglRowHeight = useMemo(() => {
+    if (layout.fitToScreen) {
+      const gap = (layout.rows - 1) * theme.spacing;
+      return Math.max(30, (mainAreaHeight - gap) / layout.rows);
     }
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-  };
+    return layout.defaultRowHeight;
+  }, [layout.fitToScreen, layout.rows, layout.defaultRowHeight, mainAreaHeight, theme.spacing]);
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    if (!isEditMode) return;
-    e.preventDefault();
-    if (draggedIndex === index) return;
-    setDragOverIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setActiveDragId(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    if (!isEditMode || draggedIndex === null) return;
-    e.preventDefault();
-    const newWidgets = [...widgets];
-    const draggedItem = newWidgets[draggedIndex];
-    newWidgets.splice(draggedIndex, 1);
-    newWidgets.splice(targetIndex, 0, draggedItem);
-    updateCurrentPage({ widgets: newWidgets });
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setActiveDragId(null);
-  };
+  const handleRglLayoutChange = useCallback((newLayout: readonly LayoutItem[]) => {
+    const widgetIds = new Set(widgets.map(w => w.id));
+    const filtered = Array.from(newLayout).filter(l => widgetIds.has(l.i));
+    setRglLayouts(prev => ({ ...prev, [currentPage.id]: filtered }));
+    // sync colSpan/rowSpan back to widget state
+    updateCurrentPage({
+      widgets: widgets.map(w => {
+        const item = filtered.find(l => l.i === w.id);
+        if (!item) return w;
+        return { ...w, colSpan: item.w, rowSpan: item.h };
+      })
+    });
+  }, [widgets, currentPage.id]);
+  // ─────────────────────────────────────────────────────────────────────
 
   const addProject = () => {
     const newId = `project_${Date.now()}`;
@@ -466,12 +485,12 @@ const App: React.FC = () => {
 
                 {/* Navigation Tabs */}
                 {theme.showPageTabs !== false && (
-                  <nav className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded-xl ${theme.transparentTabs ? 'bg-transparent' : 'bg-[var(--surface-muted)]'} ${header.textAlignment === TextAlignment.CENTER ? 'ml-auto' : ''}`}>
+                  <nav className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded-xl bg-[var(--surface-muted)] ${header.textAlignment === TextAlignment.CENTER ? 'ml-auto' : ''}`}>
                     {currentProject.pages.map(p => (
                       <button
                         key={p.id}
                         onClick={() => handlePageChange(p.id)}
-                        className={` px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : theme.transparentTabs ? 'text-muted hover:bg-black/5 dark:hover:bg-white/5' : 'bg-transparent text-muted hover:bg-[var(--surface)] hover:shadow-sm'}`}
+                        className={` px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider transition-all whitespace-nowrap ${currentPage.id === p.id ? 'bg-primary text-white shadow-md' : 'bg-transparent text-muted hover:bg-[var(--surface)] hover:shadow-sm'}`}
                       >
                         {p.name}
                       </button>
@@ -489,8 +508,8 @@ const App: React.FC = () => {
 
           {/* Widgets Grid Container */}
           <main
+            ref={mainAreaRef}
             className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}
-            style={{ padding: 'var(--dashboard-padding)' }}
           >
             {isPreviewMode && (
               <button
@@ -502,55 +521,57 @@ const App: React.FC = () => {
               </button>
             )}
 
+            {/* RGL container wrapper — useContainerWidth attaches ref here */}
             <div
-              className="grid transition-all duration-300 min-h-full"
-              style={{
-                gridTemplateColumns: `repeat(${layout.columns}, 1fr)`,
-                gridTemplateRows: layout.fitToScreen
-                  ? `repeat(${layout.rows}, 1fr)`
-                  : `repeat(${layout.rows}, ${layout.defaultRowHeight}px)`,
-                height: layout.fitToScreen ? '100%' : 'auto',
-                minHeight: layout.fitToScreen ? '0' : 'auto',
-                gridAutoRows: layout.fitToScreen ? '1fr' : `${layout.defaultRowHeight}px`,
-                gap: 'var(--spacing)'
-              }}
+              ref={gridContainerRef as React.RefObject<HTMLDivElement>}
+              className="min-h-full"
+              style={{ padding: 'var(--dashboard-padding)' }}
             >
-              {(widgets || []).map((widget, index) => (
-                <div
-                  key={widget.id}
-                  draggable={isEditMode && activeDragId === widget.id}
-                  onPointerDown={(e) => {
-                    const isHandle = (e.target as HTMLElement).closest('.drag-handle');
-                    if (isHandle) {
-                      setActiveDragId(widget.id);
-                    } else {
-                      setActiveDragId(null);
-                    }
-                  }}
-                  onDragStart={(e) => handleDragStart(e, index, widget.id)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragEnd={handleDragEnd}
-                  onDrop={(e) => handleDrop(e, index)}
-                  className={`transition-all duration-200 ${selectedWidgetId === widget.id ? 'ring-2 ring-blue-500 rounded-[inherit]' : ''} ${draggedIndex === index ? 'opacity-30 scale-95 cursor-grabbing' : 'opacity-100'} ${dragOverIndex === index ? 'scale-[1.02] ring-2 ring-dashed ring-blue-300' : ''}`}
-                  style={{ gridColumn: `span ${Math.min(widget.colSpan, layout.columns)}`, gridRow: `span ${widget.rowSpan}` }}
-                >
-                  <WidgetCard
-                    widget={widget}
-                    theme={theme}
-                    isEditMode={isEditMode}
-                    onEdit={handleWidgetSelect}
-                    onUpdate={updateWidget}
-                    onDelete={deleteWidget}
-                    onOpenExcel={(id) => setExcelWidgetId(id)}
-                  />
-                </div>
-              ))}
+              <GridLayout
+                layout={currentRglLayout}
+                width={gridWidth}
+                gridConfig={{
+                  cols: layout.columns,
+                  rowHeight: rglRowHeight,
+                  margin: [theme.spacing, theme.spacing] as [number, number],
+                  containerPadding: [0, 0] as [number, number],
+                  maxRows: layout.fitToScreen ? layout.rows : Infinity,
+                }}
+                dragConfig={{
+                  enabled: isEditMode,
+                  handle: '.drag-handle',
+                }}
+                resizeConfig={{ enabled: isEditMode, handles: ['se', 'sw', 'ne', 'nw', 'e', 'w', 'n', 's'] as const }}
+                autoSize={!layout.fitToScreen}
+                onLayoutChange={handleRglLayoutChange}
+                style={{ minHeight: layout.fitToScreen ? '100%' : 'auto' }}
+              >
+                {(widgets || []).map((widget) => (
+                  <div
+                    key={widget.id}
+                    className={`h-full transition-all duration-200 ${selectedWidgetId === widget.id
+                      ? 'ring-2 ring-[var(--primary-color)] rounded-[var(--border-radius)]'
+                      : ''
+                      }`}
+                  >
+                    <WidgetCard
+                      widget={widget}
+                      theme={theme}
+                      isEditMode={isEditMode}
+                      onEdit={handleWidgetSelect}
+                      onUpdate={updateWidget}
+                      onDelete={deleteWidget}
+                      onOpenExcel={(id) => setExcelWidgetId(id)}
+                    />
+                  </div>
+                ))}
+              </GridLayout>
 
               {isEditMode && (
                 <button
                   onClick={handleOpenWidgetPicker}
-                  style={{ borderRadius: 'var(--border-radius)' }}
-                  className="h-full flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group min-h-[150px]"
+                  style={{ borderRadius: 'var(--border-radius)', marginTop: 'var(--spacing)', width: '100%', minHeight: '150px' }}
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group"
                 >
                   <div className="w-12 h-12 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <Plus className="w-6 h-6 text-primary" />

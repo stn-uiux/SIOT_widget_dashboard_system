@@ -25,20 +25,16 @@ export const DEFAULT_THEME: DashboardTheme = {
   dashboardPadding: 32,
   titleSize: 18,
   titleWeight: '700',
-  contentSize: 12,
-  textTiny: 10,
-  textSmall: 11,
+  contentSize: 14,
+  textTiny: 12,
+  textSmall: 13,
   textMd: 18,
   textLg: 30,
   textHero: 48,
-  glassmorphism: false,
-  glassBlur: 10,
-  glassOpacity: 0.8,
   cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
   titleColor: '#0f172a',
   textColor: '#334155',
-  showPageTabs: true,
-  transparentTabs: false
+  showPageTabs: true
 };
 
 export const THEME_PRESETS: ThemePreset[] = [
@@ -63,8 +59,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       widgetHeaderColor: 'transparent', // Default for Midnight Pro
       borderWidth: 1,
       borderColor: '#1e293b',
-      chartRadius: 6,
-      transparentTabs: true // Midnight Pro looks better with transparent tabs
+      chartRadius: 6
     }
   }
 ];

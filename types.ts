@@ -166,10 +166,6 @@ export interface DashboardTheme {
   textMd: number;
   textLg: number;
   textHero: number;
-  // Glassmorphism & Effects
-  glassmorphism: boolean;
-  glassBlur: number;
-  glassOpacity: number;
   cardShadow: string;
   // Typography Colors
   titleColor: string;
@@ -181,7 +177,6 @@ export interface DashboardTheme {
     dark?: Partial<DashboardTheme>;
   };
   showPageTabs?: boolean;
-  transparentTabs?: boolean;
 }
 
 export interface ThemePreset {

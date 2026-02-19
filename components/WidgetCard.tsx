@@ -259,6 +259,88 @@ const AmChartComponent: React.FC<{
         series.appear(1000);
       });
       chart.appear(1000, 100);
+    } else if (widget.type === WidgetType.CHART_COMPOSED) {
+      const chart = root.container.children.push(am5xy.XYChart.new(root, {
+        panX: false,
+        panY: false,
+        wheelX: "none",
+        wheelY: "none",
+        layout: root.verticalLayout
+      }));
+
+      const xRenderer = am5xy.AxisRendererX.new(root, {
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+      });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+
+      const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+        categoryField: xAxisKey,
+        renderer: xRenderer,
+        tooltip: am5.Tooltip.new(root, {})
+      }));
+      xAxis.data.setAll(widget.data);
+
+      const yRenderer = am5xy.AxisRendererY.new(root, {
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+      });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+
+      const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+        renderer: yRenderer
+      }));
+
+      widget.config.series.forEach((s, idx) => {
+        if (idx === 0) {
+          const series = chart.series.push(am5xy.ColumnSeries.new(root, {
+            name: s.label,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: s.key,
+            categoryXField: xAxisKey,
+            tooltip: am5.Tooltip.new(root, {
+              labelText: "{valueY}"
+            })
+          }));
+
+          series.columns.template.setAll({
+            cornerRadiusTL: theme.chartRadius,
+            cornerRadiusTR: theme.chartRadius,
+            strokeOpacity: 0,
+            fill: am5.color(resolveColor(s.color, theme.primaryColor))
+          });
+
+          series.data.setAll(widget.data);
+          series.appear(1000);
+        } else {
+          const series = chart.series.push(am5xy.LineSeries.new(root, {
+            name: s.label,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: s.key,
+            categoryXField: xAxisKey,
+            stroke: am5.color(localResolve(s.color)),
+            fill: am5.color(localResolve(s.color)),
+            tooltip: am5.Tooltip.new(root, {
+              labelText: "{valueY}"
+            })
+          }));
+
+          series.strokes.template.setAll({ strokeWidth: 3 });
+
+          series.bullets.push(() => am5.Bullet.new(root, {
+            sprite: am5.Circle.new(root, {
+              radius: 4,
+              fill: series.get("stroke")
+            })
+          }));
+
+          series.data.setAll(widget.data);
+          series.appear(1000);
+        }
+      });
+      chart.appear(1000, 100);
     }
 
     return () => {
@@ -1143,8 +1225,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   ))}
                 </defs>
                 {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} opacity={0.3} />}
-                <XAxis dataKey={xAxisKey} hide />
-                <YAxis hide domain={['auto', 'auto']} />
+                <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
+                <YAxis hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
                 {localSeries.map((s, idx) => (
@@ -1178,8 +1260,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   ))}
                 </defs>
                 {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} opacity={0.2} />}
-                <XAxis dataKey={xAxisKey} hide />
-                <YAxis hide />
+                <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
+                <YAxis hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
                 {localSeries.map((s, idx) => (

@@ -3,6 +3,7 @@ import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, Type, Settings2, Heading
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, ChartLibrary } from '../types';
 import { BRAND_COLORS } from '../constants';
 import { getAIGeneratedThemes } from '../services/geminiService';
+import Switch from './Switch';
 
 interface DesignSidebarProps {
   theme: DashboardTheme;
@@ -109,9 +110,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
       titleColor: theme.titleColor,
       textColor: theme.textColor,
       cardShadow: theme.cardShadow,
-      glassmorphism: theme.glassmorphism,
-      glassBlur: theme.glassBlur,
-      glassOpacity: theme.glassOpacity,
       borderColor: theme.borderColor,
       widgetHeaderColor: theme.widgetHeaderColor
     };
@@ -246,15 +244,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <h3 className="text-xs font-bold uppercase text-muted tracking-wider leading-none mb-1">Dual Mode Support</h3>
                   <p className="text-[9px] text-muted font-medium uppercase tracking-tight">Support system light/dark switching</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={theme.dualModeSupport}
-                    onChange={(e) => updateTheme({ dualModeSupport: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                </label>
+                <Switch
+                  checked={theme.dualModeSupport}
+                  onChange={(checked) => updateTheme({ dualModeSupport: checked })}
+                />
               </div>
             </section>
 
@@ -387,17 +380,19 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       <span className="text-[10px] font-bold uppercase text-muted">Header Background</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateTheme({ widgetHeaderColor: 'transparent' })}
-                        className="text-[8px] font-bold uppercase text-muted hover:text-primary px-2 py-1 bg-white dark:bg-black rounded border border-[var(--border-base)]"
-                      >
-                        Clear
-                      </button>
+                      <label className="flex items-center gap-2 cursor-pointer group mr-1">
+                        <span className="text-[9px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Transp.</span>
+                        <Switch
+                          checked={theme.widgetHeaderColor === 'transparent'}
+                          onChange={(checked) => updateTheme({ widgetHeaderColor: checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#1e293b' : '#f8fafc') })}
+                        />
+                      </label>
                       <input
                         type="color"
+                        disabled={theme.widgetHeaderColor === 'transparent'}
                         value={theme.widgetHeaderColor?.startsWith('#') ? theme.widgetHeaderColor : '#f8fafc'}
                         onChange={(e) => updateTheme({ widgetHeaderColor: e.target.value })}
-                        className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                        className={`w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none ${theme.widgetHeaderColor === 'transparent' ? 'opacity-30 pointer-events-none' : ''}`}
                       />
                     </div>
                   </div>
@@ -428,13 +423,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <span className="text-[10px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Gradient Mode</span>
                   <div className="relative inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={theme.useGradient}
-                      onChange={(e) => updateTheme({ useGradient: e.target.checked })}
-                      className="sr-only peer"
+                    <Switch
+                      checked={theme.useGradient || false}
+                      onChange={(checked) => updateTheme({ useGradient: checked })}
                     />
-                    <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                   </div>
                 </label>
               </div>
@@ -492,57 +484,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   />
                 </div>
               </div>
-            </section>
-
-            {/* Glassmorphism */}
-            <section className="space-y-6 pt-4 border-t border-[var(--border-base)]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Glassmorphism</h3>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={theme.glassmorphism}
-                    onChange={(e) => updateTheme({ glassmorphism: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                </label>
-              </div>
-
-              {theme.glassmorphism && (
-                <div className="space-y-5 animate-in slide-in-from-top-2 duration-200">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Blur Intensity</span>
-                      <span className="text-xs font-mono text-primary font-bold">{theme.glassBlur}px</span>
-                    </div>
-                    <input
-                      type="range" min="0" max="40" step="1"
-                      value={theme.glassBlur}
-                      onChange={(e) => updateTheme({ glassBlur: parseInt(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Opacity</span>
-                      <span className="text-xs font-mono text-primary font-bold">{Math.round(theme.glassOpacity * 100)}%</span>
-                    </div>
-                    <input
-                      type="range" min="0" max="1" step="0.05"
-                      value={theme.glassOpacity}
-                      onChange={(e) => updateTheme({ glassOpacity: parseFloat(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-[10px] leading-relaxed text-primary/80 italic">
-                      Tip: Use a semi-transparent surface color (e.g. RGBA) for the best glass effect.
-                    </div>
-                  </div>
-                </div>
-              )}
             </section>
 
             {/* Typography Depth */}
@@ -648,15 +589,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-2 cursor-pointer group mr-2">
                     <span className="text-[9px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Transp.</span>
-                    <div className="relative inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={theme.widgetHeaderColor === 'transparent'}
-                        onChange={(e) => updateTheme({ widgetHeaderColor: e.target.checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#1e293b' : '#f8fafc') })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </div>
+                    <Switch
+                      checked={theme.widgetHeaderColor === 'transparent'}
+                      onChange={(checked) => updateTheme({ widgetHeaderColor: checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#1e293b' : '#f8fafc') })}
+                    />
                   </label>
                   <input
                     type="color"
@@ -725,15 +661,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Dashboard Header</h3>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={header.show}
-                    onChange={(e) => updateHeader({ show: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                </label>
+                <Switch
+                  checked={header.show}
+                  onChange={(checked) => updateHeader({ show: checked })}
+                />
               </div>
 
               {header.show && (
@@ -785,15 +716,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         <span className="text-[10px] font-bold text-muted uppercase">
                           Show {header.position === HeaderPosition.TOP ? 'Bottom' : 'Right'} Line
                         </span>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={header.showDivider !== false}
-                            onChange={(e) => updateHeader({ showDivider: e.target.checked })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
+                        <Switch
+                          checked={header.showDivider !== false}
+                          onChange={(checked) => updateHeader({ showDivider: checked })}
+                        />
                       </div>
                     </div>
 
@@ -830,15 +756,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       <span className="text-[10px] uppercase font-bold text-gray-400">Background Color</span>
                       <label className="flex items-center gap-2 cursor-pointer group">
                         <span className="text-[9px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Transparent</span>
-                        <div className="relative inline-flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={header.backgroundColor === 'transparent'}
-                            onChange={(e) => updateHeader({ backgroundColor: e.target.checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#0f172a' : '#ffffff') })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </div>
+                        <Switch
+                          checked={header.backgroundColor === 'transparent'}
+                          onChange={(checked) => updateHeader({ backgroundColor: checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#0f172a' : '#ffffff') })}
+                        />
                       </label>
                     </div>
                     <div className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] ${header.backgroundColor === 'transparent' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
@@ -881,43 +802,21 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                           <p className="text-[10px] font-bold uppercase text-main">Show Page Tabs</p>
                           <p className="text-[9px] text-muted">Hide for single page dashboards</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={theme.showPageTabs !== false}
-                            onChange={(e) => updateTheme({ showPageTabs: e.target.checked })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                        </label>
+                        <Switch
+                          checked={theme.showPageTabs !== false}
+                          onChange={(checked) => updateTheme({ showPageTabs: checked })}
+                        />
                       </div>
 
-                      {theme.showPageTabs !== false && (
-                        <div className="flex items-center justify-between animate-in slide-in-from-top-1 duration-200">
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-main">Transparent Tabs</p>
-                            <p className="text-[9px] text-muted">Blend tabs with background</p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={theme.transparentTabs}
-                              onChange={(e) => updateTheme({ transparentTabs: e.target.checked })}
-                              className="sr-only peer"
-                            />
-                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                          </label>
-                        </div>
-                      )}
+                      {/* Removed transparentTabs toggle */}
                     </div>
                   </div>
                 </div>
               )}
             </section>
           </div>
-        )
-        }
-      </div >
+        )}
+      </div>
 
       <div className="p-6 border-t border-[var(--border-base)] bg-gray-50 dark:bg-gray-900/50">
         <div className="flex items-center justify-between text-[10px] text-muted font-bold uppercase">
@@ -925,7 +824,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
           <span className="text-primary">{theme.name || 'Custom'}</span>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 

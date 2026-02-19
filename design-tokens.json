@@ -180,15 +180,15 @@
             },
             "scale": {
                 "tiny": {
-                    "value": "10px",
+                    "value": "12px",
                     "type": "dimension"
                 },
                 "small": {
-                    "value": "11px",
+                    "value": "13px",
                     "type": "dimension"
                 },
                 "base": {
-                    "value": "12px",
+                    "value": "14px",
                     "type": "dimension"
                 },
                 "md": {
@@ -248,6 +248,34 @@
                 "speed": {
                     "value": "0.2s",
                     "type": "duration"
+                }
+            }
+        },
+        "components": {
+            "toggle": {
+                "track": {
+                    "width": {
+                        "value": "40px",
+                        "type": "dimension"
+                    },
+                    "height": {
+                        "value": "22px",
+                        "type": "dimension"
+                    },
+                    "inactive": {
+                        "value": "#cbd5e1",
+                        "type": "color"
+                    }
+                },
+                "thumb": {
+                    "size": {
+                        "value": "18px",
+                        "type": "dimension"
+                    },
+                    "color": {
+                        "value": "#ffffff",
+                        "type": "color"
+                    }
                 }
             }
         }

@@ -7,6 +7,7 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import './DesignDocs.css';
+import Switch from './Switch';
 
 interface DesignDocsProps {
     onClose: () => void;
@@ -126,11 +127,12 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                                 <div className="p-4 bg-[var(--border-muted)] border-b border-[var(--border-base)]">
                                     <span className="text-[10px] font-black uppercase text-muted">Font Scale</span>
                                 </div>
-                                <TypoScale label="Extra Large" sizeVar="--radius-xl" text="Main Heading XL" />
-                                <TypoScale label="Title Large" sizeVar="--title-size" text="Section Heading L" />
-                                <TypoScale label="Content Base" sizeVar="--spacing" text="This is standard body text for descriptions and labels." />
-                                <TypoScale label="Content Small" sizeVar="--content-size" text="Secondary information and small metadata." />
-                                <TypoScale label="Caption" sizeVar="--radius-sm" text="Smallest legal or caption text." />
+                                <TypoScale label="Hero Title" sizeVar="--text-hero" text="Main Hero Header" />
+                                <TypoScale label="Page Title" sizeVar="--text-lg" text="Page Level Heading" />
+                                <TypoScale label="Section Title" sizeVar="--title-size" text="Section Level Heading" />
+                                <TypoScale label="Body Normal" sizeVar="--text-base" text="This is standard body text for descriptions and labels." />
+                                <TypoScale label="Body Small" sizeVar="--text-small" text="Secondary information and small metadata." />
+                                <TypoScale label="Caption (Tiny)" sizeVar="--text-tiny" text="Smallest legal or caption text (Default: 12px)." />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 mt-4">
@@ -294,20 +296,14 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
 
                                 <div className="docs-section">
                                     <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest">Toggles & Switches</h3>
-                                    <div className="preview-box flex-col gap-4 items-start">
+                                    <div className="preview-box flex-col gap-6 items-start">
                                         <div className="flex items-center gap-4">
-                                            <div className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" checked readOnly />
-                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                                            </div>
-                                            <span className="text-xs font-bold text-main">Active State</span>
+                                            <Switch checked={true} onChange={() => { }} />
+                                            <span className="text-xs font-bold text-main">Standardized ON (Primary Theme)</span>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <div className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" />
-                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                                            </div>
-                                            <span className="text-xs font-bold text-muted">Inactive State</span>
+                                            <Switch checked={false} onChange={() => { }} />
+                                            <span className="text-xs font-bold text-muted">Standardized OFF</span>
                                         </div>
                                     </div>
                                 </div>

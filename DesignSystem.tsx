@@ -29,17 +29,6 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         root.style.setProperty('--text-secondary', theme.textColor);
         root.style.setProperty('--shadow-base', theme.cardShadow);
 
-        // Glassmorphism
-        if (theme.glassmorphism) {
-            root.style.setProperty('--surface-blur', `${theme.glassBlur}px`);
-            root.style.setProperty('--surface-opacity', `${theme.glassOpacity}`);
-            root.classList.add('glass-enabled');
-        } else {
-            root.style.setProperty('--surface-blur', '0px');
-            root.style.setProperty('--surface-opacity', '1');
-            root.classList.remove('glass-enabled');
-        }
-
         // Layout & Surface Variables
         root.style.setProperty('--border-radius', `${theme.borderRadius}px`);
         root.style.setProperty('--spacing', `${theme.spacing}px`);

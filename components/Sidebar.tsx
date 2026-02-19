@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA } from '../constants';
+import Switch from './Switch';
 
 interface SidebarProps {
   selectedWidget: Widget | null;
@@ -56,16 +57,16 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
 
           {/* Fit to Screen Option */}
           <div
-            onClick={() => onUpdateLayout({ fitToScreen: !layout.fitToScreen })}
             className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all group"
           >
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-blue-500" />
               <span className="text-xs font-bold text-secondary">Fit to Screen</span>
             </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors ${layout.fitToScreen ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${layout.fitToScreen ? 'right-0.5' : 'left-0.5'}`} />
-            </div>
+            <Switch
+              checked={layout.fitToScreen}
+              onChange={(checked) => onUpdateLayout({ fitToScreen: checked })}
+            />
           </div>
 
           {/* Row Height Config (Active only when fitToScreen is FALSE) */}
@@ -279,9 +280,22 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             <LayoutGrid className={`w-4 h-4 ${selectedWidget.isDual ? 'text-blue-500' : 'text-gray-400'}`} />
             <span className="text-sm font-black uppercase tracking-tighter">Dual Mode</span>
           </div>
-          <div className={`w-10 h-6 rounded-full relative transition-colors ${selectedWidget.isDual ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedWidget.isDual ? 'right-1' : 'left-1'}`} />
-          </div>
+          <Switch
+            checked={selectedWidget.isDual || false}
+            onChange={(checked) => {
+              onUpdateWidget(selectedWidget.id, {
+                isDual: checked,
+                dualLayout: selectedWidget.dualLayout || 'horizontal',
+                dualGap: selectedWidget.dualGap ?? 16,
+                secondaryType: selectedWidget.secondaryType || selectedWidget.type,
+                secondaryConfig: selectedWidget.secondaryConfig || selectedWidget.config,
+                secondaryData: selectedWidget.secondaryData || selectedWidget.data,
+                showSubTitles: selectedWidget.showSubTitles ?? false,
+                subTitle1: selectedWidget.subTitle1 || 'Primary',
+                subTitle2: selectedWidget.subTitle2 || 'Secondary'
+              });
+            }}
+          />
         </div>
 
         {selectedWidget.isDual && (
@@ -335,14 +349,12 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             </div>
 
             <div className="pt-2 border-t border-[var(--border-muted)] space-y-3">
-              <div
-                onClick={() => onUpdateWidget(selectedWidget.id, { showSubTitles: !selectedWidget.showSubTitles })}
-                className="flex items-center justify-between cursor-pointer group"
-              >
+              <div className="flex items-center justify-between group">
                 <span className="text-xs font-black text-muted uppercase tracking-tighter">Show Subtitles</span>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${selectedWidget.showSubTitles ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-gray-800 border-gray-300'}`}>
-                  {selectedWidget.showSubTitles && <Check className="w-3 h-3 text-white stroke-[3px]" />}
-                </div>
+                <Switch
+                  checked={selectedWidget.showSubTitles || false}
+                  onChange={(checked) => onUpdateWidget(selectedWidget.id, { showSubTitles: checked })}
+                />
               </div>
 
               {selectedWidget.showSubTitles && (
@@ -553,19 +565,14 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {option.label}
                 </span>
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(
-                  option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) :
-                    option.key === 'hideHeader' ? selectedWidget.hideHeader :
-                      (currentConfig as any)[option.key])
-                  ? 'bg-blue-600 border-blue-600'
-                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
-                  }`}>
-                  {(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) :
-                    option.key === 'hideHeader' ? selectedWidget.hideHeader :
-                      (currentConfig as any)[option.key]) && (
-                      <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
-                    )}
-                </div>
+                <Switch
+                  checked={
+                    option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) || false :
+                      option.key === 'hideHeader' ? (selectedWidget.hideHeader || false) :
+                        (currentConfig as any)[option.key] || false
+                  }
+                  onChange={() => toggleConfig(option.key as any)}
+                />
               </div>
             ))}
           </div>
