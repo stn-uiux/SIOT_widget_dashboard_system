@@ -26,6 +26,11 @@ export const DEFAULT_THEME: DashboardTheme = {
   titleSize: 18,
   titleWeight: '700',
   contentSize: 12,
+  textTiny: 10,
+  textSmall: 11,
+  textMd: 18,
+  textLg: 30,
+  textHero: 48,
   glassmorphism: false,
   glassBlur: 10,
   glassOpacity: 0.8,
@@ -85,7 +90,7 @@ export const DEFAULT_PAGE: DashboardPage = {
     columns: 12,
     rows: 6,
     defaultRowHeight: 180,
-    fitToScreen: true
+    fitToScreen: false
   },
   widgets: [], // Initial widgets can be populated later
   header: DEFAULT_HEADER,
@@ -191,6 +196,25 @@ export const DEFAULT_LAYOUT: LayoutConfig = {
 };
 
 export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string, icon?: string }> = {
+  [WidgetType.SUMMARY]: {
+    mainValue: '1,234',
+    subValue: '평균 활성 사용자',
+    icon: 'monitoring',
+    data: [],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: []
+    }
+  },
   [WidgetType.SUMMARY_CHART]: {
     mainValue: '2,345,678',
     subValue: '행사 기간 누적 방문',
@@ -211,6 +235,54 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
       showUnitInLegend: true,
       showLabels: false,
       series: [{ key: 'value', label: '방문자', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.CHART_BAR]: {
+    data: MOCK_CHART_DATA,
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: true,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: true,
+      showLabels: false,
+      series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.CHART_LINE]: {
+    data: MOCK_CHART_DATA,
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: true,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: true,
+      showLabels: false,
+      series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.CHART_AREA]: {
+    data: MOCK_CHART_DATA,
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: true,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: true,
+      showLabels: false,
+      series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
     }
   },
   [WidgetType.CHART_BAR_HORIZONTAL]: {
@@ -370,6 +442,213 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
       showUnitInLegend: false,
       showLabels: false,
       series: []
+    }
+  },
+  [WidgetType.DASH_FAILURE_STATUS]: {
+    mainValue: '8',
+    subValue: '4354',
+    data: [
+      { name: 'Critical', value: 1443, color: '#ef4444' },
+      { name: 'Major', value: 1179, color: '#f59e0b' },
+      { name: 'Minor', value: 963, color: '#eab308' },
+      { name: 'Warning', value: 727, color: '#06b6d4' }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '상태', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_FACILITY_1]: {
+    data: [
+      { name: 'IP-MPLS', value: 6 },
+      { name: '미등록', value: 0 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '개',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '수량', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_FACILITY_2]: {
+    data: [
+      { name: '서버', value: 123, icon: 'database' },
+      { name: '네트워크', value: 23456, icon: 'wifi' }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_RANK_LIST]: {
+    data: [
+      { name: '그랑시아', value: 80 },
+      { name: '연립주택 15세대', value: 74 },
+      { name: '영동고등학교', value: 69 },
+      { name: '리오빌딩', value: 69 },
+      { name: 'PRADA', value: 68 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '건수', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_FAILURE_STATS]: {
+    data: [
+      { name: 'Mon', value: 20 }, { name: 'Tue', value: 45 }, { name: 'Wed', value: 28 },
+      { name: 'Thu', value: 35 }, { name: 'Fri', value: 48 }, { name: 'Sat', value: 30 }, { name: 'Sun', value: 40 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: false,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '통계', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_RESOURCE_USAGE]: {
+    mainValue: 'GMG-CDEFG...',
+    data: [
+      { name: 'CPU', value: 30 },
+      { name: 'MEM', value: 40 },
+      { name: 'DISK', value: 30 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '%',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '사용률', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_TRAFFIC_STATUS]: {
+    data: Array.from({ length: 24 }, (_, i) => ({ name: `${i}:00`, value: 100 + Math.random() * 100 })),
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: 'bps',
+      showLegend: false,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '트래픽', color: '#06b6d4' }]
+    }
+  },
+  [WidgetType.DASH_NET_TRAFFIC]: {
+    data: Array.from({ length: 10 }, (_, i) => ({
+      name: `Time ${i}`,
+      dmz: 20 + Math.random() * 20,
+      vdi: 30 + Math.random() * 20,
+      biz: 40 + Math.random() * 20,
+      gov: 10 + Math.random() * 20
+    })),
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'dmz',
+      unit: 'bps',
+      showLegend: true,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [
+        { key: 'dmz', label: 'DMZ', color: '#3b82f6' },
+        { key: 'vdi', label: 'VDI', color: '#ec4899' },
+        { key: 'biz', label: '업무망', color: '#22c55e' },
+        { key: 'gov', label: '5G정부망', color: '#06b6d4' }
+      ]
+    }
+  },
+  [WidgetType.DASH_SECURITY_STATUS]: {
+    mainValue: '545',
+    data: [
+      { name: 'DDoS', today: 24, weekly: 186 },
+      { name: 'IPS', today: 12, weekly: 448 },
+      { name: 'Anti-Virus', today: 6, weekly: 30 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'today',
+      unit: '건',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'today', label: '오늘', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_VDI_STATUS]: {
+    data: [
+      { name: '사용 준비중', value: 251 },
+      { name: '사용대기', value: 583 },
+      { name: '사용중', value: 1430 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '건',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: true,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '수량', color: 'var(--primary-color)' }]
     }
   }
 

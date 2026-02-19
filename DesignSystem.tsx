@@ -52,6 +52,12 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         root.style.setProperty('--title-size', `${theme.titleSize}px`);
         root.style.setProperty('--title-weight', theme.titleWeight);
         root.style.setProperty('--content-size', `${theme.contentSize}px`);
+        root.style.setProperty('--text-tiny', `${theme.textTiny}px`);
+        root.style.setProperty('--text-small', `${theme.textSmall}px`);
+        root.style.setProperty('--text-base', `${theme.contentSize}px`);
+        root.style.setProperty('--text-md', `${theme.textMd}px`);
+        root.style.setProperty('--text-lg', `${theme.textLg}px`);
+        root.style.setProperty('--text-hero', `${theme.textHero}px`);
 
         // Dark Mode Class
         if (theme.mode === ThemeMode.DARK) {

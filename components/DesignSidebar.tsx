@@ -563,15 +563,78 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Content Size</span>
+                    <span className="text-[10px] uppercase font-bold text-gray-400">Content (Base)</span>
                     <span className="text-xs font-mono text-primary font-bold">{theme.contentSize}px</span>
                   </div>
                   <input
-                    type="range" min="8" max="20" step="1"
+                    type="range" min="8" max="24" step="1"
                     value={theme.contentSize}
                     onChange={(e) => updateTheme({ contentSize: parseInt(e.target.value) })}
                     className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 pt-2 border-t border-[var(--border-muted)]">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Tiny Scale</span>
+                      <span className="text-xs font-mono text-primary font-bold">{theme.textTiny}px</span>
+                    </div>
+                    <input
+                      type="range" min="6" max="16" step="1"
+                      value={theme.textTiny}
+                      onChange={(e) => updateTheme({ textTiny: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Small Scale</span>
+                      <span className="text-xs font-mono text-primary font-bold">{theme.textSmall}px</span>
+                    </div>
+                    <input
+                      type="range" min="8" max="20" step="1"
+                      value={theme.textSmall}
+                      onChange={(e) => updateTheme({ textSmall: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Medium Scale</span>
+                      <span className="text-xs font-mono text-primary font-bold">{theme.textMd}px</span>
+                    </div>
+                    <input
+                      type="range" min="12" max="32" step="1"
+                      value={theme.textMd}
+                      onChange={(e) => updateTheme({ textMd: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Large Scale</span>
+                      <span className="text-xs font-mono text-primary font-bold">{theme.textLg}px</span>
+                    </div>
+                    <input
+                      type="range" min="20" max="60" step="1"
+                      value={theme.textLg}
+                      onChange={(e) => updateTheme({ textLg: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">Hero Scale</span>
+                      <span className="text-xs font-mono text-primary font-bold">{theme.textHero}px</span>
+                    </div>
+                    <input
+                      type="range" min="30" max="100" step="1"
+                      value={theme.textHero}
+                      onChange={(e) => updateTheme({ textHero: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">

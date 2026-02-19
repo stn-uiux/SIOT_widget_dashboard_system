@@ -16,6 +16,18 @@ import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image, Trash2 } fro
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary, ChartConfig } from '../types';
 import MapWidget from './MapWidget';
 
+const resolveColor = (colorStr: string | undefined, fallback: string) => {
+  if (!colorStr) return fallback;
+  if (colorStr.startsWith('var(')) {
+    const varName = colorStr.match(/var\(([^)]+)\)/)?.[1];
+    if (varName) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      return val || fallback;
+    }
+  }
+  return colorStr;
+};
+
 const AmChartComponent: React.FC<{
   widget: Widget,
   theme: DashboardTheme,
@@ -30,19 +42,9 @@ const AmChartComponent: React.FC<{
     if (!chartRef.current) return;
 
     const root = am5.Root.new(chartRef.current);
-    root._logo?.dispose(); // amCharts license reminder, though technically should stay for free version
+    root._logo?.dispose();
 
-    const resolveColor = (colorStr: string) => {
-      if (!colorStr) return theme.primaryColor;
-      if (colorStr.startsWith('var(')) {
-        const varName = colorStr.match(/var\(([^)]+)\)/)?.[1];
-        if (varName) {
-          const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-          return val || theme.primaryColor;
-        }
-      }
-      return colorStr;
-    };
+    const localResolve = (c: string | undefined) => resolveColor(c, theme.primaryColor);
 
     root.setThemes([
       am5themes_Animated.new(root),
@@ -74,7 +76,7 @@ const AmChartComponent: React.FC<{
       }));
 
       const xRenderer = am5radar.AxisRendererCircular.new(root, {});
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor)) });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
 
       const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
         categoryField: xAxisKey,
@@ -83,7 +85,7 @@ const AmChartComponent: React.FC<{
       xAxis.data.setAll(widget.data);
 
       const yRenderer = am5radar.AxisRendererRadial.new(root, {});
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor)) });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
 
       const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
         renderer: yRenderer
@@ -96,102 +98,162 @@ const AmChartComponent: React.FC<{
           yAxis: yAxis,
           valueYField: s.key,
           categoryXField: xAxisKey,
-          stroke: am5.color(resolveColor(s.color)),
-          fill: am5.color(resolveColor(s.color))
+          tooltip: am5.Tooltip.new(root, {
+            labelText: "{valueY}"
+          })
         }));
-        series.fills.template.setAll({ fillOpacity: 0.3, visible: true });
+
+        series.get("tooltip")?.get("background")?.setAll({
+          fill: am5.color(resolveColor(s.color, theme.primaryColor)),
+          fillOpacity: 0.8
+        });
+
+        series.strokes.template.setAll({
+          strokeWidth: 2,
+          stroke: am5.color(resolveColor(s.color, theme.primaryColor))
+        });
+
         series.data.setAll(widget.data);
+        series.appear(1000);
       });
-    } else {
-      const isHorizontal = widget.type === WidgetType.CHART_BAR_HORIZONTAL;
+    } else if (widget.type === WidgetType.CHART_BAR || widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST) {
+      const isHorizontal = widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST;
+
       const chart = root.container.children.push(am5xy.XYChart.new(root, {
         panX: false,
         panY: false,
-        layout: root.verticalLayout,
-        paddingBottom: 0,
-        paddingTop: 5
+        wheelX: "none",
+        wheelY: "none",
+        layout: root.verticalLayout
       }));
 
-      // Renderers
-      const xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
-      xRenderer.grid.template.setAll({
-        stroke: am5.color(resolveColor(strokeColor)),
-        strokeOpacity: 1,
-        strokeWidth: 1,
-        visible: showGrid
+      const xRenderer = am5xy.AxisRendererX.new(root, {
+        minGridDistance: 30,
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
       });
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor)), visible: showXAxis });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
 
-      const yRenderer = am5xy.AxisRendererY.new(root, { inversed: isHorizontal });
-      yRenderer.grid.template.setAll({
-        stroke: am5.color(resolveColor(strokeColor)),
-        strokeOpacity: 1,
-        strokeWidth: 1,
-        visible: showGrid
+      const yRenderer = am5xy.AxisRendererY.new(root, {
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
       });
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor)), visible: showYAxis });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
 
-      // Axes
       let xAxis, yAxis;
       if (isHorizontal) {
-        xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, { renderer: xRenderer }));
+        xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+          renderer: xRenderer
+        }));
         yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
           categoryField: xAxisKey,
-          renderer: yRenderer
+          renderer: yRenderer,
+          tooltip: am5.Tooltip.new(root, {})
         }));
         yAxis.data.setAll(widget.data);
       } else {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
           categoryField: xAxisKey,
-          renderer: xRenderer
+          renderer: xRenderer,
+          tooltip: am5.Tooltip.new(root, {})
         }));
         xAxis.data.setAll(widget.data);
-        yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, { renderer: yRenderer }));
+        yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+          renderer: yRenderer
+        }));
       }
 
-      // Series
-      widget.config.series.forEach((s) => {
-        let series;
-        if (isHorizontal) {
-          series = chart.series.push(am5xy.ColumnSeries.new(root, {
-            name: s.label,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueXField: s.key,
-            categoryYField: xAxisKey,
-            fill: am5.color(resolveColor(s.color)),
-            stroke: am5.color(resolveColor(s.color))
-          }));
-          series.columns.template.setAll({ cornerRadiusBR: theme.chartRadius, cornerRadiusTR: theme.chartRadius });
-        } else if (widget.type === WidgetType.CHART_BAR) {
-          series = chart.series.push(am5xy.ColumnSeries.new(root, {
-            name: s.label,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueYField: s.key,
-            categoryXField: xAxisKey,
-            fill: am5.color(resolveColor(s.color)),
-            stroke: am5.color(resolveColor(s.color))
-          }));
-          series.columns.template.setAll({ cornerRadiusTL: theme.chartRadius, cornerRadiusTR: theme.chartRadius });
-        } else {
-          series = chart.series.push(am5xy.LineSeries.new(root, {
-            name: s.label,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            valueYField: s.key,
-            categoryXField: xAxisKey,
-            stroke: am5.color(resolveColor(s.color))
-          }));
-          series.bullets.push(() => am5.Bullet.new(root, {
-            sprite: am5.Circle.new(root, {
-              radius: 4,
-              fill: series.get("stroke")
+      widget.config.series.forEach(s => {
+        const series = chart.series.push(am5xy.ColumnSeries.new(root, {
+          name: s.label,
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueXField: isHorizontal ? s.key : undefined,
+          valueYField: isHorizontal ? undefined : s.key,
+          categoryXField: isHorizontal ? undefined : xAxisKey,
+          categoryYField: isHorizontal ? xAxisKey : undefined,
+          tooltip: am5.Tooltip.new(root, {
+            labelText: "{valueX}{valueY}"
+          })
+        }));
+
+        series.columns.template.setAll({
+          cornerRadiusTL: theme.chartRadius,
+          cornerRadiusTR: isHorizontal ? 0 : theme.chartRadius,
+          cornerRadiusBR: isHorizontal ? theme.chartRadius : 0,
+          cornerRadiusBL: 0,
+          strokeOpacity: 0,
+          fill: am5.color(resolveColor(s.color, theme.primaryColor))
+        });
+
+        series.data.setAll(widget.data);
+        series.appear(1000);
+      });
+    } else if (widget.type === WidgetType.CHART_LINE || widget.type === WidgetType.CHART_AREA || widget.type === WidgetType.DASH_TRAFFIC_STATUS || widget.type === WidgetType.DASH_FAILURE_STATS || widget.type === WidgetType.DASH_NET_TRAFFIC) {
+      const chart = root.container.children.push(am5xy.XYChart.new(root, {
+        panX: false,
+        panY: false,
+        wheelX: "none",
+        wheelY: "none",
+        layout: root.verticalLayout
+      }));
+
+      const xRenderer = am5xy.AxisRendererX.new(root, {
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+      });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+
+      const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+        categoryField: xAxisKey,
+        renderer: xRenderer,
+        tooltip: am5.Tooltip.new(root, {})
+      }));
+      xAxis.data.setAll(widget.data);
+
+      const yRenderer = am5xy.AxisRendererY.new(root, {
+        strokeOpacity: 0.1,
+        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+      });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+
+      const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+        renderer: yRenderer
+      }));
+
+      widget.config.series.forEach(s => {
+        const series = chart.series.push(am5xy.LineSeries.new(root, {
+          name: s.label,
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: s.key,
+          categoryXField: xAxisKey,
+          stroke: am5.color(localResolve(s.color)),
+          fill: am5.color(localResolve(s.color)),
+          tooltip: am5.Tooltip.new(root, {
+            labelText: "{valueY}"
+          })
+        }));
+        series.bullets.push(() => am5.Bullet.new(root, {
+          sprite: am5.Circle.new(root, {
+            radius: 4,
+            fill: series.get("stroke")
+          })
+        }));
+        if (widget.type === WidgetType.CHART_AREA || widget.type === WidgetType.DASH_TRAFFIC_STATUS || widget.type === WidgetType.DASH_FAILURE_STATS || widget.type === WidgetType.DASH_NET_TRAFFIC) {
+          series.fills.template.setAll({
+            fillOpacity: 0.5,
+            visible: true,
+            fillGradient: am5.LinearGradient.new(root, {
+              stops: [
+                { opacity: 0.6 },
+                { opacity: 0 }
+              ]
             })
-          }));
-          if (widget.type === WidgetType.CHART_AREA) {
-            series.fills.template.setAll({ fillOpacity: 0.3, visible: true });
-          }
+          });
+        }
+        if (widget.type === WidgetType.DASH_TRAFFIC_STATUS) {
+          series.set("tensionX", 0.77);
         }
         series.data.setAll(widget.data);
         series.appear(1000);
@@ -324,7 +386,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         data: currentData.map(d => d[s.key])
       }));
 
-      const colors = localSeries.map(s => s.color || theme.primaryColor);
+      const colors = localSeries.map(s => resolveColor(s.color, theme.primaryColor));
 
       const options: any = {
         chart: {
@@ -391,7 +453,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       let type: any = 'line';
       let chartData: any = apexSeries;
-      let legendItems = localSeries.map(s => ({ value: s.label, color: s.color || theme.primaryColor }));
+      let legendItems = localSeries.map(s => ({ value: s.label, color: resolveColor(s.color, theme.primaryColor) }));
 
       switch (currentType) {
         case WidgetType.CHART_BAR: type = 'bar'; break;
@@ -418,6 +480,31 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         case WidgetType.CHART_COMPOSED:
           type = 'line';
           break;
+        case WidgetType.DASH_TRAFFIC_STATUS:
+          type = 'area';
+          options.stroke.curve = 'smooth';
+          options.fill = {
+            type: 'gradient',
+            gradient: {
+              shadeIntensity: 1,
+              opacityFrom: 0.6,
+              opacityTo: 0.1,
+              stops: [0, 90, 100]
+            }
+          };
+          break;
+        case WidgetType.DASH_NET_TRAFFIC:
+          type = 'area';
+          options.chart.stacked = true;
+          break;
+        case WidgetType.DASH_FAILURE_STATS:
+          type = 'area';
+          break;
+        case WidgetType.DASH_RANK_LIST:
+          type = 'bar';
+          options.plotOptions.bar.horizontal = true;
+          options.plotOptions.bar.borderRadius = theme.chartRadius;
+          break;
       }
 
       return (
@@ -432,7 +519,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
     const renderAmChart = () => {
       const { showLegend, xAxisKey } = currentConfig;
-      let legendItems = localSeries.map(s => ({ value: s.label, color: s.color || theme.primaryColor }));
+      let legendItems = localSeries.map(s => ({ value: s.label, color: resolveColor(s.color, theme.primaryColor) }));
 
       if (currentType === WidgetType.CHART_PIE) {
         legendItems = (currentData || []).map((d, idx) => ({
@@ -458,7 +545,12 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       );
     };
 
-    const isGeneralWidget = [WidgetType.WEATHER, WidgetType.IMAGE, WidgetType.MAP, WidgetType.SUMMARY, WidgetType.SUMMARY_CHART, WidgetType.TABLE].includes(currentType);
+    const isGeneralWidget = [
+      WidgetType.WEATHER, WidgetType.IMAGE, WidgetType.MAP, WidgetType.SUMMARY, WidgetType.SUMMARY_CHART, WidgetType.TABLE,
+      WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2,
+      WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS,
+      WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST
+    ].includes(currentType);
 
     if (theme.chartLibrary === ChartLibrary.APEXCHARTS && !isGeneralWidget) {
       return renderApexChart();
@@ -480,15 +572,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     value={currentMainValue || '0'}
                     onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
                     className="bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full text-main"
-                    style={{ fontSize: 'calc(var(--content-size) * 3.5)' }}
+                    style={{ fontSize: 'var(--text-hero)' }}
                   />
                 ) : (
-                  <span className="font-black tracking-tighter leading-tight text-main" style={{ fontSize: 'calc(var(--content-size) * 3.5)' }}>
+                  <span className="font-black tracking-tighter leading-tight text-main" style={{ fontSize: 'var(--text-hero)' }}>
                     {currentMainValue}
                   </span>
                 )}
                 {unit && (
-                  <span className="font-bold text-muted" style={{ fontSize: 'calc(var(--content-size) * 1.5)' }}>
+                  <span className="font-bold text-muted" style={{ fontSize: 'var(--text-md)' }}>
                     {unit}
                   </span>
                 )}
@@ -501,10 +593,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 value={currentSubValue || ''}
                 onChange={(e) => onUpdate?.(widget.id, { subValue: e.target.value })}
                 className="bg-transparent border-none p-0 w-full font-bold focus:ring-0 outline-none text-muted"
-                style={{ fontSize: 'calc(var(--content-size) * 1.4)' }}
+                style={{ fontSize: 'var(--text-md)' }}
               />
             ) : (
-              <p className="font-bold leading-tight text-muted" style={{ fontSize: 'calc(var(--content-size) * 1.4)' }}>
+              <p className="font-bold leading-tight text-muted" style={{ fontSize: 'var(--text-md)' }}>
                 {currentSubValue}
               </p>
             )}
@@ -526,18 +618,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       style={{ fontSize: `${contentSize * 3.8}px` }}
                     />
                   ) : (
-                    <span className={`font-black tracking-tighter leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`} style={{ fontSize: `${contentSize * 3.8}px` }}>
+                    <span className={`font-black tracking-tighter leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`} style={{ fontSize: 'var(--text-hero)' }}>
                       {currentMainValue}
                     </span>
                   )}
                   {unit && (
-                    <span className={`font-bold mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} style={{ fontSize: `${contentSize * 1.6}px` }}>
+                    <span className={`font-bold mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} style={{ fontSize: 'var(--text-md)' }}>
                       {unit}
                     </span>
                   )}
                 </div>
               </div>
-              <p className={`font-bold leading-tight ${isDark ? 'text-slate-300' : 'text-gray-400'}`} style={{ fontSize: `${contentSize * 1.4}px` }}>
+              <p className={`font-bold leading-tight ${isDark ? 'text-slate-300' : 'text-gray-400'}`} style={{ fontSize: 'var(--text-md)' }}>
                 {currentSubValue}
               </p>
             </div>
@@ -591,7 +683,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             />
             {currentSubValue && (
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-[10px] font-bold uppercase tracking-wider">{currentSubValue}</p>
+                <p className="font-bold uppercase tracking-wider" style={{ fontSize: 'var(--text-tiny)' }}>{currentSubValue}</p>
               </div>
             )}
             {isEditMode && (
@@ -636,7 +728,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
               <MapWidget lat={lat || 37.5665} lng={lng || 126.9780} zoom={13} provider="osm" />
             </div>
             {!widget.noBezel && (
-              <div className="absolute top-2 left-2 z-[1000] bg-white/90 dark:bg-black/80 px-2 py-1 rounded text-[10px] font-bold shadow-sm pointer-events-none">
+              <div className="absolute top-2 left-2 z-[1000] bg-white/90 dark:bg-black/80 px-2 py-1 rounded font-bold shadow-sm pointer-events-none" style={{ fontSize: 'var(--text-tiny)' }}>
                 {currentMainValue}
               </div>
             )}
@@ -862,6 +954,293 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
+      /* Premium Widget Implementations */
+
+      case WidgetType.DASH_FAILURE_STATUS:
+        return (
+          <div className="h-full flex flex-col gap-4">
+            <div className="grid grid-cols-4 gap-2">
+              {currentData.slice(0, 4).map((d: any, idx: number) => (
+                <div key={idx} className="flex flex-col items-center p-2 bg-[var(--surface-muted)] border border-[var(--border-base)] transition-all hover:scale-105 group" style={{ borderRadius: theme.chartRadius }}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                    <span className="font-bold text-muted uppercase tracking-tighter" style={{ fontSize: 'var(--text-tiny)' }}>{d.name}</span>
+                  </div>
+                  <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-lg)' }}>{d.value.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 flex flex-col justify-end">
+              <div className="relative h-12 overflow-hidden bg-gradient-to-r from-blue-500 to-sky-400 p-px shadow-lg shadow-blue-500/20 group cursor-pointer transition-all hover:shadow-blue-500/40" style={{ borderRadius: theme.chartRadius }}>
+                <div className="absolute inset-x-0 h-1/2 bottom-0 bg-white/10 group-hover:h-full transition-all" />
+                <div className="relative h-full w-full flex items-center justify-between px-6 text-white font-black" style={{ fontSize: 'var(--text-base)' }}>
+                  <div className="flex items-center gap-3">
+                    <span className="opacity-80">처리중</span>
+                    <span style={{ fontSize: 'var(--text-md)' }}>{currentMainValue}</span>
+                  </div>
+                  <div className="w-px h-4 bg-white/30" />
+                  <div className="flex items-center gap-3">
+                    <span className="opacity-80">대기중</span>
+                    <span style={{ fontSize: 'var(--text-md)' }}>{currentSubValue}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case WidgetType.DASH_FACILITY_1:
+        return (
+          <div className="h-full flex items-center justify-center">
+            <div className="flex items-center w-full max-w-md">
+              {currentData.map((d: any, idx: number) => (
+                <React.Fragment key={idx}>
+                  <div className="flex-1 flex flex-col items-center gap-2 group">
+                    <span className="font-bold text-muted uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>{d.name}</span>
+                    <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-hero)' }}>{d.value}</span>
+                  </div>
+                  {idx < currentData.length - 1 && <div className="w-px h-16 bg-[var(--border-muted)] mx-4" />}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        );
+
+      case WidgetType.DASH_FACILITY_2:
+        return (
+          <div className="h-full flex flex-col justify-center gap-6 px-4">
+            {currentData.map((d: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 bg-gradient-to-br transition-all group-hover:scale-110 shadow-lg ${idx === 0 ? 'from-slate-700 to-slate-800 shadow-slate-500/20' : 'from-blue-600 to-indigo-600 shadow-blue-500/20'}`} style={{ borderRadius: theme.chartRadius }}>
+                    <span className="material-symbols-outlined text-white text-2xl">{d.icon}</span>
+                  </div>
+                  <span className="font-bold text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-md)' }}>{d.name}</span>
+                </div>
+                <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-hero)' }}>{d.value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        );
+
+      case WidgetType.DASH_RANK_LIST:
+        return (
+          <div className="h-full flex items-center gap-8 px-4 overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <span className="material-symbols-outlined text-muted opacity-40 select-none" style={{ fontSize: 'min(90px, 10vh)' }}>
+                {currentIcon || 'schema'}
+              </span>
+            </div>
+
+            <div className="flex-1 flex flex-col gap-3 py-1 overflow-y-auto no-scrollbar justify-center h-full">
+              {currentData.map((d: any, idx: number) => {
+                const maxVal = Math.max(...currentData.map((i: any) => i.value)) || 1;
+                const widthPercent = (d.value / maxVal) * 100;
+
+                return (
+                  <div key={idx} className="flex flex-col gap-1 group cursor-pointer">
+                    <div className="h-8 bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: '999px' }}>
+                      <div
+                        className="h-full transition-all duration-1000 group-hover:brightness-110 shadow-lg relative"
+                        style={{
+                          width: `${widthPercent}%`,
+                          background: `linear-gradient(to right, var(--premium-start), var(--premium-end))`,
+                          borderRadius: '999px'
+                        }}
+                      >
+                        <div className="absolute inset-0 flex items-center px-4 whitespace-nowrap">
+                          <span className="text-white font-black tracking-tight drop-shadow-md" style={{ fontSize: 'var(--text-small)' }}>
+                            {d.name} : {d.value.toLocaleString()}{unit}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+
+      case WidgetType.DASH_FAILURE_STATS:
+        return (
+          <div className="h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={currentData}>
+                <defs>
+                  {localSeries.map((s, idx) => (
+                    <linearGradient key={`grad-stats-${idx}`} id={`grad-stats-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0.6} />
+                      <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0.05} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} opacity={0.5} />
+                <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} stroke={labelColor} fontSize={parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-tiny')) || 10} fontWeight="600" />
+                <YAxis hide />
+                <Tooltip contentStyle={tooltipStyle} />
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {localSeries.map((s, idx) => (
+                  <Area
+                    key={s.key}
+                    type="monotone"
+                    dataKey={s.key}
+                    stroke={resolveColor(s.color, theme.primaryColor)}
+                    strokeWidth={4}
+                    fillOpacity={1}
+                    fill={`url(#grad-stats-${idx})`}
+                    dot={{ r: 4, strokeWidth: 2, fill: 'white' }}
+                    activeDot={{ r: 6, strokeWidth: 0, fill: resolveColor(s.color, theme.primaryColor) }}
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case WidgetType.DASH_RESOURCE_USAGE:
+        return (
+          <div className="h-full flex items-center gap-6 px-2">
+            {currentIcon && (
+              <div className="flex-shrink-0 transition-transform hover:scale-110">
+                {renderGoogleIcon(currentIcon)}
+              </div>
+            )}
+            <div className="flex-1 flex flex-col gap-4 justify-center py-2">
+              {currentData.map((d: any, idx: number) => (
+                <div key={idx} className="flex flex-col gap-1.5 group">
+                  <div className="flex justify-between items-center px-1">
+                    <div className="font-black text-muted uppercase tracking-tight group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-tiny)' }}>{d.name}</div>
+                    <div className="font-mono font-black text-main" style={{ fontSize: 'var(--text-tiny)' }}>{d.value}%</div>
+                  </div>
+                  <div className="h-2.5 bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: theme.chartRadius }}>
+                    <div
+                      className="h-full transition-all duration-1000 group-hover:brightness-110"
+                      style={{
+                        width: `${d.value}%`,
+                        background: `linear-gradient(to right, ${resolveColor(d.color, theme.primaryColor)}, ${resolveColor(d.color, theme.primaryColor)}88)`
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+
+      case WidgetType.DASH_TRAFFIC_STATUS:
+        return (
+          <div className="h-full p-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={currentData}>
+                <defs>
+                  {localSeries.map((s, idx) => (
+                    <linearGradient key={`gradTraffic-${idx}`} id={`gradTraffic-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} opacity={0.3} />}
+                <XAxis dataKey={xAxisKey} hide />
+                <YAxis hide domain={['auto', 'auto']} />
+                <Tooltip contentStyle={tooltipStyle} />
+                {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
+                {localSeries.map((s, idx) => (
+                  <Area
+                    key={s.key}
+                    type="natural"
+                    dataKey={s.key}
+                    stroke={resolveColor(s.color, theme.primaryColor)}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill={`url(#gradTraffic-${idx})`}
+                    dot={false}
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case WidgetType.DASH_NET_TRAFFIC:
+        return (
+          <div className="h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={currentData}>
+                <defs>
+                  {localSeries.map((s, idx) => (
+                    <linearGradient key={idx} id={`gradNet-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor)} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} opacity={0.2} />}
+                <XAxis dataKey={xAxisKey} hide />
+                <YAxis hide />
+                <Tooltip contentStyle={tooltipStyle} />
+                {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
+                {localSeries.map((s, idx) => (
+                  <Area key={idx} type="monotone" dataKey={s.key} stroke={resolveColor(s.color, theme.primaryColor)} strokeWidth={2} fill={`url(#gradNet-${idx})`} dot={false} stackId="1" />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case WidgetType.DASH_SECURITY_STATUS:
+        return (
+          <div className="h-full flex items-center gap-6">
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative w-32 h-32 rounded-full border-4 border-dashed border-blue-500/30 flex items-center justify-center group cursor-pointer transition-all hover:border-blue-500 hover:rotate-12">
+                <div className="absolute inset-2 rounded-full bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
+                <span className="material-symbols-outlined text-4xl text-blue-500">verified_user</span>
+                <div className="absolute -bottom-2 bg-blue-600 text-white px-3 py-1 rounded-full font-black shadow-lg shadow-blue-500/40" style={{ fontSize: 'var(--text-tiny)' }}>{currentMainValue}</div>
+              </div>
+              <span className="font-black text-muted uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>보안성공/탐지</span>
+            </div>
+            <div className="flex-1 h-full overflow-hidden py-2">
+              <table className="w-full h-full font-bold border-collapse" style={{ fontSize: 'var(--text-base)' }}>
+                <thead className="text-muted uppercase tracking-tighter border-b border-[var(--border-base)]" style={{ fontSize: 'var(--text-tiny)' }}>
+                  <tr>
+                    <th className="text-left pb-2">유형</th>
+                    <th className="text-right pb-2">오늘</th>
+                    <th className="text-right pb-2">주간</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-muted)]">
+                  {currentData.map((d: any, idx: number) => (
+                    <tr key={idx} className="group hover:bg-[var(--primary-subtle)] transition-colors">
+                      <td className="py-2.5 text-secondary">{d.name}</td>
+                      <td className="py-2.5 text-right font-mono text-main group-hover:text-primary">{d.today}</td>
+                      <td className="py-2.5 text-right font-mono text-muted">{d.weekly}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+
+      case WidgetType.DASH_VDI_STATUS:
+        return (
+          <div className="h-full flex flex-col justify-center gap-4 px-2">
+            {currentData.map((d: any, idx: number) => (
+              <div key={idx} className="relative group overflow-hidden bg-[var(--surface-muted)] border border-[var(--border-base)] p-4 flex items-center justify-between transition-all hover:bg-[var(--surface)] hover:shadow-premium cursor-pointer" style={{ borderRadius: theme.chartRadius }}>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <span className="relative z-10 font-bold text-secondary uppercase tracking-tight" style={{ fontSize: 'var(--text-base)' }}>{d.name}</span>
+                <div className="relative z-10 flex items-baseline gap-1">
+                  <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-lg)' }}>{d.value.toLocaleString()}</span>
+                  <span className="font-black text-muted uppercase" style={{ fontSize: 'var(--text-tiny)' }}>건</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
       default:
         return <div className="flex items-center justify-center h-full text-gray-400 italic text-sm">No Preview</div>;
     }
@@ -877,7 +1256,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       }}
     >
 
-      {!widget.noBezel && (
+      {!widget.noBezel && !widget.hideHeader && (
         <div
           className="flex items-center justify-between px-5 py-3 mb-4 -mx-5 -mt-5 border-b border-[var(--border-muted)] shrink-0 z-20"
           style={{ backgroundColor: 'var(--widget-header-color)' }}
@@ -929,8 +1308,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           )}
         </div>
       )}
-      {/* Invisible Drag Handle for No Bezel Mode in Edit Mode */}
-      {widget.noBezel && isEditMode && (
+
+      {/* Invisible Drag Handle for No Bezel Mode or Hidden Header in Edit Mode */}
+      {(widget.noBezel || widget.hideHeader) && isEditMode && (
         <div className="absolute top-0 left-0 right-0 h-10 z-[2000] group/handle opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
           <div className="drag-handle cursor-grab active:cursor-grabbing text-white p-2">
             <GripVertical className="w-6 h-6" />
@@ -952,6 +1332,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         </div>
       )}
+
       <div className="flex-1 min-h-0 select-none">
         {widget.isDual ? (
           <div
@@ -960,7 +1341,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           >
             <div className="flex-1 min-w-0 flex flex-col">
               {widget.showSubTitles && widget.subTitle1 && (
-                <div className="text-[10px] font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none">
+                <div className="font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none" style={{ fontSize: 'var(--text-tiny)' }}>
                   {widget.subTitle1}
                 </div>
               )}
@@ -970,7 +1351,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             </div>
             <div className="flex-1 min-w-0 flex flex-col">
               {widget.showSubTitles && widget.subTitle2 && (
-                <div className="text-[10px] font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none">
+                <div className="font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none" style={{ fontSize: 'var(--text-tiny)' }}>
                   {widget.subTitle2}
                 </div>
               )}

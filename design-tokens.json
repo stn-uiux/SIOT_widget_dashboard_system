@@ -16,6 +16,16 @@
                 "primary_subtle": {
                     "value": "rgba(59, 130, 246, 0.1)",
                     "type": "color"
+                },
+                "premium_start": {
+                    "value": "#7c3aed",
+                    "type": "color",
+                    "description": "Premium purple for ranking bars"
+                },
+                "premium_end": {
+                    "value": "#db2777",
+                    "type": "color",
+                    "description": "Premium pink for ranking bars"
                 }
             },
             "status": {
@@ -169,24 +179,28 @@
                 }
             },
             "scale": {
-                "xs": {
+                "tiny": {
                     "value": "10px",
                     "type": "dimension"
                 },
-                "sm": {
-                    "value": "12px",
+                "small": {
+                    "value": "11px",
                     "type": "dimension"
                 },
                 "base": {
-                    "value": "14px",
+                    "value": "12px",
                     "type": "dimension"
                 },
-                "lg": {
+                "md": {
                     "value": "18px",
                     "type": "dimension"
                 },
-                "xl": {
-                    "value": "24px",
+                "lg": {
+                    "value": "30px",
+                    "type": "dimension"
+                },
+                "hero": {
+                    "value": "48px",
                     "type": "dimension"
                 }
             },

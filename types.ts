@@ -16,7 +16,18 @@ export enum WidgetType {
   MAP_NAVER = 'MAP_NAVER',
   TABLE = 'TABLE',
   SUMMARY = 'SUMMARY',
-  SUMMARY_CHART = 'SUMMARY_CHART'
+  SUMMARY_CHART = 'SUMMARY_CHART',
+  // Premium Dashboard Widgets
+  DASH_FAILURE_STATUS = 'DASH_FAILURE_STATUS',
+  DASH_FACILITY_1 = 'DASH_FACILITY_1',
+  DASH_FACILITY_2 = 'DASH_FACILITY_2',
+  DASH_RANK_LIST = 'DASH_RANK_LIST',
+  DASH_FAILURE_STATS = 'DASH_FAILURE_STATS',
+  DASH_RESOURCE_USAGE = 'DASH_RESOURCE_USAGE',
+  DASH_TRAFFIC_STATUS = 'DASH_TRAFFIC_STATUS',
+  DASH_NET_TRAFFIC = 'DASH_NET_TRAFFIC',
+  DASH_SECURITY_STATUS = 'DASH_SECURITY_STATUS',
+  DASH_VDI_STATUS = 'DASH_VDI_STATUS'
 }
 
 export enum ThemeMode {
@@ -66,6 +77,7 @@ export interface Widget {
   subValue?: string;
   icon?: string;
   noBezel?: boolean;
+  hideHeader?: boolean;
   // Dual Chart Support
   isDual?: boolean;
   dualLayout?: 'horizontal' | 'vertical';
@@ -149,6 +161,11 @@ export interface DashboardTheme {
   titleSize: number;
   titleWeight: string;
   contentSize: number;
+  textTiny: number;
+  textSmall: number;
+  textMd: number;
+  textLg: number;
+  textHero: number;
   // Glassmorphism & Effects
   glassmorphism: boolean;
   glassBlur: number;

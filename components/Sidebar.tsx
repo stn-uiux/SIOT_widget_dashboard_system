@@ -121,6 +121,11 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
       return;
     }
 
+    if (key === 'hideHeader') {
+      onUpdateWidget(selectedWidget.id, { hideHeader: !selectedWidget.hideHeader });
+      return;
+    }
+
     const currentValue = (currentConfig as any)[key];
     const updates: any = { [key]: !currentValue };
 
@@ -138,8 +143,8 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     if (defaultData) {
       updateCurrentWidget({
         type: newType,
-        data: defaultData.data,
-        config: { ...currentConfig, ...defaultData.config },
+        data: JSON.parse(JSON.stringify(defaultData.data)),
+        config: { ...currentConfig, ...JSON.parse(JSON.stringify(defaultData.config)) },
         mainValue: defaultData.mainValue,
         subValue: defaultData.subValue
       });
@@ -206,38 +211,42 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
     });
   };
 
-  const isSummary = currentType === WidgetType.SUMMARY;
+  const isSummary = [WidgetType.SUMMARY].includes(currentType);
+  const isPremiumSummary = [WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
   const isSummaryChart = currentType === WidgetType.SUMMARY_CHART;
   const isTable = currentType === WidgetType.TABLE;
   const isPie = currentType === WidgetType.CHART_PIE;
   const isImage = currentType === WidgetType.IMAGE;
-  const isChart = currentType.includes('CHART') || isTable;
+  const isChart = currentType.includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
     WidgetType.CHART_BAR_HORIZONTAL,
     WidgetType.CHART_LINE,
     WidgetType.CHART_AREA,
-    WidgetType.CHART_COMPOSED
+    WidgetType.CHART_COMPOSED,
+    WidgetType.DASH_FAILURE_STATS,
+    WidgetType.DASH_TRAFFIC_STATUS,
+    WidgetType.DASH_NET_TRAFFIC
   ].includes(currentType);
 
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
-  const canShowLegend = isChart && !isTable && !isSummaryChart;
+  const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   // 위젯 타입별 가용 옵션 필터링
   const appearanceOptions = [
     // 'Show Unit' 체크박스는 사용자의 요청에 의해 제거됨 (unit 텍스트 입력 유무로 판단)
-    { key: 'showLegend', label: 'Show Legend', visible: canShowLegend },
+    { key: 'showLegend', label: 'Show Legend', visible: canShowLegend || currentType === WidgetType.DASH_NET_TRAFFIC },
     // Legend가 켜져있을 때만 Unit in Legend 옵션을 노출함
     { key: 'showUnitInLegend', label: 'Show Unit in Legend', visible: canShowLegend && currentConfig.showLegend },
     { key: 'showLabels', label: 'Show Labels', visible: isPie },
     { key: 'showGrid', label: 'Show Grid Lines', visible: isGridChart },
     { key: 'showXAxis', label: 'Show X-Axis', visible: isAxisChart },
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
-    { key: 'noBezel', label: 'No Bezel', visible: currentType === WidgetType.MAP || currentType === WidgetType.IMAGE || currentType === WidgetType.WEATHER },
+    { key: 'hideHeader', label: 'Hide Header', visible: true },
+    { key: 'noBezel', label: 'No Bezel', visible: true },
   ].filter(opt => opt.visible);
 
-  const canShowNoBezel = [WidgetType.MAP, WidgetType.IMAGE, WidgetType.WEATHER].includes(currentType);
 
   return (
     <div className="w-80 h-full bg-[var(--surface)] border-l border-[var(--border-base)] p-6 space-y-8 overflow-y-auto custom-scrollbar shadow-2xl transition-all">
@@ -390,6 +399,39 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
         </div>
       </section>
 
+      {/* Premium Dashboard Templates */}
+      <section className="space-y-4">
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <PaletteIcon className="w-4 h-4" /> Premium Templates
+        </label>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: 'Failure' },
+            { id: WidgetType.DASH_FACILITY_1, icon: Database, label: 'Facility 1' },
+            { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: 'Facility 2' },
+            { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: 'Ranking' },
+            { id: WidgetType.DASH_FAILURE_STATS, icon: AreaIcon, label: 'F-Stats' },
+            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: 'Resource' },
+            { id: WidgetType.DASH_TRAFFIC_STATUS, icon: TrendingUp, label: 'Traffic' },
+            { id: WidgetType.DASH_NET_TRAFFIC, icon: Activity, label: 'Net Traffic' },
+            { id: WidgetType.DASH_SECURITY_STATUS, icon: Database, label: 'Security' },
+            { id: WidgetType.DASH_VDI_STATUS, icon: TableIcon, label: 'VDI Status' },
+          ].map((type) => (
+            <button
+              key={type.id}
+              onClick={() => handleTypeChange(type.id as WidgetType)}
+              className={`p-2 flex flex-col items-center gap-1 rounded-xl border transition-all ${currentType === type.id
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
+                : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
+                }`}
+            >
+              <type.icon className="w-4 h-4" />
+              <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{type.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* General Widgets Section */}
       <section className="space-y-4">
         <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -511,13 +553,18 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {option.label}
                 </span>
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) : (currentConfig as any)[option.key])
+                <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${(
+                  option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) :
+                    option.key === 'hideHeader' ? selectedWidget.hideHeader :
+                      (currentConfig as any)[option.key])
                   ? 'bg-blue-600 border-blue-600'
                   : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'
                   }`}>
-                  {(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) : (currentConfig as any)[option.key]) && (
-                    <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
-                  )}
+                  {(option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) :
+                    option.key === 'hideHeader' ? selectedWidget.hideHeader :
+                      (currentConfig as any)[option.key]) && (
+                      <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
+                    )}
                 </div>
               </div>
             ))}
@@ -627,31 +674,35 @@ const Sidebar: React.FC<SidebarProps> = ({ selectedWidget, layout, onUpdateWidge
             />
           </div>
 
-          {(isSummary || isSummaryChart) && (
+          {(isSummary || isSummaryChart || isPremiumSummary) && (
             <>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Current Value</span>
-                <input
-                  type="text"
-                  value={currentMainValue || ''}
-                  onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Description</span>
-                <input
-                  type="text"
-                  value={currentSubValue || ''}
-                  onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-                />
-              </div>
+              {!isImage && (
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Current Value</span>
+                  <input
+                    type="text"
+                    value={currentMainValue || ''}
+                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
+                  />
+                </div>
+              )}
+              {!isImage && (
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Description</span>
+                  <input
+                    type="text"
+                    value={currentSubValue || ''}
+                    onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
 
-        {!isSummary && (
+        {(!isSummary || isPremiumSummary) && (
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
             {currentData.map((item, idx) => (
               <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">

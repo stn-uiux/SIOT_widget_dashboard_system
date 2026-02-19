@@ -4,6 +4,8 @@
     --primary-color-rgb: 59, 130, 246;
     --primary-subtle: rgba(var(--primary-color-rgb), 0.1);
     --secondary-color: #6366f1;
+    --premium-start: #7c3aed;
+    --premium-end: #db2777;
 
     /* Status Colors */
     --success: #10b981;
@@ -46,6 +48,14 @@
     --title-size: 18px;
     --title-weight: 700;
     --content-size: 12px;
+
+    /* Typography Scale (Set by DesignSystem.tsx) */
+    --text-tiny: 10px;
+    --text-small: 11px;
+    --text-base: 12px;
+    --text-md: 18px;
+    --text-lg: 30px;
+    --text-hero: 48px;
 }
 
 /* Dark Mode Overrides */

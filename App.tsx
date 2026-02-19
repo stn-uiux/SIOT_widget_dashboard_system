@@ -17,6 +17,8 @@ import ExcelModal from './components/ExcelModal';
 import ConfirmModal from './components/ConfirmModal';
 import DesignDocs from './components/DesignDocs';
 import DesignSystem from './DesignSystem';
+import WidgetPicker from './components/WidgetPicker';
+import { TYPE_DEFAULT_DATA } from './constants';
 
 const App: React.FC = () => {
   // Navigation & Project State
@@ -41,6 +43,7 @@ const App: React.FC = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -70,30 +73,44 @@ const App: React.FC = () => {
   };
 
 
-  const addWidget = () => {
+  const handleOpenWidgetPicker = () => {
+    setIsWidgetPickerOpen(true);
+  };
+
+  const addWidgetWithType = (type: WidgetType) => {
+    const defaultData = TYPE_DEFAULT_DATA[type];
     const newWidget: Widget = {
       id: `widget_${Date.now()}`,
-      type: WidgetType.CHART_BAR,
+      type: type,
       title: 'New Analysis',
       colSpan: 4,
       rowSpan: 2,
-      config: {
-        xAxisKey: 'name',
-        yAxisKey: 'value',
-        showLegend: true,
-        showGrid: true,
-        showXAxis: true,
-        showYAxis: true,
-        showUnit: false,
-        showUnitInLegend: false,
-        showLabels: false,
-        unit: '',
-        series: [{ key: 'value', label: 'Revenue', color: 'var(--primary-color)' }]
-      },
-      data: MOCK_CHART_DATA,
+      config: defaultData?.config
+        ? JSON.parse(JSON.stringify(defaultData.config))
+        : {
+          xAxisKey: 'name',
+          yAxisKey: 'value',
+          series: [{ key: 'value', label: 'Value', color: 'var(--primary-color)' }],
+          showLegend: true,
+          showGrid: true,
+          showXAxis: true,
+          showYAxis: true,
+          showUnit: false,
+          showUnitInLegend: false,
+          showLabels: false,
+          unit: ''
+        },
+      data: defaultData?.data
+        ? JSON.parse(JSON.stringify(defaultData.data))
+        : JSON.parse(JSON.stringify(MOCK_CHART_DATA)),
+      mainValue: defaultData?.mainValue,
+      subValue: defaultData?.subValue,
+      icon: defaultData?.icon,
       noBezel: false,
     };
     updateCurrentPage({ widgets: [...widgets, newWidget] });
+    setIsWidgetPickerOpen(false);
+    showToast(`Added ${type} widget`);
   };
 
   const updateWidget = (id: string, updates: Partial<Widget>) => {
@@ -531,7 +548,7 @@ const App: React.FC = () => {
 
               {isEditMode && (
                 <button
-                  onClick={addWidget}
+                  onClick={handleOpenWidgetPicker}
                   style={{ borderRadius: 'var(--border-radius)' }}
                   className="h-full flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group min-h-[150px]"
                 >
@@ -611,6 +628,13 @@ const App: React.FC = () => {
       {isDesignDocsOpen && (
         <DesignDocs onClose={() => setIsDesignDocsOpen(false)} />
       )}
+
+      <WidgetPicker
+        isOpen={isWidgetPickerOpen}
+        onClose={() => setIsWidgetPickerOpen(false)}
+        onSelect={addWidgetWithType}
+        isDark={theme.mode === ThemeMode.DARK}
+      />
     </div>
   );
 };
