@@ -18,11 +18,7 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         applyColorPalette(root, 'primary', theme.primaryColor);
 
         // Core Colors
-        if (theme.useGradient && theme.backgroundGradientColor) {
-            root.style.setProperty('--background', `linear-gradient(135deg, ${theme.backgroundColor}, ${theme.backgroundGradientColor})`);
-        } else {
-            root.style.setProperty('--background', theme.backgroundColor);
-        }
+        root.style.setProperty('--background', theme.backgroundColor);
         root.style.setProperty('--surface', theme.surfaceColor);
         root.style.setProperty('--surface-rgb', hexToRgb(theme.surfaceColor));
         root.style.setProperty('--text-main', theme.titleColor);
@@ -48,12 +44,14 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         root.style.setProperty('--text-lg', `${theme.textLg}px`);
         root.style.setProperty('--text-hero', `${theme.textHero}px`);
 
-        // Dark Mode Class
+        // Mode Classes
+        root.classList.remove('dark', 'cyber', 'midnight-pro');
         if (theme.mode === ThemeMode.DARK) {
             root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
+        } else if (theme.mode === ThemeMode.CYBER) {
+            root.classList.add('dark', 'cyber');
         }
+
     }, [theme]);
 
     return null;
