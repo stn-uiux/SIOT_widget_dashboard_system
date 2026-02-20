@@ -14,6 +14,29 @@
     --primary-80: #363884;
     --primary-90: #272860;
     --primary-95: #20214e;
+
+    /* Alpha Palette */
+    --black-alpha-03: rgba(0, 0, 0, 0.03);
+    --black-alpha-05: rgba(0, 0, 0, 0.05);
+    --black-alpha-10: rgba(0, 0, 0, 0.1);
+    --black-alpha-20: rgba(0, 0, 0, 0.2);
+    --black-alpha-40: rgba(0, 0, 0, 0.4);
+    --black-alpha-60: rgba(0, 0, 0, 0.6);
+    --black-alpha-80: rgba(0, 0, 0, 0.8);
+
+    --white-alpha-05: rgba(255, 255, 255, 0.05);
+    --white-alpha-10: rgba(255, 255, 255, 0.1);
+    --white-alpha-20: rgba(255, 255, 255, 0.2);
+    --white-alpha-30: rgba(255, 255, 255, 0.3);
+    --white-alpha-90: rgba(255, 255, 255, 0.9);
+
+    /* Base Colors */
+    --white: #ffffff;
+    --black: #000000;
+    --red-500: #ef4444;
+    --purple-500: #8b5cf6;
+    --pink-500: #ec4899;
+
     --secondary-color: #6366f1;
     --premium-start: #7c3aed;
     --premium-end: #db2777;
@@ -70,6 +93,21 @@
     --title-weight: 700;
     --content-size: 14px;
 
+    /* Edit Mode Indicators */
+    --edit-mode-border-color: rgba(var(--primary-color-rgb), 0.4);
+    --edit-mode-border-style: dashed;
+
+    --selected-border-color: #8b5cf6;
+    --selected-shadow-glow: 0 0 35px rgba(139, 92, 246, 0.4);
+    --selected-glow-intense: 0 0 50px rgba(139, 92, 246, 0.6);
+    --selected-overlay-bg: rgba(139, 92, 246, 0.08);
+    --selected-inner-glow: inset 0 0 25px rgba(139, 92, 246, 0.15);
+
+    --action-hover-bg: var(--border-muted);
+    --action-hover-text: var(--primary-color);
+    --action-danger-hover-bg: rgba(239, 68, 68, 0.1);
+    --action-danger-hover-text: var(--error);
+
     /* Typography Scale (Set by DesignSystem.tsx) */
     --text-tiny: 12px;
     --text-small: 13px;
@@ -91,6 +129,22 @@
     --border-base: rgba(255, 255, 255, 0.08);
     --border-muted: rgba(255, 255, 255, 0.05);
     --border-strong: rgba(255, 255, 255, 0.15);
+
+    /* Color Swap: Light Primary (#3b82f6) -> Dark Secondary */
+    --primary-color: #6366f1;
+    --primary-color-rgb: 99, 102, 241;
+    --secondary-color: #3b82f6;
+
+    /* Dark Mode Selection: High-end White */
+    --selected-border-color: #ffffff;
+    --selected-shadow-glow: 0 0 35px rgba(255, 255, 255, 0.5);
+    --selected-glow-intense: 0 0 50px rgba(255, 255, 255, 0.7);
+    --selected-overlay-bg: rgba(255, 255, 255, 0.12);
+    --selected-inner-glow: inset 0 0 25px rgba(255, 255, 255, 0.25);
+
+    /* Mode Specifics */
+    --shadow-dark-text: 0 1px 2px rgba(0, 0, 0, 0.8);
+    --shadow-light-text: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 /* Cyber Mode Overrides (Updated to match premium futuristic aesthetic) */
@@ -115,6 +169,20 @@
     --radius-md: 4px;
     --radius-lg: 4px;
     --radius-xl: 6px;
+
+    /* Cyber Semantic */
+    --cyber-text: #00e5ff;
+    --cyber-text-alpha: rgba(0, 229, 255, 0.5);
+    --cyber-border-alpha: rgba(0, 229, 255, 0.3);
+    --cyber-bg-alpha: rgba(0, 229, 255, 0.1);
+    --cyber-blue: #008cff;
+
+    /* Cyber Mode Selection: Pure White for visibility on complex frames */
+    --selected-border-color: #ffffff;
+    --selected-shadow-glow: 0 0 35px rgba(255, 255, 255, 0.5);
+    --selected-glow-intense: 0 0 50px rgba(255, 255, 255, 0.7);
+    --selected-overlay-bg: rgba(255, 255, 255, 0.15);
+    --selected-inner-glow: inset 0 0 25px rgba(255, 255, 255, 0.25);
 }
 
 .cyber .btn-premium {
@@ -793,6 +861,70 @@ body {
 .react-grid-item.resizing {
     z-index: 100;
     opacity: 0.9;
+}
+
+.edit-mode-indicator {
+    outline: 2px var(--edit-mode-border-style) var(--edit-mode-border-color);
+    outline-offset: -2px;
+    border-radius: var(--border-radius);
+}
+
+.widget-selected {
+    outline: 2px solid var(--selected-border-color) !important;
+    outline-offset: -2px;
+    background-color: var(--selected-overlay-bg) !important;
+    border-radius: var(--border-radius);
+    z-index: 50;
+    backdrop-filter: brightness(1.15) saturate(1.3);
+    /* GPU acceleration for shadows */
+    will-change: box-shadow, outline-color;
+    animation: cyber-neon-smooth 3s infinite ease-in-out;
+}
+
+@keyframes cyber-neon-smooth {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 12px rgba(255, 255, 255, 0.4),
+            0 0 20px rgba(var(--primary-color-rgb), 0.2),
+            var(--selected-inner-glow);
+        outline-color: var(--selected-border-color);
+    }
+
+    50% {
+        box-shadow:
+            0 0 25px rgba(255, 255, 255, 0.6),
+            0 0 40px rgba(var(--primary-color-rgb), 0.4),
+            var(--selected-inner-glow);
+        outline-color: #fff;
+    }
+}
+
+.widget-action-btn {
+    padding: 6px;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    transition: all var(--transition-speed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widget-action-btn:hover {
+    background-color: var(--action-hover-bg);
+    color: var(--action-hover-text);
+    transform: translateY(-1px);
+}
+
+.widget-action-btn-danger:hover {
+    background-color: var(--action-danger-hover-bg);
+    color: var(--action-danger-hover-text);
+}
+
+.cyber .widget-action-btn:hover {
+    box-shadow: 0 0 10px rgba(var(--primary-color-rgb), 0.3);
+    border-color: var(--primary-color);
 }
 
 /* Standardized Switch Component */

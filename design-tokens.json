@@ -10,17 +10,51 @@
                     "description": "Main brand color used for primary actions and highlights"
                 },
                 "primary_scale": {
-                    "5": { "value": "#a5aaff", "type": "color" },
-                    "10": { "value": "#9ea3ff", "type": "color" },
-                    "20": { "value": "#8f93ff", "type": "color" },
-                    "30": { "value": "#8084ff", "type": "color" },
-                    "40": { "value": "#7175ff", "type": "color" },
-                    "50": { "value": "#6366f1", "type": "color", "description": "Base primary" },
-                    "60": { "value": "#5456cc", "type": "color" },
-                    "70": { "value": "#4547a8", "type": "color" },
-                    "80": { "value": "#363884", "type": "color" },
-                    "90": { "value": "#272860", "type": "color" },
-                    "95": { "value": "#20214e", "type": "color" }
+                    "5": {
+                        "value": "#a5aaff",
+                        "type": "color"
+                    },
+                    "10": {
+                        "value": "#9ea3ff",
+                        "type": "color"
+                    },
+                    "20": {
+                        "value": "#8f93ff",
+                        "type": "color"
+                    },
+                    "30": {
+                        "value": "#8084ff",
+                        "type": "color"
+                    },
+                    "40": {
+                        "value": "#7175ff",
+                        "type": "color"
+                    },
+                    "50": {
+                        "value": "#6366f1",
+                        "type": "color",
+                        "description": "Base primary"
+                    },
+                    "60": {
+                        "value": "#5456cc",
+                        "type": "color"
+                    },
+                    "70": {
+                        "value": "#4547a8",
+                        "type": "color"
+                    },
+                    "80": {
+                        "value": "#363884",
+                        "type": "color"
+                    },
+                    "90": {
+                        "value": "#272860",
+                        "type": "color"
+                    },
+                    "95": {
+                        "value": "#20214e",
+                        "type": "color"
+                    }
                 },
                 "secondary": {
                     "value": "#6366f1",
@@ -279,18 +313,58 @@
         },
         "components": {
             "button": {
-                "height": { "value": "44px", "type": "dimension" },
-                "padding_x": { "value": "20px", "type": "dimension" },
-                "padding_y": { "value": "10px", "type": "dimension" },
-                "radius_pill": { "value": "9999px", "type": "dimension", "description": "Pill-shaped buttons" },
-                "gap": { "value": "8px", "type": "dimension", "description": "Gap between icon and label" },
-                "font_size": { "value": "14px", "type": "dimension" },
-                "font_weight": { "value": "600", "type": "string" },
-                "background_default_light": { "value": "#f1f5f9", "type": "color" },
-                "background_default_dark": { "value": "#1a1936", "type": "color", "description": "Default/inactive button fill" },
-                "background_active_dark": { "value": "#1a1936", "type": "color", "description": "Active state same fill, border glows" },
-                "icon_only_size": { "value": "40px", "type": "dimension" },
-                "icon_only_radius": { "value": "12px", "type": "dimension" }
+                "height": {
+                    "value": "44px",
+                    "type": "dimension"
+                },
+                "padding_x": {
+                    "value": "20px",
+                    "type": "dimension"
+                },
+                "padding_y": {
+                    "value": "10px",
+                    "type": "dimension"
+                },
+                "radius_pill": {
+                    "value": "9999px",
+                    "type": "dimension",
+                    "description": "Pill-shaped buttons"
+                },
+                "gap": {
+                    "value": "8px",
+                    "type": "dimension",
+                    "description": "Gap between icon and label"
+                },
+                "font_size": {
+                    "value": "14px",
+                    "type": "dimension"
+                },
+                "font_weight": {
+                    "value": "600",
+                    "type": "string"
+                },
+                "background_default_light": {
+                    "value": "#f1f5f9",
+                    "type": "color"
+                },
+                "background_default_dark": {
+                    "value": "#1a1936",
+                    "type": "color",
+                    "description": "Default/inactive button fill"
+                },
+                "background_active_dark": {
+                    "value": "#1a1936",
+                    "type": "color",
+                    "description": "Active state same fill, border glows"
+                },
+                "icon_only_size": {
+                    "value": "40px",
+                    "type": "dimension"
+                },
+                "icon_only_radius": {
+                    "value": "12px",
+                    "type": "dimension"
+                }
             },
             "premium_mode_toggle": {
                 "width": {
@@ -339,6 +413,45 @@
                 "header_color": {
                     "value": "transparent",
                     "type": "color"
+                },
+                "edit_mode_border_color": {
+                    "value": "rgba(59, 130, 246, 0.4)",
+                    "type": "color",
+                    "description": "Border color for widgets in Edit Mode"
+                },
+                "edit_mode_border_style": {
+                    "value": "dashed",
+                    "type": "string",
+                    "description": "Border style for widgets in Edit Mode"
+                },
+                "selected_border_color": {
+                    "value": "#8b5cf6",
+                    "type": "color",
+                    "description": "Vibrant purple border for selected widget (Light Mode)"
+                },
+                "selected_shadow_glow": {
+                    "value": "0 0 35px rgba(139, 92, 246, 0.4)",
+                    "type": "string"
+                },
+                "action_hover_text": {
+                    "value": "var(--primary-color)",
+                    "type": "color"
+                },
+                "action_danger_hover_bg": {
+                    "value": "rgba(239, 68, 68, 0.1)",
+                    "type": "color"
+                },
+                "action_danger_hover_text": {
+                    "value": "var(--error)",
+                    "type": "color"
+                },
+                "selected_overlay_bg": {
+                    "value": "rgba(139, 92, 246, 0.08)",
+                    "type": "color"
+                },
+                "selected_inner_glow": {
+                    "value": "inset 0 0 25px rgba(139, 92, 246, 0.15)",
+                    "type": "string"
                 }
             }
         },

@@ -135,6 +135,13 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                                         <ColorSwatch name="Border Base" variable="--border-base" />
                                         <ColorSwatch name="Border Muted" variable="--border-muted" />
                                         <ColorSwatch name="Border Strong" variable="--border-strong" />
+                                        <ColorSwatch name="Edit Mode Border" variable="--edit-mode-border-color" description="Used for widget indicators in Edit Mode" />
+                                        <ColorSwatch name="Selected Border" variable="--selected-border-color" description="Pure White focused border" />
+                                        <ColorSwatch name="Selected Glow" variable="--selected-shadow-glow" description="White pearl glow for high-end feel" />
+                                        <ColorSwatch name="Selected Overlay" variable="--selected-overlay-bg" description="Glass overlay for visibility" />
+                                        <ColorSwatch name="Inner Glow" variable="--selected-inner-glow" description="Inner depth highlight" />
+                                        <ColorSwatch name="Action Hover" variable="--action-hover-text" description="Hover color for widget buttons" />
+                                        <ColorSwatch name="Danger Hover" variable="--action-danger-hover-text" description="Hover color for delete buttons" />
                                     </div>
                                 </div>
 

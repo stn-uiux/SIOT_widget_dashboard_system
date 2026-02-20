@@ -312,7 +312,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         <span className="text-[9px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Transparent</span>
                         <Switch
                           checked={header.backgroundColor === 'transparent'}
-                          onChange={(checked) => updateHeader({ backgroundColor: checked ? 'transparent' : (theme.mode === ThemeMode.DARK ? '#0f172a' : '#ffffff') })}
+                          onChange={(checked) => updateHeader({ backgroundColor: checked ? 'transparent' : theme.backgroundColor })}
                         />
                       </label>
                     </div>

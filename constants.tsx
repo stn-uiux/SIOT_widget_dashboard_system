@@ -11,7 +11,7 @@ export const MOCK_CHART_DATA = [
 ];
 
 export const DEFAULT_THEME: DashboardTheme = {
-  name: 'Default',
+  name: 'Dark Mode',
   primaryColor: '#6366f1',
   backgroundColor: '#020617',
   surfaceColor: '#0f172a',
@@ -158,6 +158,7 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
       showUnit: true,
       showUnitInLegend: true,
       showLabels: false,
+      useGradient: true,
       series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
     }
   },
@@ -586,59 +587,45 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
 
 };
 
-// Examples page: visualization + premium + general (one each)
-const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
-  // 시각화 차트
-  WidgetType.CHART_BAR,
-  WidgetType.CHART_BAR_HORIZONTAL,
-  WidgetType.CHART_LINE,
-  WidgetType.CHART_AREA,
-  WidgetType.CHART_PIE,
-  WidgetType.CHART_SANKEY,
-  WidgetType.CHART_RADAR,
-  WidgetType.CHART_COMPOSED,
-  WidgetType.SUMMARY_CHART,
-  // 프리미엄 템플릿
-  WidgetType.DASH_FAILURE_STATUS,
-  WidgetType.DASH_FACILITY_1,
-  WidgetType.DASH_FACILITY_2,
-  WidgetType.DASH_RANK_LIST,
-  WidgetType.DASH_RESOURCE_USAGE,
-  WidgetType.DASH_TRAFFIC_STATUS,
-  WidgetType.DASH_SECURITY_STATUS,
-  WidgetType.DASH_VDI_STATUS,
-  // 일반 컴포넌트
-  WidgetType.SUMMARY,
-  WidgetType.TABLE,
-  WidgetType.IMAGE,
-  WidgetType.MAP,
-  WidgetType.WEATHER,
-];
+import {
+  BarChart3, TrendingUp, PieChart, Table, Database,
+  Activity, Monitor, LayoutGrid, CloudSun, Image as ImageIcon, MapPin,
+  Hexagon, BarChartHorizontal, AreaChart, Layers, Workflow, Info
+} from 'lucide-react';
 
-const EXAMPLES_LABELS: Record<string, string> = {
-  [WidgetType.CHART_BAR]: '세로 막대',
-  [WidgetType.CHART_BAR_HORIZONTAL]: '가로 막대',
-  [WidgetType.CHART_LINE]: '선형 차트',
-  [WidgetType.CHART_AREA]: '영역 차트',
-  [WidgetType.CHART_PIE]: '파이 차트',
-  [WidgetType.CHART_SANKEY]: '생키 다이어그램',
-  [WidgetType.CHART_RADAR]: '방사형 차트',
-  [WidgetType.CHART_COMPOSED]: '혼합형 차트',
-  [WidgetType.SUMMARY_CHART]: '트렌드 요약',
-  [WidgetType.DASH_FAILURE_STATUS]: '장애 현황',
-  [WidgetType.DASH_FACILITY_1]: '시설 현황 1',
-  [WidgetType.DASH_FACILITY_2]: '시설 현황 2',
-  [WidgetType.DASH_RANK_LIST]: '순위 리스트',
-  [WidgetType.DASH_RESOURCE_USAGE]: '리소스 사용량',
-  [WidgetType.DASH_TRAFFIC_STATUS]: '트래픽 통계',
-  [WidgetType.DASH_SECURITY_STATUS]: '보안 현황',
-  [WidgetType.DASH_VDI_STATUS]: 'VDI 접속 현황',
-  [WidgetType.SUMMARY]: '단일 수치',
-  [WidgetType.TABLE]: '데이터 테이블',
-  [WidgetType.IMAGE]: '이미지 박스',
-  [WidgetType.MAP]: '지도 위젯',
-  [WidgetType.WEATHER]: '날씨 정보',
+export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: any, category: 'viz' | 'premium' | 'general' }>> = {
+  [WidgetType.CHART_BAR]: { label: '세로 막대', icon: BarChart3, category: 'viz' },
+  [WidgetType.CHART_BAR_HORIZONTAL]: { label: '가로 막대', icon: BarChartHorizontal, category: 'viz' },
+  [WidgetType.CHART_LINE]: { label: '선형 차트', icon: TrendingUp, category: 'viz' },
+  [WidgetType.CHART_AREA]: { label: '영역 차트', icon: AreaChart, category: 'viz' },
+  [WidgetType.CHART_PIE]: { label: '파이 차트', icon: PieChart, category: 'viz' },
+  [WidgetType.CHART_RADAR]: { label: '방사형 차트', icon: Hexagon, category: 'viz' },
+  [WidgetType.CHART_COMPOSED]: { label: '혼합형 차트', icon: Layers, category: 'viz' },
+  [WidgetType.CHART_SANKEY]: { label: '생키 다이어그램', icon: Workflow, category: 'viz' },
+
+  [WidgetType.SUMMARY]: { label: '단일 수치 (Stat)', icon: Database, category: 'premium' },
+  [WidgetType.SUMMARY_CHART]: { label: '트렌드 요약', icon: Activity, category: 'premium' },
+  [WidgetType.DASH_FAILURE_STATUS]: { label: '장애 현황 (KPI)', icon: Activity, category: 'premium' },
+  [WidgetType.DASH_FAILURE_STATS]: { label: '장애 통계 (Stats)', icon: AreaChart, category: 'premium' },
+  [WidgetType.DASH_NET_TRAFFIC]: { label: '네트워크 트래픽', icon: Activity, category: 'premium' },
+  [WidgetType.DASH_SECURITY_STATUS]: { label: '보안 탐지 현황', icon: Hexagon, category: 'premium' },
+  [WidgetType.DASH_RESOURCE_USAGE]: { label: '리소스 사용량', icon: BarChart3, category: 'premium' },
+  [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },
+  [WidgetType.DASH_FACILITY_2]: { label: '시설 현황 (Type 2)', icon: Monitor, category: 'premium' },
+  [WidgetType.DASH_RANK_LIST]: { label: '순위 리스트', icon: BarChartHorizontal, category: 'premium' },
+  [WidgetType.DASH_TRAFFIC_STATUS]: { label: '실시간 트래픽', icon: TrendingUp, category: 'premium' },
+  [WidgetType.DASH_VDI_STATUS]: { label: 'VDI 접속 현황', icon: Table, category: 'premium' },
+
+  [WidgetType.TABLE]: { label: '데이터 테이블', icon: Table, category: 'general' },
+  [WidgetType.IMAGE]: { label: '이미지 박스', icon: ImageIcon, category: 'general' },
+  [WidgetType.MAP]: { label: '지도 위젯', icon: MapPin, category: 'general' },
+  [WidgetType.WEATHER]: { label: '날씨 정보', icon: CloudSun, category: 'general' },
 };
+
+export const EXAMPLES_LABELS: Record<string, string> = Object.keys(WIDGET_METADATA).reduce((acc, key) => {
+  acc[key] = WIDGET_METADATA[key as WidgetType].label;
+  return acc;
+}, {} as Record<string, string>);
 
 const defaultChartConfig = {
   xAxisKey: 'name',
@@ -653,6 +640,31 @@ const defaultChartConfig = {
   showLabels: false,
   unit: ''
 };
+
+const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
+  WidgetType.CHART_BAR,
+  WidgetType.CHART_BAR_HORIZONTAL,
+  WidgetType.CHART_LINE,
+  WidgetType.CHART_AREA,
+  WidgetType.CHART_PIE,
+  WidgetType.CHART_SANKEY,
+  WidgetType.CHART_RADAR,
+  WidgetType.CHART_COMPOSED,
+  WidgetType.SUMMARY_CHART,
+  WidgetType.DASH_FAILURE_STATUS,
+  WidgetType.DASH_FACILITY_1,
+  WidgetType.DASH_FACILITY_2,
+  WidgetType.DASH_RANK_LIST,
+  WidgetType.DASH_RESOURCE_USAGE,
+  WidgetType.DASH_TRAFFIC_STATUS,
+  WidgetType.DASH_SECURITY_STATUS,
+  WidgetType.DASH_VDI_STATUS,
+  WidgetType.SUMMARY,
+  WidgetType.TABLE,
+  WidgetType.IMAGE,
+  WidgetType.MAP,
+  WidgetType.WEATHER,
+];
 
 // rowHeight 20 → height 200 = 10 rows
 const EXAMPLES_ROW_SPAN = 10;

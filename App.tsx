@@ -47,7 +47,7 @@ const IsometricLogo: React.FC<{ isCyber?: boolean; isDark?: boolean; primaryColo
         <defs>
           <linearGradient id="baseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={color} />
-            <stop offset="100%" stopColor={isCyber ? '#006064' : '#1d4ed8'} />
+            <stop offset="100%" stopColor={isCyber ? 'var(--primary-90)' : 'var(--secondary-color)'} />
           </linearGradient>
           <linearGradient id="panelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={accentColor} stopOpacity={isLight ? 0.6 : 0.8} />
@@ -77,9 +77,9 @@ const IsometricLogo: React.FC<{ isCyber?: boolean; isDark?: boolean; primaryColo
         </g>
       </svg>
       {isCyber ? (
-        <div className="absolute inset-0 bg-cyan-400/20 blur-xl rounded-full scale-110 -z-10 animate-pulse" />
+        <div className="absolute inset-0 bg-[var(--cyber-bg-alpha)] blur-xl rounded-full scale-110 -z-10 animate-pulse" />
       ) : (
-        <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-110 -z-10" />
+        <div className="absolute inset-0 bg-[var(--primary-subtle)] blur-xl rounded-full scale-110 -z-10" />
       )}
     </div>
   );
@@ -225,12 +225,19 @@ const App: React.FC = () => {
 
   const addWidgetWithType = (type: WidgetType) => {
     const defaultData = TYPE_DEFAULT_DATA[type];
+    const newId = `widget_${Date.now()}`;
+
+    // Find the bottom-most position in current layout
+    const bottomY = currentRglLayout.length > 0
+      ? Math.max(...currentRglLayout.map(l => l.y + l.h))
+      : 0;
+
     const newWidget: Widget = {
-      id: `widget_${Date.now()}`,
+      id: newId,
       type: type,
       title: 'New Analysis',
       colSpan: 4,
-      rowSpan: 2,
+      rowSpan: 10, // Default to 200px (10 * 20px rowHeight)
       config: defaultData?.config
         ? JSON.parse(JSON.stringify(defaultData.config))
         : {
@@ -254,6 +261,16 @@ const App: React.FC = () => {
       icon: defaultData?.icon,
       noBezel: false,
     };
+
+    // Explicitly update RGL layout to place new widget at bottom
+    setRglLayouts(prev => ({
+      ...prev,
+      [currentPage.id]: [
+        ...(prev[currentPage.id] || []),
+        { i: newId, x: 0, y: bottomY, w: 4, h: 10 }
+      ]
+    }));
+
     updateCurrentPage({ widgets: [...widgets, newWidget] });
     setIsWidgetPickerOpen(false);
     showToast(`Added ${type} widget`);
@@ -772,9 +789,10 @@ const App: React.FC = () => {
                       <div
                         key={widget.id}
                         className={`h-full transition-all duration-200 ${selectedWidgetId === widget.id
-                          ? 'ring-2 ring-[var(--primary-color)] rounded-[var(--border-radius)]'
+                          ? 'widget-selected'
                           : ''
                           }`}
+                        style={selectedWidgetId === widget.id ? { zIndex: 50 } : {}}
                       >
                         <WidgetCard
                           widget={widget}

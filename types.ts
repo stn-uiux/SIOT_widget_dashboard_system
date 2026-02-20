@@ -47,6 +47,7 @@ export interface ChartSeries {
   key: string;
   label: string;
   color?: string;
+  endColor?: string;
 }
 
 export interface ChartConfig {
@@ -62,6 +63,7 @@ export interface ChartConfig {
   showUnitInLegend: boolean;
   showLabels: boolean;
   unit: string;
+  useGradient?: boolean;
 }
 
 export interface Widget {

@@ -1,10 +1,9 @@
 import React from 'react';
 import {
-    X, BarChart3, TrendingUp, PieChart, Table, Database,
-    Activity, Monitor, LayoutGrid, CloudSun, Image, MapPin,
-    Hexagon, BarChartHorizontal, AreaChart, Layers, ChevronRight
+    X, BarChart3, Database, LayoutGrid, ChevronRight, Layers
 } from 'lucide-react';
 import { WidgetType } from '../types';
+import { WIDGET_METADATA } from '../constants';
 
 interface WidgetPickerProps {
     isOpen: boolean;
@@ -19,44 +18,27 @@ const CATEGORIES = [
         label: '시각화 차트',
         description: '데이터를 직관적으로 분석하기 위한 기본 차트들입니다.',
         icon: BarChart3,
-        items: [
-            { id: WidgetType.CHART_BAR, icon: BarChart3, label: '세로 막대' },
-            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대' },
-            { id: WidgetType.CHART_LINE, icon: TrendingUp, label: '선형 차트' },
-            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트' },
-            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트' },
-            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트' },
-            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트' },
-            { id: WidgetType.SUMMARY_CHART, icon: Activity, label: '트렌드 요약' },
-        ]
+        items: Object.entries(WIDGET_METADATA)
+            .filter(([_, meta]) => meta.category === 'viz')
+            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
     },
     {
         id: 'premium',
         label: '프리미엄 템플릿',
-        description: '특수 목적을 위해 사전에 디자인된 고급 대시보드 위젯입니다.',
+        description: '특수 목적을 위해 디자인된 고급 통계 및 분석 템플릿입니다.',
         icon: LayoutGrid,
-        items: [
-            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황' },
-            { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황 1' },
-            { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 현황 2' },
-            { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
-            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용량' },
-            { id: WidgetType.DASH_TRAFFIC_STATUS, icon: TrendingUp, label: '트래픽 통계' },
-            { id: WidgetType.DASH_VDI_STATUS, icon: Table, label: 'VDI 접속 현황' },
-        ]
+        items: Object.entries(WIDGET_METADATA)
+            .filter(([_, meta]) => meta.category === 'premium')
+            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
     },
     {
         id: 'general',
         label: '일반 컴포넌트',
-        description: '기본적인 데이터 노출 및 외부 정보를 위한 컴포넌트입니다.',
+        description: '기본적인 정보 노출 및 외부 연동을 위한 컴포넌트입니다.',
         icon: Database,
-        items: [
-            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치' },
-            { id: WidgetType.TABLE, icon: Table, label: '데이터 테이블' },
-            { id: WidgetType.IMAGE, icon: Image, label: '이미지 박스' },
-            { id: WidgetType.MAP, icon: MapPin, label: '지도 위젯' },
-            { id: WidgetType.WEATHER, icon: CloudSun, label: '날씨 정보' },
-        ]
+        items: Object.entries(WIDGET_METADATA)
+            .filter(([_, meta]) => meta.category === 'general')
+            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
     }
 ];
 
@@ -74,7 +56,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
             />
 
             {/* Modal Body */}
-            <div className={`relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-[2.5rem] border border-[var(--border-base)] shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col ${isDark ? 'bg-[#0f172a] text-white' : 'bg-white text-gray-900'}`}>
+            <div className={`relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-base)] shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col bg-[var(--surface)] text-[var(--text-main)]`}>
 
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-[var(--border-muted)] flex items-center justify-between shrink-0">
@@ -97,7 +79,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`flex flex-col items-start p-4 rounded-3xl transition-all text-left group ${activeCategory === cat.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20' : 'hover:bg-black/5 dark:hover:bg-white/5 text-muted'}`}
+                                className={`flex flex-col items-start p-4 rounded-[var(--radius-xl)] transition-all text-left group ${activeCategory === cat.id ? 'bg-[var(--primary-color)] text-white shadow-xl shadow-[var(--primary-subtle)]' : 'hover:bg-[var(--border-muted)] text-[var(--text-muted)]'}`}
                             >
                                 <cat.icon className={`w-5 h-5 mb-2 ${activeCategory === cat.id ? 'text-white' : 'text-primary'}`} />
                                 <span className="font-black text-xs uppercase tracking-widest">{cat.label}</span>
@@ -124,15 +106,15 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                 <button
                                     key={item.id}
                                     onClick={() => onSelect(item.id)}
-                                    className={`group relative flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium ${isDark ? 'bg-[#1e293b] border-slate-700 hover:border-blue-500/50' : 'bg-white border-gray-100 hover:border-blue-200'}`}
+                                    className={`group relative flex flex-col items-center justify-center p-6 rounded-[var(--radius-xl)] border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium bg-[var(--surface-muted)] border-[var(--border-muted)] hover:border-[var(--primary-color)]`}
                                 >
-                                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-4 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                                        <item.icon className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors" />
+                                    <div className="w-14 h-14 rounded-[var(--radius-lg)] bg-[var(--primary-subtle)] flex items-center justify-center mb-4 transition-colors group-hover:bg-[var(--primary-color)] group-hover:text-white">
+                                        <item.icon className="w-7 h-7 text-[var(--primary-color)] group-hover:text-white transition-colors" />
                                     </div>
                                     <span className="font-black text-xs uppercase tracking-tight text-center">{item.label}</span>
 
                                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ChevronRight className="w-4 h-4 text-blue-500" />
+                                        <ChevronRight className="w-4 h-4 text-[var(--primary-color)]" />
                                     </div>
                                 </button>
                             ))}
