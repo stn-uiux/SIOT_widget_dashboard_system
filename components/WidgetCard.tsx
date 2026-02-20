@@ -3,13 +3,14 @@ import React from 'react';
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  ComposedChart, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  ComposedChart, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Sankey
 } from 'recharts';
 import Chart from 'react-apexcharts';
 import * as am5 from "@amcharts/amcharts5";
 import * as am5xy from "@amcharts/amcharts5/xy";
 import * as am5percent from "@amcharts/amcharts5/percent";
 import * as am5radar from "@amcharts/amcharts5/radar";
+import * as am5flow from "@amcharts/amcharts5/flow";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
 import { Settings, GripVertical, FileSpreadsheet, X, MapPin, Image, Trash2 } from 'lucide-react';
@@ -116,6 +117,39 @@ const AmChartComponent: React.FC<{
         series.data.setAll(widget.data);
         series.appear(1000);
       });
+    } else if (widget.type === WidgetType.CHART_SANKEY) {
+      const series = root.container.children.push(am5flow.Sankey.new(root, {
+        sourceIdField: xAxisKey || "from",
+        targetIdField: widget.config.yAxisKey || "to",
+        valueField: widget.config.series[0]?.key || "value",
+        paddingRight: 50,
+        paddingLeft: 10,
+        nodePadding: 20
+      }));
+
+      series.nodes.get("colors")?.set("step", 2);
+      series.nodes.rectangles.template.setAll({
+        fillOpacity: 0.8,
+        strokeOpacity: 0,
+        cornerRadiusTL: theme.borderRadius,
+        cornerRadiusTR: theme.borderRadius,
+        cornerRadiusBL: theme.borderRadius,
+        cornerRadiusBR: theme.borderRadius
+      });
+      series.nodes.labels.template.setAll({
+        fontSize: contentSize,
+        fill: am5.color(resolveColor(labelColor, '#888888')),
+        paddingLeft: 5,
+        paddingRight: 5
+      });
+
+      series.links.template.setAll({
+        fillOpacity: 0.3,
+        strokeStyle: "solid"
+      });
+
+      series.data.setAll(widget.data);
+      series.appear(1000, 100);
     } else if (widget.type === WidgetType.CHART_BAR || widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST) {
       const isHorizontal = widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST;
 
@@ -362,18 +396,19 @@ interface WidgetCardProps {
 }
 
 const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEdit, onUpdate, onDelete, onOpenExcel }) => {
-  const isDark = theme.mode === ThemeMode.DARK;
+  const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
+  const isCyber = theme.mode === ThemeMode.CYBER;
 
   const contentSize = theme.contentSize;
   const titleSize = theme.titleSize;
   const titleWeight = theme.titleWeight;
 
-  const strokeColor = 'var(--border-base)';
-  const labelColor = 'var(--text-muted)';
+  const strokeColor = isCyber ? 'rgba(0, 229, 255, 0.2)' : 'var(--border-base)';
+  const labelColor = isCyber ? '#00e5ff' : 'var(--text-muted)';
 
   const series = widget.config.series && widget.config.series.length > 0
     ? widget.config.series
-    : [{ key: widget.config.yAxisKey || 'value', label: widget.title, color: 'var(--primary-color)' }];
+    : [{ key: widget.config.yAxisKey || 'value', label: widget.title, color: isCyber ? '#00e5ff' : 'var(--primary-color)' }];
 
   const chartKey = `chart-${widget.id}-${widget.type}-${series.map(s => s.key).join('-')}`;
 
@@ -381,8 +416,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     const icon = iconName || widget.icon;
     if (!icon) return null;
     return (
-      <div className="p-3 rounded-2xl flex items-center justify-center transition-all bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]">
-        <span className="material-symbols-outlined" style={{ fontSize: `calc(var(--content-size) * 2.5)` }}>
+      <div className={`p-3 rounded-2xl flex items-center justify-center transition-all ${isCyber ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]'}`}>
+        <span className={`material-symbols-outlined ${isCyber ? 'neon-glow' : ''}`} style={{ fontSize: `calc(var(--content-size) * 2.5)` }}>
           {icon}
         </span>
       </div>
@@ -460,6 +495,11 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     ];
 
     const renderApexChart = () => {
+      // Fallback for Sankey since ApexCharts doesn't support it natively
+      if (currentType === WidgetType.CHART_SANKEY) {
+        return renderAmChart();
+      }
+
       const { xAxisKey, showLegend, showGrid, showXAxis, showYAxis, unit } = currentConfig;
 
       const categories = currentData.map(d => String(d[xAxisKey] || ''));
@@ -653,16 +693,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     type="text"
                     value={currentMainValue || '0'}
                     onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
-                    className="bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full text-main"
+                    className={`bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full ${isCyber ? 'font-mono text-cyan-400' : 'text-main'}`}
                     style={{ fontSize: 'var(--text-hero)' }}
                   />
                 ) : (
-                  <span className="font-black tracking-tighter leading-tight text-main" style={{ fontSize: 'var(--text-hero)' }}>
+                  <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-cyan-400 neon-glow' : 'text-main'}`} style={{ fontSize: 'var(--text-hero)' }}>
                     {currentMainValue}
                   </span>
                 )}
                 {unit && (
-                  <span className="font-bold text-muted" style={{ fontSize: 'var(--text-md)' }}>
+                  <span className={`font-bold ${isCyber ? 'text-cyan-400/60' : 'text-muted'}`} style={{ fontSize: 'var(--text-md)' }}>
                     {unit}
                   </span>
                 )}
@@ -686,6 +726,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         );
 
       case WidgetType.SUMMARY_CHART:
+        const summaryColor = isCyber ? '#00e5ff' : theme.primaryColor;
         return (
           <div className="relative h-full w-full flex flex-col justify-start pt-2">
             <div className="z-10 px-2 flex flex-col gap-1">
@@ -696,22 +737,22 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       type="text"
                       value={currentMainValue || '0'}
                       onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
-                      className={`bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full ${isDark ? 'text-white' : 'text-gray-800'}`}
+                      className={`bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full ${isCyber ? 'font-mono text-cyan-400' : (isDark ? 'text-white' : 'text-gray-800')}`}
                       style={{ fontSize: `${contentSize * 3.8}px` }}
                     />
                   ) : (
-                    <span className={`font-black tracking-tighter leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`} style={{ fontSize: 'var(--text-hero)' }}>
+                    <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-cyan-400 neon-glow' : (isDark ? 'text-white' : 'text-gray-800')}`} style={{ fontSize: 'var(--text-hero)' }}>
                       {currentMainValue}
                     </span>
                   )}
                   {unit && (
-                    <span className={`font-bold mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} style={{ fontSize: 'var(--text-md)' }}>
+                    <span className={`font-bold mb-2 ${isCyber ? 'text-cyan-400/60' : (isDark ? 'text-slate-500' : 'text-gray-400')}`} style={{ fontSize: 'var(--text-md)' }}>
                       {unit}
                     </span>
                   )}
                 </div>
               </div>
-              <p className={`font-bold leading-tight ${isDark ? 'text-slate-300' : 'text-gray-400'}`} style={{ fontSize: 'var(--text-md)' }}>
+              <p className={`font-bold leading-tight ${isCyber ? 'text-cyan-400/40' : (isDark ? 'text-slate-300' : 'text-gray-400')}`} style={{ fontSize: 'var(--text-md)' }}>
                 {currentSubValue}
               </p>
             </div>
@@ -720,14 +761,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <AreaChart data={currentData}>
                   <defs>
                     <linearGradient id={`grad-${widget.id}-${isSec ? 'sec' : 'main'}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={theme.primaryColor} stopOpacity={0.4} />
-                      <stop offset="100%" stopColor={theme.primaryColor} stopOpacity={0} />
+                      <stop offset="0%" stopColor={summaryColor} stopOpacity={isCyber ? 0.8 : 0.4} />
+                      <stop offset="50%" stopColor={summaryColor} stopOpacity={isCyber ? 0.3 : 0.1} />
+                      <stop offset="100%" stopColor={summaryColor} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <Area
                     type="monotone"
                     dataKey={localSeries[0]?.key || 'value'}
-                    stroke={theme.primaryColor}
+                    stroke={summaryColor}
                     strokeWidth={4}
                     fillOpacity={1}
                     fill={`url(#grad-${widget.id}-${isSec ? 'sec' : 'main'})`}
@@ -821,7 +863,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.CHART_BAR:
         return (
-          <div className="h-full">
+          <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart key={chartKey} {...commonProps}>
                 {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
@@ -830,7 +872,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[theme.chartRadius, theme.chartRadius, 0, 0]} />
+                  <Bar
+                    key={s.key}
+                    name={s.label}
+                    dataKey={s.key}
+                    fill={resolveColor(s.color, isCyber ? '#00e5ff' : theme.primaryColor)}
+                    radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
+                  />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -839,7 +887,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.CHART_BAR_HORIZONTAL:
         return (
-          <div className="h-full">
+          <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart key={chartKey} layout="vertical" data={currentData} margin={{ top: 5, right: 10, left: 30, bottom: 0 }}>
                 {showGrid && <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={strokeColor} />}
@@ -848,7 +896,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Bar key={s.key} name={s.label} dataKey={s.key} fill={s.color || theme.primaryColor} radius={[0, theme.chartRadius, theme.chartRadius, 0]} />
+                  <Bar
+                    key={s.key}
+                    name={s.label}
+                    dataKey={s.key}
+                    fill={resolveColor(s.color, isCyber ? '#00e5ff' : theme.primaryColor)}
+                    radius={[0, theme.chartRadius, theme.chartRadius, 0]}
+                  />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -857,7 +911,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.CHART_LINE:
         return (
-          <div className="h-full">
+          <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart key={chartKey} {...commonProps}>
                 {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
@@ -866,7 +920,21 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Line key={s.key} name={s.label} type="monotone" dataKey={s.key} stroke={s.color || theme.primaryColor} strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: isDark ? '#1e293b' : '#fff' }} />
+                  <Line
+                    key={s.key}
+                    name={s.label}
+                    type="natural"
+                    dataKey={s.key}
+                    stroke={resolveColor(s.color, isCyber ? 'var(--primary-color)' : theme.primaryColor)}
+                    strokeWidth={isCyber ? 4 : 3}
+                    dot={{
+                      r: isCyber ? 5 : 4,
+                      strokeWidth: 2,
+                      fill: isCyber ? 'var(--background)' : (isDark ? '#1e293b' : '#fff'),
+                      stroke: resolveColor(s.color, isCyber ? 'var(--primary-color)' : theme.primaryColor)
+                    }}
+                    activeDot={{ r: 8, strokeWidth: 0 }}
+                  />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -875,14 +943,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.CHART_AREA:
         return (
-          <div className="h-full">
+          <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart key={chartKey} {...commonProps}>
                 <defs>
                   {localSeries.map(s => (
                     <linearGradient key={`grad-${s.key}`} id={`grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={s.color || theme.primaryColor} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={s.color || theme.primaryColor} stopOpacity={0} />
+                      <stop offset="0%" stopColor={resolveColor(s.color, isCyber ? 'var(--primary-color)' : theme.primaryColor)} stopOpacity={isCyber ? 0.8 : 0.4} />
+                      <stop offset="50%" stopColor={isCyber ? 'var(--secondary-color)' : resolveColor(s.color, theme.primaryColor)} stopOpacity={isCyber ? 0.3 : 0.1} />
+                      <stop offset="100%" stopColor={isCyber ? 'var(--secondary-color)' : resolveColor(s.color, theme.primaryColor)} stopOpacity={0} />
                     </linearGradient>
                   ))}
                 </defs>
@@ -892,7 +961,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s) => (
-                  <Area key={s.key} name={s.label} type="monotone" dataKey={s.key} stroke={s.color || theme.primaryColor} fillOpacity={1} fill={`url(#grad-${s.key})`} strokeWidth={3} />
+                  <Area
+                    key={s.key}
+                    name={s.label}
+                    type="natural"
+                    dataKey={s.key}
+                    stroke={resolveColor(s.color, isCyber ? 'var(--primary-color)' : theme.primaryColor)}
+                    strokeWidth={isCyber ? 4 : 3}
+                    fillOpacity={1}
+                    fill={`url(#grad-${s.key})`}
+                  />
                 ))}
               </AreaChart>
             </ResponsiveContainer>
@@ -901,7 +979,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.CHART_PIE:
         return (
-          <div className="h-full">
+          <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -927,7 +1005,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       <text
                         x={x}
                         y={y}
-                        fill="var(--text-secondary)"
+                        fill={isCyber ? '#00e5ff' : 'var(--text-secondary)'}
                         textAnchor={x > cx ? 'start' : 'end'}
                         dominantBaseline="central"
                         style={{ fontSize: `${contentSize}px`, fontWeight: 'var(--title-weight)' }}
@@ -938,7 +1016,12 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   } : false}
                 >
                   {currentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="var(--surface)" strokeWidth={2} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={isCyber ? (index === 0 ? '#00e5ff' : index === 1 ? '#008cff' : index === 2 ? '#6366f1' : PIE_COLORS[index % PIE_COLORS.length]) : PIE_COLORS[index % PIE_COLORS.length]}
+                      stroke={isCyber ? 'rgba(0, 229, 255, 0.2)' : 'var(--surface)'}
+                      strokeWidth={2}
+                    />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} />
@@ -969,6 +1052,83 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
               </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case WidgetType.CHART_SANKEY:
+        const sankeyData = (() => {
+          const nodes: { name: string }[] = [];
+          const links: { source: number; target: number; value: number }[] = [];
+          const nodeMap = new Map<string, number>();
+
+          const sKey = xAxisKey || 'source';
+          const tKey = currentConfig.yAxisKey || 'target';
+          const vKey = localSeries[0]?.key || 'value';
+
+          currentData.forEach(item => {
+            // Flexible key resolution: Configured -> source/target -> from/to
+            const sName = item[sKey] || item['source'] || item['from'];
+            const tName = item[tKey] || item['target'] || item['to'];
+            const val = Number(item[vKey] || item['value']) || 0;
+
+            if (sName && tName) {
+              if (!nodeMap.has(sName)) {
+                nodeMap.set(sName, nodes.length);
+                nodes.push({ name: sName });
+              }
+              if (!nodeMap.has(tName)) {
+                nodeMap.set(tName, nodes.length);
+                nodes.push({ name: tName });
+              }
+              links.push({
+                source: nodeMap.get(sName)!,
+                target: nodeMap.get(tName)!,
+                value: val
+              });
+            }
+          });
+          return { nodes, links };
+        })();
+
+        return (
+          <div className="h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <Sankey
+                data={sankeyData}
+                node={({ x, y, width, height, index, payload, containerWidth }) => {
+                  const isOut = x + width + 6 > containerWidth;
+                  return (
+                    <g>
+                      <rect
+                        x={x} y={y} width={width} height={height}
+                        fill={resolveColor(localSeries[0]?.color, theme.primaryColor)}
+                        fillOpacity={0.8}
+                        rx={theme.chartRadius}
+                      />
+                      <text
+                        x={x + width / 2}
+                        y={y + height / 2}
+                        dy={contentSize / 2 - 2}
+                        fontSize={contentSize}
+                        fill={isDark ? "#fff" : "#000"}
+                        textAnchor="middle"
+                        pointerEvents="none"
+                        style={{ textShadow: isDark ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' }}
+                      >
+                        {payload.name}
+                      </text>
+                    </g>
+                  );
+                }}
+                link={{
+                  stroke: resolveColor(localSeries[0]?.color, theme.primaryColor),
+                  strokeOpacity: 0.2,
+                  fill: "none"
+                }}
+              >
+                <Tooltip contentStyle={tooltipStyle} />
+              </Sankey>
             </ResponsiveContainer>
           </div>
         );
@@ -1094,7 +1254,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             {currentData.map((d: any, idx: number) => (
               <div key={idx} className="flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 bg-gradient-to-br transition-all group-hover:scale-110 shadow-lg ${idx === 0 ? 'from-slate-700 to-slate-800 shadow-slate-500/20' : 'from-blue-600 to-indigo-600 shadow-blue-500/20'}`} style={{ borderRadius: theme.chartRadius }}>
+                  <div className={`p-3 bg-gradient-to-br transition-all group-hover:scale-110 shadow-lg ${isCyber ? (idx === 0 ? 'from-indigo-600 to-violet-600 shadow-indigo-500/40 neon-glow' : 'from-pink-600 to-orange-500 shadow-pink-500/40 neon-glow') : (idx === 0 ? 'from-slate-700 to-slate-800 shadow-slate-500/20' : 'from-blue-600 to-indigo-600 shadow-blue-500/20')}`} style={{ borderRadius: theme.chartRadius }}>
                     <span className="material-symbols-outlined text-white text-2xl">{d.icon}</span>
                   </div>
                   <span className="font-bold text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-md)' }}>{d.name}</span>
@@ -1235,7 +1395,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     type="natural"
                     dataKey={s.key}
                     stroke={resolveColor(s.color, theme.primaryColor)}
-                    strokeWidth={3}
+                    strokeWidth={isCyber ? 4 : 3}
                     fillOpacity={1}
                     fill={`url(#gradTraffic-${idx})`}
                     dot={false}
@@ -1265,7 +1425,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 <Tooltip contentStyle={tooltipStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
                 {localSeries.map((s, idx) => (
-                  <Area key={idx} type="monotone" dataKey={s.key} stroke={resolveColor(s.color, theme.primaryColor)} strokeWidth={2} fill={`url(#gradNet-${idx})`} dot={false} stackId="1" />
+                  <Area
+                    key={idx}
+                    type="natural"
+                    dataKey={s.key}
+                    stroke={resolveColor(s.color, theme.primaryColor)}
+                    strokeWidth={isCyber ? 3 : 2}
+                    fill={`url(#gradNet-${idx})`}
+                    dot={false}
+                    stackId="1"
+                  />
                 ))}
               </AreaChart>
             </ResponsiveContainer>
@@ -1329,119 +1498,85 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   };
 
   return (
-    <div
-      className={`relative h-full flex flex-col shadow-base transition-all duration-300 group overflow-hidden bg-surface text-main hover:shadow-premium hover:shadow-[var(--primary-color)]/5 rounded-design ${widget.noBezel ? 'p-0 !shadow-none bg-transparent' : 'p-5'}`}
-      style={{
-        borderWidth: widget.noBezel ? '0' : 'var(--widget-border-width)',
-        borderColor: 'var(--widget-border-color)',
-        borderStyle: 'solid'
-      }}
-    >
-
-      {!widget.noBezel && !widget.hideHeader && (
-        <div
-          className="flex items-center justify-between px-5 py-3 mb-4 -mx-5 -mt-5 border-b border-[var(--border-muted)] shrink-0 z-20"
-          style={{ backgroundColor: 'var(--widget-header-color)' }}
-        >
-          <div className="flex items-center gap-2 overflow-hidden flex-1">
-
-            {isEditMode && (
-              <div className="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500 transition-colors shrink-0">
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-
+    <div className={`h-full flex flex-col group relative ${isCyber ? 'cyber-frame' : ''}`}>
+      {isCyber && <div className="cyber-frame-inner absolute inset-0 pointer-events-none z-10" />}
+      <div className={`flex-1 flex flex-col overflow-hidden bg-surface transition-all duration-300 ${!widget.noBezel ? 'rounded-design border-main shadow-base p-design' : ''} ${isEditMode ? 'ring-2 ring-primary/20 ring-offset-2 ring-offset-background' : ''}`}>
+        {!widget.hideHeader && (
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2 overflow-hidden">
+              {isEditMode && (
+                <div className="drag-handle cursor-grab opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-1">
+                  <GripVertical className="w-4 h-4 text-muted" />
+                </div>
+              )}
               {isEditMode ? (
                 <input
                   type="text"
                   value={widget.title}
                   onChange={(e) => onUpdate?.(widget.id, { title: e.target.value })}
-                  className="bg-transparent border-none p-0 title-text tracking-tight leading-tight focus:ring-0 outline-none rounded px-1 transition-colors min-w-[50px] text-primary hover:bg-[var(--primary-subtle)]"
+                  className={`bg-transparent border-none p-0 font-bold focus:ring-0 outline-none w-full truncate ${isCyber ? 'text-cyan-400' : 'text-main'}`}
+                  style={{ fontSize: `${titleSize}px`, fontWeight: titleWeight }}
                 />
               ) : (
-                <h3 className="truncate select-none title-text tracking-tight leading-tight transition-opacity text-primary">
+                <h3 className={`font-bold truncate ${isCyber ? 'text-cyan-400 uppercase tracking-wider' : 'text-main'}`} style={{ fontSize: `${titleSize}px`, fontWeight: titleWeight }}>
                   {widget.title}
+                  {isCyber && <span className="ml-2 inline-block w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />}
                 </h3>
               )}
             </div>
-          </div>
-          {isEditMode && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => onOpenExcel(widget.id)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-emerald-400' : 'hover:bg-gray-100 text-green-600'}`}
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onEdit(widget.id)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-gray-100 text-gray-500'}`}
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(widget.id)}
-                className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-red-900/40 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Invisible Drag Handle for No Bezel Mode or Hidden Header in Edit Mode */}
-      {(widget.noBezel || widget.hideHeader) && isEditMode && (
-        <div className="absolute top-0 left-0 right-0 h-10 z-[2000] group/handle opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
-          <div className="drag-handle cursor-grab active:cursor-grabbing text-white p-2">
-            <GripVertical className="w-6 h-6" />
+            {isEditMode && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <button
+                  onClick={() => onEdit(widget.id)}
+                  className={`p-1.5 hover:bg-muted text-muted transition-colors ${isCyber ? 'rounded-md' : 'rounded-lg'}`}
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onOpenExcel(widget.id)}
+                  className={`p-1.5 hover:bg-muted text-muted transition-colors ${isCyber ? 'rounded-md' : 'rounded-lg'}`}
+                  title="Open Data"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(widget.id)}
+                  className={`p-1.5 hover:bg-red-500/10 hover:text-red-500 text-muted transition-colors ${isCyber ? 'rounded-md' : 'rounded-lg'}`}
+                  title="Delete"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onEdit(widget.id)}
-              className="p-1.5 bg-white/20 rounded-lg hover:bg-white/40 text-white transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(widget.id)}
-              className="p-1.5 bg-red-500/20 rounded-lg hover:bg-red-500/40 text-red-200 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex-1 min-h-0 select-none">
-        {widget.isDual ? (
-          <div
-            className={`flex h-full ${widget.dualLayout === 'vertical' ? 'flex-col' : 'flex-row'}`}
-            style={{ gap: `${widget.dualGap ?? 16}px` }}
-          >
-            <div className="flex-1 min-w-0 flex flex-col">
-              {widget.showSubTitles && widget.subTitle1 && (
-                <div className="font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none" style={{ fontSize: 'var(--text-tiny)' }}>
-                  {widget.subTitle1}
-                </div>
-              )}
-              <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 relative">
+          {isCyber && <div className="widget-scan" />}
+          {widget.isDual ? (
+            <div
+              className="w-full h-full flex flex-col md:flex-row"
+              style={{
+                flexDirection: widget.dualLayout === 'vertical' ? 'column' : 'row',
+                gap: `${widget.dualGap || 16}px`
+              }}
+            >
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {widget.showSubTitles && widget.subTitle1 && (
+                  <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle1}</div>
+                )}
                 {renderChart()}
               </div>
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col">
-              {widget.showSubTitles && widget.subTitle2 && (
-                <div className="font-black uppercase text-muted mb-2 px-1 tracking-widest leading-none" style={{ fontSize: 'var(--text-tiny)' }}>
-                  {widget.subTitle2}
-                </div>
-              )}
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {widget.showSubTitles && widget.subTitle2 && (
+                  <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle2}</div>
+                )}
                 {renderChart({
-                  type: widget.secondaryType || widget.type,
-                  config: widget.secondaryConfig || widget.config,
-                  data: widget.secondaryData || widget.data,
+                  type: widget.secondaryType,
+                  config: widget.secondaryConfig,
+                  data: widget.secondaryData,
                   mainValue: widget.secondaryMainValue,
                   subValue: widget.secondarySubValue,
                   icon: widget.secondaryIcon,
@@ -1450,10 +1585,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 })}
               </div>
             </div>
-          </div>
-        ) : (
-          renderChart()
-        )}
+          ) : (
+            renderChart()
+          )}
+        </div>
       </div>
     </div>
   );

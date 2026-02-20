@@ -9,6 +9,7 @@ export enum WidgetType {
   CHART_TREEMAP = 'CHART_TREEMAP',
   CHART_COMPOSED = 'CHART_COMPOSED',
   CHART_FUNNEL = 'CHART_FUNNEL',
+  CHART_SANKEY = 'CHART_SANKEY',
   WEATHER = 'WEATHER',
   IMAGE = 'IMAGE',
   MAP = 'MAP',
@@ -32,7 +33,8 @@ export enum WidgetType {
 
 export enum ThemeMode {
   LIGHT = 'light',
-  DARK = 'dark'
+  DARK = 'dark',
+  CYBER = 'cyber'
 }
 
 export enum ChartLibrary {
@@ -146,8 +148,6 @@ export interface DashboardTheme {
   name?: string;
   primaryColor: string;
   backgroundColor: string;
-  useGradient?: boolean;
-  backgroundGradientColor?: string;
   surfaceColor: string;
   widgetHeaderColor?: string;
   mode: ThemeMode;

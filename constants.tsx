@@ -1,4 +1,4 @@
-import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, ThemePreset, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment } from './types';
+import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, ThemePreset, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment, Widget } from './types';
 
 export const MOCK_CHART_DATA = [
   { name: 'Jan', value: 400, secondary: 240 },
@@ -12,15 +12,15 @@ export const MOCK_CHART_DATA = [
 
 export const DEFAULT_THEME: DashboardTheme = {
   name: 'Default',
-  primaryColor: '#3b82f6',
-  backgroundColor: '#f8fafc',
-  surfaceColor: '#ffffff',
-  mode: ThemeMode.LIGHT,
+  primaryColor: '#6366f1',
+  backgroundColor: '#020617',
+  surfaceColor: '#0f172a',
+  mode: ThemeMode.DARK,
   chartLibrary: ChartLibrary.RECHARTS,
   borderRadius: 16,
   chartRadius: 6,
   borderWidth: 1,
-  borderColor: '#e2e8f0',
+  borderColor: '#1e293b',
   spacing: 16,
   dashboardPadding: 32,
   titleSize: 18,
@@ -31,35 +31,39 @@ export const DEFAULT_THEME: DashboardTheme = {
   textMd: 18,
   textLg: 30,
   textHero: 48,
-  cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-  titleColor: '#0f172a',
-  textColor: '#334155',
+  cardShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
+  titleColor: '#f8fafc',
+  textColor: '#94a3b8',
+  widgetHeaderColor: 'transparent',
   showPageTabs: true
 };
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
-    id: 'preset_default',
-    name: 'STN Standard',
-    theme: DEFAULT_THEME
-  },
-  {
-    id: 'preset_dark_pro',
-    name: 'Midnight Pro',
+    id: 'preset_light',
+    name: 'Light Mode',
     theme: {
       ...DEFAULT_THEME,
-      name: 'Midnight Pro',
-      mode: ThemeMode.DARK,
-      backgroundColor: '#020617',
-      surfaceColor: '#0f172a',
-      primaryColor: '#6366f1',
-      titleColor: '#f8fafc',
-      textColor: '#94a3b8',
-      cardShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
-      widgetHeaderColor: 'transparent', // Default for Midnight Pro
-      borderWidth: 1,
-      borderColor: '#1e293b',
-      chartRadius: 6
+      name: 'Light Mode',
+      mode: ThemeMode.LIGHT,
+      backgroundColor: '#f8fafc',
+      surfaceColor: '#ffffff',
+      primaryColor: '#3b82f6',
+      titleColor: '#0f172a',
+      textColor: '#334155',
+      cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      borderColor: '#e2e8f0',
+      widgetHeaderColor: undefined,
+      dualModeSupport: true
+    }
+  },
+  {
+    id: 'preset_dark',
+    name: 'Dark Mode',
+    theme: {
+      ...DEFAULT_THEME,
+      name: 'Dark Mode',
+      dualModeSupport: true
     }
   }
 ];
@@ -71,7 +75,7 @@ export const DEFAULT_HEADER: HeaderConfig = {
   width: 240,
   margin: 0,
   padding: 16,
-  backgroundColor: 'var(--surface)',
+  backgroundColor: 'var(--background)',
   textColor: 'var(--text-main)',
   textAlignment: TextAlignment.LEFT,
   title: 'My Custom Dashboard',
@@ -82,9 +86,9 @@ export const DEFAULT_PAGE: DashboardPage = {
   id: 'page_1',
   name: 'Main Page',
   layout: {
-    columns: 12,
-    rows: 6,
-    defaultRowHeight: 180,
+    columns: 24,
+    rows: 12,
+    defaultRowHeight: 20,
     fitToScreen: false
   },
   widgets: [], // Initial widgets can be populated later
@@ -92,102 +96,11 @@ export const DEFAULT_PAGE: DashboardPage = {
   tabs: []
 };
 
-export const INITIAL_PROJECT_LIST: Project[] = [
-  {
-    id: 'project_1',
-    name: 'My Dashboard',
-    pages: [{
-      ...DEFAULT_PAGE,
-      id: 'page_1',
-      name: 'Overview',
-      widgets: [
-        {
-          id: '1',
-          type: WidgetType.CHART_BAR,
-          title: 'Global Revenue',
-          colSpan: 8,
-          rowSpan: 2,
-          config: {
-            xAxisKey: 'name',
-            xAxisLabel: 'Month',
-            yAxisKey: 'value',
-            showLegend: true,
-            showGrid: true,
-            showXAxis: true,
-            showYAxis: true,
-            showUnit: true,
-            showUnitInLegend: true,
-            showLabels: false,
-            unit: '$',
-            series: [
-              { key: 'value', label: 'Europe', color: 'var(--primary-color)' },
-              { key: 'secondary', label: 'North America', color: 'var(--primary-70)' },
-              { key: 'asia', label: 'Asia', color: 'var(--primary-30)' }
-            ]
-          },
-          data: MOCK_CHART_DATA.map(d => ({ ...d, asia: Math.floor(d.value * 0.5) }))
-        },
-        {
-          id: '2',
-          type: WidgetType.SUMMARY,
-          title: 'Total Active Users',
-          mainValue: '12,480',
-          subValue: 'Last 30 days increase',
-          colSpan: 4,
-          rowSpan: 1,
-          config: {
-            xAxisKey: 'name',
-            yAxisKey: 'value',
-            showLegend: false,
-            showGrid: false,
-            showXAxis: false,
-            showYAxis: false,
-            showUnit: false,
-            showUnitInLegend: false,
-            showLabels: false,
-            unit: '',
-            series: []
-          },
-          data: []
-        },
-        {
-          id: '3',
-          type: WidgetType.TABLE,
-          title: 'Recent Transactions',
-          colSpan: 4,
-          rowSpan: 1,
-          config: {
-            xAxisKey: 'name',
-            xAxisLabel: 'Customer',
-            yAxisKey: 'value',
-            showLegend: false,
-            showGrid: false,
-            showXAxis: true,
-            showYAxis: true,
-            showUnit: true,
-            showUnitInLegend: false,
-            showLabels: false,
-            unit: '$',
-            series: [{ key: 'value', label: 'Amount', color: 'var(--primary-color)' }]
-          },
-          data: [
-            { name: 'John Doe', value: 120 },
-            { name: 'Jane Smith', value: 450 },
-            { name: 'Bob Wilson', value: 300 }
-          ]
-        }
-      ]
-    }],
-    activePageId: 'page_1',
-    theme: DEFAULT_THEME
-  }
-];
-
 export const DEFAULT_LAYOUT: LayoutConfig = {
-  columns: 3,
-  rows: 4,
+  columns: 24,
+  rows: 12,
   fitToScreen: false,
-  defaultRowHeight: 300,
+  defaultRowHeight: 20,
 };
 
 export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string, icon?: string }> = {
@@ -343,6 +256,30 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
         { key: 'value', label: 'Player A', color: 'var(--primary-color)' },
         { key: 'secondary', label: 'Player B', color: 'var(--primary-30)' }
       ]
+    }
+  },
+  [WidgetType.CHART_SANKEY]: {
+    data: [
+      { source: 'Source A', target: 'Target A', value: 10 },
+      { source: 'Source A', target: 'Target B', value: 15 },
+      { source: 'Source B', target: 'Target B', value: 8 },
+      { source: 'Target A', target: 'End X', value: 8 },
+      { source: 'Target A', target: 'End Y', value: 2 },
+      { source: 'Target B', target: 'End Y', value: 20 },
+      { source: 'Target B', target: 'End Z', value: 3 }
+    ],
+    config: {
+      xAxisKey: 'source',
+      yAxisKey: 'target',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: true,
+      series: [{ key: 'value', label: 'Flow', color: 'var(--primary-color)' }]
     }
   },
   [WidgetType.CHART_PIE]: {
@@ -648,6 +585,109 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
   }
 
 };
+
+// Examples page: visualization + premium + general (one each)
+const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
+  // 시각화 차트
+  WidgetType.CHART_BAR,
+  WidgetType.CHART_BAR_HORIZONTAL,
+  WidgetType.CHART_LINE,
+  WidgetType.CHART_AREA,
+  WidgetType.CHART_PIE,
+  WidgetType.CHART_SANKEY,
+  WidgetType.CHART_RADAR,
+  WidgetType.CHART_COMPOSED,
+  WidgetType.SUMMARY_CHART,
+  // 프리미엄 템플릿
+  WidgetType.DASH_FAILURE_STATUS,
+  WidgetType.DASH_FACILITY_1,
+  WidgetType.DASH_FACILITY_2,
+  WidgetType.DASH_RANK_LIST,
+  WidgetType.DASH_RESOURCE_USAGE,
+  WidgetType.DASH_TRAFFIC_STATUS,
+  WidgetType.DASH_SECURITY_STATUS,
+  WidgetType.DASH_VDI_STATUS,
+  // 일반 컴포넌트
+  WidgetType.SUMMARY,
+  WidgetType.TABLE,
+  WidgetType.IMAGE,
+  WidgetType.MAP,
+  WidgetType.WEATHER,
+];
+
+const EXAMPLES_LABELS: Record<string, string> = {
+  [WidgetType.CHART_BAR]: '세로 막대',
+  [WidgetType.CHART_BAR_HORIZONTAL]: '가로 막대',
+  [WidgetType.CHART_LINE]: '선형 차트',
+  [WidgetType.CHART_AREA]: '영역 차트',
+  [WidgetType.CHART_PIE]: '파이 차트',
+  [WidgetType.CHART_SANKEY]: '생키 다이어그램',
+  [WidgetType.CHART_RADAR]: '방사형 차트',
+  [WidgetType.CHART_COMPOSED]: '혼합형 차트',
+  [WidgetType.SUMMARY_CHART]: '트렌드 요약',
+  [WidgetType.DASH_FAILURE_STATUS]: '장애 현황',
+  [WidgetType.DASH_FACILITY_1]: '시설 현황 1',
+  [WidgetType.DASH_FACILITY_2]: '시설 현황 2',
+  [WidgetType.DASH_RANK_LIST]: '순위 리스트',
+  [WidgetType.DASH_RESOURCE_USAGE]: '리소스 사용량',
+  [WidgetType.DASH_TRAFFIC_STATUS]: '트래픽 통계',
+  [WidgetType.DASH_SECURITY_STATUS]: '보안 현황',
+  [WidgetType.DASH_VDI_STATUS]: 'VDI 접속 현황',
+  [WidgetType.SUMMARY]: '단일 수치',
+  [WidgetType.TABLE]: '데이터 테이블',
+  [WidgetType.IMAGE]: '이미지 박스',
+  [WidgetType.MAP]: '지도 위젯',
+  [WidgetType.WEATHER]: '날씨 정보',
+};
+
+const defaultChartConfig = {
+  xAxisKey: 'name',
+  yAxisKey: 'value',
+  series: [{ key: 'value', label: 'Value', color: 'var(--primary-color)' }],
+  showLegend: true,
+  showGrid: true,
+  showXAxis: true,
+  showYAxis: true,
+  showUnit: false,
+  showUnitInLegend: false,
+  showLabels: false,
+  unit: ''
+};
+
+// rowHeight 20 → height 200 = 10 rows
+const EXAMPLES_ROW_SPAN = 10;
+
+export const EXAMPLES_PAGE_WIDGETS: Widget[] = EXAMPLES_WIDGET_TYPES.map((type, idx) => {
+  const def = TYPE_DEFAULT_DATA[type];
+  return {
+    id: `ex_${idx + 1}`,
+    type,
+    title: EXAMPLES_LABELS[type] || type,
+    colSpan: 6,
+    rowSpan: EXAMPLES_ROW_SPAN,
+    config: def?.config ? JSON.parse(JSON.stringify(def.config)) : defaultChartConfig,
+    data: def?.data ? JSON.parse(JSON.stringify(def.data)) : [],
+    mainValue: def?.mainValue,
+    subValue: def?.subValue,
+    icon: def?.icon,
+    noBezel: false,
+  };
+});
+
+export const INITIAL_PROJECT_LIST: Project[] = [
+  {
+    id: 'project_1',
+    name: 'My Dashboard',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Examples',
+      widgets: EXAMPLES_PAGE_WIDGETS
+    }],
+    activePageId: 'page_1',
+    theme: DEFAULT_THEME
+  }
+];
 
 export const BRAND_COLORS = [
   { name: 'Blue', hex: '#3b82f6' },
