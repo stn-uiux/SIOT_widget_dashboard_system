@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout } from 'lucide-react';
+import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download } from 'lucide-react';
+import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset } from '../types';
 import { BRAND_COLORS } from '../constants';
 import Switch from './Switch';
@@ -102,7 +103,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               {theme.dualModeSupport && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-[var(--border-base)] animate-in slide-in-from-top-2 duration-300">
                   <span className="text-[10px] font-bold uppercase text-muted">Current Mode</span>
-                  <ModeToggle mode={theme.mode} onChange={onModeSwitch} />
+                  <ModeToggle key={theme.mode} mode={theme.mode} onChange={onModeSwitch} />
                 </div>
               )}
             </section>
@@ -423,6 +424,108 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   />
                 </div>
               </div>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
+                  <Image className="w-3.5 h-3.5" /> Background Image
+                </h3>
+                {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundFlicker) && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdatePage({
+                      layout: {
+                        ...currentPage.layout,
+                        backgroundImage: undefined,
+                        backgroundFlicker: false,
+                      },
+                    })}
+                    className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                  >
+                    리셋
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted uppercase tracking-tight">Upload image</p>
+              <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                  className="hidden"
+                  id="bg-image-file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = reader.result as string;
+                      onUpdatePage({ layout: { ...currentPage.layout, backgroundImage: dataUrl } });
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                  }}
+                />
+                <label
+                  htmlFor="bg-image-file"
+                  className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors"
+                >
+                  파일 선택
+                </label>
+                <span className={`text-xs ${currentPage.layout?.backgroundImage ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
+                  {currentPage.layout?.backgroundImage
+                    ? (currentPage.layout.backgroundImage.startsWith('data:') ? '이미지 적용됨' : '이미지 적용됨')
+                    : '선택된 파일 없음'}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted uppercase tracking-tight">또는 URL 입력 (예: /assets/이미지.png)</p>
+              <input
+                type="text"
+                placeholder="/assets/bg-project2.png 또는 URL"
+                value={currentPage.layout?.backgroundImage?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImage ?? '')}
+                onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImage: e.target.value.trim() || undefined } })}
+                className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+              />
+              {currentPage.layout?.backgroundImage && (
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[10px] font-bold uppercase text-muted">Neon flicker</span>
+                  <Switch
+                    checked={currentPage.layout?.backgroundFlicker ?? false}
+                    onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundFlicker: checked } })}
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
+                <span className="text-[10px] font-bold uppercase text-muted">Glassmorphism</span>
+                <Switch
+                  checked={currentPage.layout?.glassmorphism ?? false}
+                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphism: checked } })}
+                />
+              </div>
+              <p className="text-[9px] text-muted uppercase tracking-tight">위젯 카드를 반투명·블러·테두리 스타일로 (project2 등)</p>
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
+                <span className="text-[10px] font-bold uppercase text-muted">해상도별 레이아웃 (Breakpoints)</span>
+                <Switch
+                  checked={currentPage.layout?.useResponsive ?? false}
+                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, useResponsive: checked } })}
+                />
+              </div>
+              <p className="text-[9px] text-muted uppercase tracking-tight">lg(1200px) / md(996px) / sm(768px) / xs(480px) 구간별로 컬럼·레이아웃 전환</p>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+              <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
+                <Download className="w-3.5 h-3.5" /> Figma 연동
+              </h3>
+              <p className="text-[10px] text-muted uppercase tracking-tight">design-tokens를 Figma 변수(Variables)용 JSON으로 내보냅니다.</p>
+              <button
+                type="button"
+                onClick={() => downloadFigmaVariablesJson('design-tokens-figma.json')}
+                className="w-full py-2.5 px-4 rounded-xl border border-[var(--border-base)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold hover:bg-[var(--border-muted)] transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Figma 변수로 내보내기
+              </button>
             </section>
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">

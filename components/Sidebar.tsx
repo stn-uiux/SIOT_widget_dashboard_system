@@ -4,10 +4,11 @@ import {
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
-  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow
+  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
+  RotateCcw
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode } from '../types';
-import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA } from '../constants';
+import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import Switch from './Switch';
 
 interface SidebarProps {
@@ -73,18 +74,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             />
           </div>
 
-          {/* Row Height Config (Active only when fitToScreen is FALSE) */}
+          {/* Row Height Config (Active only when fitToScreen is FALSE; new project2에서도 이 값 사용) */}
           <div className={`space-y-1 pt-1 transition-opacity ${layout.fitToScreen ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
             <span className="text-[10px] uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
               <MoveVertical className="w-3 h-3" /> Default Row Height (px)
             </span>
             <input
               type="number"
-              min="100"
-              max="800"
-              step="10"
+              min="10"
+              max="200"
+              step="5"
               value={layout.defaultRowHeight}
-              onChange={(e) => onUpdateLayout({ defaultRowHeight: parseInt(e.target.value) || 100 })}
+              onChange={(e) => onUpdateLayout({ defaultRowHeight: Math.max(10, parseInt(e.target.value, 10) || 20) })}
               className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)]`}
             />
           </div>
@@ -222,13 +223,28 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     });
   };
 
+  /** Data Series 색상을 브랜드/테마 색으로 초기화 (디자인에서 primary 바꾸면 다시 반영되도록) */
+  const handleResetSeriesColors = () => {
+    const shades = [50, 70, 30, 90, 10, 60, 40, 80, 20];
+    const series = currentConfig.series || [];
+    const newSeries = series.map((s, i) => ({
+      ...s,
+      color: i === 0 ? 'var(--primary-color)' : `var(--primary-${shades[(i - 1) % shades.length]})`,
+      endColor: undefined
+    }));
+    updateCurrentWidget({ config: { ...currentConfig, series: newSeries } });
+  };
+
   const isSummary = [WidgetType.SUMMARY].includes(currentType);
+  const isGeneralKpi = currentType === WidgetType.GENERAL_KPI;
+  const isEarningProgress = currentType === WidgetType.EARNING_PROGRESS;
+  const isEarningTrend = currentType === WidgetType.EARNING_TREND;
   const isPremiumSummary = [WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
   const isSummaryChart = currentType === WidgetType.SUMMARY_CHART;
   const isTable = currentType === WidgetType.TABLE;
   const isPie = currentType === WidgetType.CHART_PIE;
   const isImage = currentType === WidgetType.IMAGE;
-  const isChart = currentType.includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+  const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
@@ -356,7 +372,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="range" min="0" max="64" step="4"
                   value={selectedWidget.dualGap ?? 16}
                   onChange={(e) => onUpdateWidget(selectedWidget.id, { dualGap: parseInt(e.target.value) })}
-                  className="w-full accent-blue-600 h-1.5 bg-gray-200 dark:bg-gray-700 ${isCyber ? 'rounded-md' : 'rounded-lg'} appearance-none cursor-pointer"
+                  className={`w-full accent-blue-600 h-1.5 bg-gray-200 dark:bg-gray-700 ${isCyber ? 'rounded-md' : 'rounded-lg'} appearance-none cursor-pointer`}
                 />
               </div>
 
@@ -375,14 +391,14 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       type="text"
                       value={selectedWidget.subTitle1 || ''}
                       onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle1: e.target.value })}
-                      className="p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none"
+                      className={`p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none`}
                       placeholder="Left Label"
                     />
                     <input
                       type="text"
                       value={selectedWidget.subTitle2 || ''}
                       onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle2: e.target.value })}
-                      className="p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none"
+                      className={`p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none`}
                       placeholder="Right Label"
                     />
                   </div>
@@ -472,7 +488,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
 
       {
-        isSummary && (
+        isSummary && !isGeneralKpi && (
           <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <Smile className="w-4 h-4" /> Icon Settings
@@ -484,13 +500,144 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
                   onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
                   placeholder="e.g. group, monitoring, star"
                 />
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
                   {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
                 </span>
               </div>
+            </div>
+          </section>
+        )
+      }
+
+      {
+        isEarningProgress && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <PaletteIcon className="w-4 h-4" /> Progress
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={selectedWidget.progressValue ?? 89}
+                onChange={(e) => updateCurrentWidget({ progressValue: parseInt(e.target.value, 10) })}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+              />
+            </div>
+          </section>
+        )
+      }
+
+      {
+        isEarningTrend && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" /> Earning Trend
+            </label>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Comparison text</span>
+                <input
+                  type="text"
+                  value={selectedWidget.comparisonText ?? ''}
+                  onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Compared of $11,750 last year"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="space-y-1 flex-1">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Trend %</span>
+                  <input
+                    type="number"
+                    value={selectedWidget.trendPercent ?? 21}
+                    onChange={(e) => updateCurrentWidget({ trendPercent: parseInt(e.target.value, 10) || 0 })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pt-5">
+                  <span className="text-[10px] uppercase font-bold text-gray-400">Direction</span>
+                  <Switch
+                    checked={selectedWidget.trendUp !== false}
+                    onChange={(checked) => updateCurrentWidget({ trendUp: checked })}
+                  />
+                  <span className="text-xs text-[var(--text-muted)]">{selectedWidget.trendUp !== false ? '▲ Up' : '▼ Down'}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block">Category bars</span>
+                {(selectedWidget.categoryItems ?? [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: '#f97316' }, { label: 'Marketing', value: 12 }]).map((item, idx) => (
+                  <div key={idx} className="flex gap-2 items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)]">
+                    <input
+                      type="text"
+                      value={item.label}
+                      onChange={(e) => {
+                        const next = [...(selectedWidget.categoryItems ?? [])];
+                        if (!next[idx]) next[idx] = { label: '', value: 0 };
+                        next[idx] = { ...next[idx], label: e.target.value };
+                        updateCurrentWidget({ categoryItems: next });
+                      }}
+                      className="flex-1 min-w-0 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      placeholder="Label"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={item.value}
+                      onChange={(e) => {
+                        const next = [...(selectedWidget.categoryItems ?? [])];
+                        if (!next[idx]) next[idx] = { label: '', value: 0 };
+                        next[idx] = { ...next[idx], value: parseInt(e.target.value, 10) || 0 };
+                        updateCurrentWidget({ categoryItems: next });
+                      }}
+                      className="w-14 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                    />
+                    <input
+                      type="text"
+                      value={item.color ?? ''}
+                      onChange={(e) => {
+                        const next = [...(selectedWidget.categoryItems ?? [])];
+                        if (!next[idx]) next[idx] = { label: '', value: 0 };
+                        next[idx] = { ...next[idx], color: e.target.value || undefined };
+                        updateCurrentWidget({ categoryItems: next });
+                      }}
+                      className="w-20 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      placeholder="Color"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      }
+
+      {
+        isGeneralKpi && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <PaletteIcon className="w-4 h-4" /> KPI Icon
+            </label>
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Icon</span>
+              <select
+                value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
+                onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+              >
+                {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </section>
         )
@@ -521,7 +668,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:${isCyber ? 'rounded-md' : 'rounded-lg'} file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:${isCyber ? 'rounded-md' : 'rounded-lg'} file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
                   />
                 </div>
               </div>
@@ -533,7 +680,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentMainValue || ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -545,10 +692,34 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentSubValue || ''}
                   onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold"
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="Image description..."
                 />
               </div>
+            </div>
+          </section>
+        )
+      }
+
+      {
+        !isSec && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <PaletteIcon className="w-4 h-4" /> Background
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Background opacity</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={selectedWidget.backgroundOpacity ?? 100}
+                onChange={(e) => updateCurrentWidget({ backgroundOpacity: parseInt(e.target.value, 10) })}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+              />
             </div>
           </section>
         )
@@ -598,17 +769,29 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
                 <Palette className="w-4 h-4" /> Data Series
               </label>
-              <button
-                onClick={handleAddSeries}
-                className="btn-base btn-surface"
-                style={{ padding: '6px' }}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleResetSeriesColors}
+                  className="btn-base btn-surface flex items-center gap-1"
+                  style={{ padding: '6px 8px' }}
+                  title="Reset series colors to brand/theme"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase">Reset</span>
+                </button>
+                <button
+                  onClick={handleAddSeries}
+                  className="btn-base btn-surface"
+                  style={{ padding: '6px' }}
+                  title="Add series"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               {(currentConfig.series || []).map((s, idx) => (
-                <div key={s.key} className="p-3 bg-gray-50 dark:bg-gray-800 ${isCyber ? 'rounded-md' : 'rounded-xl'} border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm">
+                <div key={s.key} className={`p-3 bg-gray-50 dark:bg-gray-800 ${isCyber ? 'rounded-md' : 'rounded-xl'} border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm`}>
                   <div className="flex flex-col gap-0.5 mr-1">
                     <button
                       disabled={idx === 0}
@@ -690,7 +873,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentConfig.xAxisLabel || ''}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
-                  className="w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                  className={`w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold`}
                   placeholder="e.g. Month, Project Name"
                 />
                 <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
@@ -704,12 +887,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               type="text"
               value={currentConfig.unit || ''}
               onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-              className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               placeholder="e.g. 명, $, %"
             />
           </div>
 
-          {(isSummary || isSummaryChart || isPremiumSummary) && (
+          {(isSummary || isSummaryChart || isPremiumSummary || isGeneralKpi || isEarningProgress || isEarningTrend) && (
             <>
               {!isImage && (
                 <div className="space-y-1">
@@ -718,18 +901,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={currentMainValue || ''}
                     onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
                   />
                 </div>
               )}
-              {!isImage && (
+              {!isImage && !isEarningTrend && (
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Description</span>
                   <input
                     type="text"
                     value={currentSubValue || ''}
                     onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
               )}

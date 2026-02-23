@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { ThemeMode } from '../types';
 import './ModeToggle.css';
@@ -9,11 +9,22 @@ interface ModeToggleProps {
 }
 
 const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
-    const isDark = mode === ThemeMode.DARK;
+    const [displayMode, setDisplayMode] = useState(mode);
+    useEffect(() => setDisplayMode(mode), [mode]);
+
+    const isDark = displayMode === ThemeMode.DARK;
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const nextMode = isDark ? ThemeMode.LIGHT : ThemeMode.DARK;
+        setDisplayMode(nextMode);
+        onChange(nextMode);
+    };
 
     return (
         <button
-            onClick={() => onChange(isDark ? ThemeMode.LIGHT : ThemeMode.DARK)}
+            type="button"
+            onClick={handleClick}
             className={`premium-mode-toggle ${isDark ? 'dark' : 'light'}`}
             aria-label="Toggle Theme Mode"
         >

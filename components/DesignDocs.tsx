@@ -5,9 +5,10 @@ import {
     CheckCircle2, XCircle, AlertTriangle, Info,
     Search, ChevronDown, MousePointer2, Layout,
     ArrowLeft, Sun, Moon, Settings, FileSpreadsheet,
-    GripVertical, List, Edit3, Plus
+    GripVertical, List, Edit3, Plus, Download
 } from 'lucide-react';
 import './DesignDocs.css';
+import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 import { ThemeMode } from '../types';
@@ -20,9 +21,9 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
     const [activeTab, setActiveTab] = useState<'tokens' | 'components' | 'icons'>('tokens');
     const [activeSubTab, setActiveSubTab] = useState<'buttons' | 'forms' | 'cards'>('buttons');
 
-    const ColorSwatch = ({ name, variable, description }: { name: string, variable: string, description?: string }) => (
+    const ColorSwatch = ({ name, variable, description, isGradient }: { name: string, variable: string, description?: string; isGradient?: boolean }) => (
         <div className="swatch-card">
-            <div className="swatch-preview" style={{ backgroundColor: `var(${variable})` }} />
+            <div className="swatch-preview" style={isGradient ? { background: `var(${variable})` } : { backgroundColor: `var(${variable})` }} />
             <div className="swatch-info">
                 <div className="swatch-name">{name}</div>
                 <div className="swatch-value">{variable}</div>
@@ -54,6 +55,15 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => downloadFigmaVariablesJson('design-tokens-figma.json')}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-base)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-semibold hover:bg-[var(--border-muted)] transition-colors"
+                        title="Figma 변수(Variables)로 쓸 수 있는 JSON 다운로드"
+                    >
+                        <Download className="w-4 h-4" />
+                        Figma 변수로 내보내기
+                    </button>
                     <div className="text-[10px] bg-primary text-white px-2 py-1 rounded font-black">v1.2.8</div>
                 </div>
             </header>
@@ -93,7 +103,7 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                                     <div className="docs-grid">
                                         <ColorSwatch name="Primary" variable="--primary-color" description="Main brand color for actions" />
                                         <ColorSwatch name="Secondary" variable="--secondary-color" description="Alternative brand color" />
-                                        <ColorSwatch name="Primary Gradient" variable="--primary-gradient" description="Dynamic gradient for primary actions" />
+                                        <ColorSwatch name="Primary Gradient" variable="--primary-gradient" description="Dynamic gradient for primary actions" isGradient />
                                         <ColorSwatch name="Primary Subtle" variable="--primary-subtle" description="Transparent primary background" />
                                     </div>
                                 </div>

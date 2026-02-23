@@ -275,7 +275,7 @@
         },
         "typography": {
             "titleSize": {
-                "value": "18px",
+                "value": "14px",
                 "type": "dimension"
             },
             "titleWeight": {
@@ -291,7 +291,7 @@
                 "type": "dimension"
             },
             "textSmall": {
-                "value": "13px",
+                "value": "12px",
                 "type": "dimension"
             },
             "textBase": {
@@ -299,15 +299,15 @@
                 "type": "dimension"
             },
             "textMd": {
-                "value": "18px",
+                "value": "16px",
                 "type": "dimension"
             },
             "textLg": {
-                "value": "30px",
+                "value": "24px",
                 "type": "dimension"
             },
             "textHero": {
-                "value": "48px",
+                "value": "34px",
                 "type": "dimension"
             }
         },
@@ -452,6 +452,47 @@
                 "selected_inner_glow": {
                     "value": "inset 0 0 25px rgba(139, 92, 246, 0.15)",
                     "type": "string"
+                }
+            },
+            "glassmorphism": {
+                "blur": {
+                    "value": "12px",
+                    "type": "dimension",
+                    "description": "Backdrop blur amount for glass cards"
+                },
+                "light": {
+                    "background": {
+                        "value": "rgba(255, 255, 255, 0.55)",
+                        "type": "color",
+                        "description": "Light mode glass background"
+                    },
+                    "border": {
+                        "value": "1px solid rgba(255, 255, 255, 0.6)",
+                        "type": "string",
+                        "description": "Light mode glass border"
+                    },
+                    "shadow": {
+                        "value": "0 8px 32px rgba(0, 0, 0, 0.08)",
+                        "type": "string",
+                        "description": "Light mode glass shadow"
+                    }
+                },
+                "dark": {
+                    "background": {
+                        "value": "rgba(15, 23, 42, 0.35)",
+                        "type": "color",
+                        "description": "Dark mode glass background"
+                    },
+                    "border": {
+                        "value": "1px solid rgba(255, 255, 255, 0.12)",
+                        "type": "string",
+                        "description": "Dark mode glass border"
+                    },
+                    "shadow": {
+                        "value": "0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                        "type": "string",
+                        "description": "Dark mode glass shadow"
+                    }
                 }
             }
         },

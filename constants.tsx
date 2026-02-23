@@ -1,4 +1,5 @@
 import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, ThemePreset, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment, Widget } from './types';
+import { getDefaultThemeFromTokens, getLightThemeFromTokens } from './design-tokens/themeFromTokens';
 
 export const MOCK_CHART_DATA = [
   { name: 'Jan', value: 400, secondary: 240 },
@@ -10,63 +11,68 @@ export const MOCK_CHART_DATA = [
   { name: 'Jul', value: 349, secondary: 430 },
 ];
 
-export const DEFAULT_THEME: DashboardTheme = {
-  name: 'Dark Mode',
-  primaryColor: '#6366f1',
-  backgroundColor: '#020617',
-  surfaceColor: '#0f172a',
-  mode: ThemeMode.DARK,
-  chartLibrary: ChartLibrary.RECHARTS,
-  borderRadius: 16,
-  chartRadius: 6,
-  borderWidth: 1,
-  borderColor: '#1e293b',
-  spacing: 16,
-  dashboardPadding: 32,
-  titleSize: 18,
-  titleWeight: '700',
-  contentSize: 14,
-  textTiny: 12,
-  textSmall: 13,
-  textMd: 18,
-  textLg: 30,
-  textHero: 48,
-  cardShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
-  titleColor: '#f8fafc',
-  textColor: '#94a3b8',
-  widgetHeaderColor: 'transparent',
-  showPageTabs: true
-};
-
-export const THEME_PRESETS: ThemePreset[] = [
-  {
-    id: 'preset_light',
-    name: 'Light Mode',
-    theme: {
-      ...DEFAULT_THEME,
-      name: 'Light Mode',
-      mode: ThemeMode.LIGHT,
-      backgroundColor: '#f8fafc',
-      surfaceColor: '#ffffff',
-      primaryColor: '#3b82f6',
-      titleColor: '#0f172a',
-      textColor: '#334155',
-      cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-      borderColor: '#e2e8f0',
-      widgetHeaderColor: undefined,
-      dualModeSupport: true
-    }
-  },
-  {
-    id: 'preset_dark',
-    name: 'Dark Mode',
-    theme: {
-      ...DEFAULT_THEME,
+/** design-tokens.json 기준 기본 테마(Dark). JSON 없거나 오류 시 fallback 사용 */
+function getDefaultTheme(): DashboardTheme {
+  try {
+    return getDefaultThemeFromTokens();
+  } catch {
+    return {
       name: 'Dark Mode',
-      dualModeSupport: true
-    }
+      primaryColor: '#6366f1',
+      backgroundColor: '#020617',
+      surfaceColor: '#0f172a',
+      mode: ThemeMode.DARK,
+      chartLibrary: ChartLibrary.RECHARTS,
+      borderRadius: 16,
+      chartRadius: 6,
+      borderWidth: 1,
+      borderColor: '#1e293b',
+      spacing: 16,
+      dashboardPadding: 32,
+      titleSize: 18,
+      titleWeight: '700',
+      contentSize: 14,
+      textTiny: 12,
+      textSmall: 13,
+      textMd: 18,
+      textLg: 30,
+      textHero: 48,
+      cardShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
+      titleColor: '#f8fafc',
+      textColor: '#94a3b8',
+      widgetHeaderColor: 'transparent',
+      showPageTabs: true,
+    };
   }
-];
+}
+
+export const DEFAULT_THEME: DashboardTheme = getDefaultTheme();
+
+/** Light/Dark 프리셋 — design-tokens.json semantic.light / semantic.dark 기준 */
+export const THEME_PRESETS: ThemePreset[] = (() => {
+  let lightTheme: DashboardTheme;
+  try {
+    lightTheme = getLightThemeFromTokens({ name: 'Light Mode', dualModeSupport: true, widgetHeaderColor: undefined });
+  } catch {
+    lightTheme = { ...DEFAULT_THEME, name: 'Light Mode', mode: ThemeMode.LIGHT, backgroundColor: '#f8fafc', surfaceColor: '#ffffff', primaryColor: '#3b82f6', titleColor: '#0f172a', textColor: '#334155', cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderColor: '#e2e8f0', dualModeSupport: true };
+  }
+  return [
+    { id: 'preset_light', name: 'Light Mode', theme: lightTheme },
+    { id: 'preset_dark', name: 'Dark Mode', theme: { ...DEFAULT_THEME, name: 'Dark Mode', dualModeSupport: true } },
+  ];
+})();
+
+/** new project2 전용 커스텀 테마 — design-tokens 기준 + 이미지(Data visualisation) 블루 악센트, 생키 팔레트 */
+export const PROJECT2_CUSTOM_THEME: DashboardTheme = (() => {
+  const base = getDefaultThemeFromTokens();
+  return {
+    ...base,
+    name: 'Custom (Data visualisation)',
+    primaryColor: '#3b82f6',
+    chartPalette: ['#4f46e5', '#0d9488', '#c2410c', '#ec4899', '#a855f7', '#f97316'],
+    dualModeSupport: true,
+  };
+})();
 
 export const DEFAULT_HEADER: HeaderConfig = {
   show: true,
@@ -103,7 +109,12 @@ export const DEFAULT_LAYOUT: LayoutConfig = {
   defaultRowHeight: 20,
 };
 
-export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainValue?: string, subValue?: string, icon?: string }> = {
+/** breakpoint 이름 → 최소 너비(px). 화면 너비가 이 값 미만이면 다음 breakpoint로 전환 */
+export const RESPONSIVE_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480 } as const;
+/** breakpoint별 그리드 컬럼 수 (lg=데스크톱 24열, md=태블릿 12열, sm=모바일 가로 6열, xs=작은 모바일 2열) */
+export const RESPONSIVE_COLS = { lg: 24, md: 12, sm: 6, xs: 2 } as const;
+
+export const TYPE_DEFAULT_DATA: Record<string, { data: any[]; config: any; mainValue?: string; subValue?: string; icon?: string; progressValue?: number; title?: string }> = {
   [WidgetType.SUMMARY]: {
     mainValue: '1,234',
     subValue: '평균 활성 사용자',
@@ -583,14 +594,73 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[], config: any, mainV
       showLabels: false,
       series: [{ key: 'value', label: '수량', color: 'var(--primary-color)' }]
     }
-  }
+  },
 
+  [WidgetType.GENERAL_KPI]: {
+    mainValue: '204',
+    subValue: 'ACTIVE USER',
+    icon: 'TrendingDown',
+    data: [],
+    config: { xAxisKey: 'name', yAxisKey: 'value', unit: '', showLegend: false, showGrid: false, showXAxis: false, showYAxis: false, showUnit: false, showUnitInLegend: false, showLabels: false, series: [] }
+  },
+  [WidgetType.EARNING_PROGRESS]: {
+    title: 'Total earning',
+    mainValue: '$12,875',
+    subValue: '11%',
+    progressValue: 89,
+    data: [],
+    config: { xAxisKey: 'name', yAxisKey: 'value', unit: '', showLegend: false, showGrid: false, showXAxis: false, showYAxis: false, showUnit: false, showUnitInLegend: false, showLabels: false, series: [] }
+  },
+  [WidgetType.BLANK]: {
+    data: [],
+    config: {}
+  },
+  [WidgetType.EARNING_TREND]: {
+    mainValue: '$12,875',
+    subValue: '21',
+    trendPercent: 21,
+    trendUp: true,
+    comparisonText: 'Compared of $11,750 last year',
+    data: [
+      { name: 'Jan', value: 8200 },
+      { name: 'Feb', value: 9100 },
+      { name: 'Mar', value: 8700 },
+      { name: 'Apr', value: 9500 },
+      { name: 'May', value: 10200 },
+      { name: 'Jun', value: 11200 },
+      { name: 'Jul', value: 11800 },
+      { name: 'Aug', value: 12400 },
+      { name: 'Sep', value: 12100 },
+      { name: 'Oct', value: 12875 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      useGradient: true,
+      series: [
+        { key: 'value', label: 'Revenue', color: '#ec4899', endColor: '#8b5cf6' }
+      ]
+    },
+    categoryItems: [
+      { label: 'Sales', value: 8 },
+      { label: 'Product', value: 68, color: '#f97316' },
+      { label: 'Marketing', value: 12 }
+    ]
+  }
 };
 
 import {
   BarChart3, TrendingUp, PieChart, Table, Database,
   Activity, Monitor, LayoutGrid, CloudSun, Image as ImageIcon, MapPin,
-  Hexagon, BarChartHorizontal, AreaChart, Layers, Workflow, Info
+  Hexagon, BarChartHorizontal, AreaChart, Layers, Workflow, Info, Square
 } from 'lucide-react';
 
 export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: any, category: 'viz' | 'premium' | 'general' }>> = {
@@ -620,7 +690,22 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.IMAGE]: { label: '이미지 박스', icon: ImageIcon, category: 'general' },
   [WidgetType.MAP]: { label: '지도 위젯', icon: MapPin, category: 'general' },
   [WidgetType.WEATHER]: { label: '날씨 정보', icon: CloudSun, category: 'general' },
+  [WidgetType.GENERAL_KPI]: { label: 'KPI (General)', icon: Activity, category: 'general' },
+  [WidgetType.EARNING_PROGRESS]: { label: 'Total Earning (Progress)', icon: TrendingUp, category: 'general' },
+  [WidgetType.EARNING_TREND]: { label: 'Earning Trend (Chart + KPI)', icon: Activity, category: 'general' },
+  [WidgetType.BLANK]: { label: '빈 위젯', icon: Square, category: 'general' },
 };
+
+/** Icon options for General KPI widget (value = Lucide icon name stored in widget.icon) */
+export const GENERAL_KPI_ICON_OPTIONS: { value: string; label: string; colorVar: string }[] = [
+  { value: 'TrendingDown', label: 'Trending Down', colorVar: '--info' },
+  { value: 'User', label: 'User', colorVar: '--primary-color' },
+  { value: 'Repeat', label: 'Repeat', colorVar: '--secondary-color' },
+  { value: 'Activity', label: 'Activity', colorVar: '--primary-color' },
+  { value: 'BarChart3', label: 'Bar Chart', colorVar: '--primary-color' },
+  { value: 'TrendingUp', label: 'Trending Up', colorVar: '--success' },
+  { value: 'Database', label: 'Database', colorVar: '--primary-color' },
+];
 
 export const EXAMPLES_LABELS: Record<string, string> = Object.keys(WIDGET_METADATA).reduce((acc, key) => {
   acc[key] = WIDGET_METADATA[key as WidgetType].label;
@@ -664,6 +749,10 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.IMAGE,
   WidgetType.MAP,
   WidgetType.WEATHER,
+  WidgetType.GENERAL_KPI,
+  WidgetType.EARNING_PROGRESS,
+  WidgetType.EARNING_TREND,
+  WidgetType.BLANK,
 ];
 
 // rowHeight 20 → height 200 = 10 rows
@@ -674,7 +763,7 @@ export const EXAMPLES_PAGE_WIDGETS: Widget[] = EXAMPLES_WIDGET_TYPES.map((type, 
   return {
     id: `ex_${idx + 1}`,
     type,
-    title: EXAMPLES_LABELS[type] || type,
+    title: (def as any)?.title ?? EXAMPLES_LABELS[type] ?? type,
     colSpan: 6,
     rowSpan: EXAMPLES_ROW_SPAN,
     config: def?.config ? JSON.parse(JSON.stringify(def.config)) : defaultChartConfig,
@@ -682,9 +771,78 @@ export const EXAMPLES_PAGE_WIDGETS: Widget[] = EXAMPLES_WIDGET_TYPES.map((type, 
     mainValue: def?.mainValue,
     subValue: def?.subValue,
     icon: def?.icon,
+    progressValue: def?.progressValue,
     noBezel: false,
   };
 });
+
+/** Sankey data: Finance → Sales/Investments/Salary → Main projects/Development/Outsourcing (image flow). */
+const PROJECT2_SANKEY_DATA = [
+  { source: 'Finance', target: 'Sales', value: 84430 },
+  { source: 'Finance', target: 'Investments', value: 78655 },
+  { source: 'Finance', target: 'Salary', value: 23987 },
+  { source: 'Sales', target: 'Main projects', value: 2500 },
+  { source: 'Sales', target: 'Development', value: 45000 },
+  { source: 'Sales', target: 'Outsourcing', value: 36930 },
+  { source: 'Investments', target: 'Main projects', value: 2000 },
+  { source: 'Investments', target: 'Development', value: 45000 },
+  { source: 'Investments', target: 'Outsourcing', value: 31655 },
+  { source: 'Salary', target: 'Main projects', value: 1373 },
+  { source: 'Salary', target: 'Development', value: 3989 },
+  { source: 'Salary', target: 'Outsourcing', value: 18625 },
+];
+
+/** Widgets for New Project2: left (EARNING_PROGRESS, EARNING_TREND) + center (CHART_SANKEY) + bottom (3 GENERAL_KPI). */
+const PROJECT2_PAGE_WIDGETS: Widget[] = (() => {
+  const kpiBase = TYPE_DEFAULT_DATA[WidgetType.GENERAL_KPI];
+  const earningBase = TYPE_DEFAULT_DATA[WidgetType.EARNING_PROGRESS];
+  const trendBase = TYPE_DEFAULT_DATA[WidgetType.EARNING_TREND] as any;
+  const sankeyBase = TYPE_DEFAULT_DATA[WidgetType.CHART_SANKEY];
+  const kpiConfig = kpiBase?.config ? JSON.parse(JSON.stringify(kpiBase.config)) : defaultChartConfig;
+  const earningConfig = earningBase?.config ? JSON.parse(JSON.stringify(earningBase.config)) : defaultChartConfig;
+  const trendConfig = trendBase?.config ? JSON.parse(JSON.stringify(trendBase.config)) : defaultChartConfig;
+  const sankeyConfig = sankeyBase?.config ? JSON.parse(JSON.stringify(sankeyBase.config)) : defaultChartConfig;
+  const trendData = trendBase?.data ? JSON.parse(JSON.stringify(trendBase.data)) : [];
+  const trendCategoryItems = trendBase?.categoryItems ? JSON.parse(JSON.stringify(trendBase.categoryItems)) : [];
+  /** new project2 커스텀 컬러: 이미지 기준 Sales=다크오렌지, Product=미디엄오렌지, Marketing=뮤트블루 */
+  const project2CategoryItems = [
+    { label: 'Sales', value: 8, color: '#ea580c' },
+    { label: 'Product', value: 68, color: '#f97316' },
+    { label: 'Marketing', value: 12, color: '#64748b' },
+  ];
+  return [
+    { id: 'proj2_earning_1', type: WidgetType.EARNING_PROGRESS, title: 'Total earning', config: earningConfig, data: [], colSpan: 1, rowSpan: 1, mainValue: '$12,875', subValue: '11%', progressValue: 89, hideHeader: true },
+    {
+      id: 'proj2_earning_trend_1',
+      type: WidgetType.EARNING_TREND,
+      title: '',
+      config: { ...trendConfig, series: [{ key: 'value', label: 'Revenue', color: '#ec4899', endColor: '#8b5cf6' }] },
+      data: trendData,
+      colSpan: 1,
+      rowSpan: 1,
+      mainValue: trendBase?.mainValue ?? '$12,875',
+      trendPercent: trendBase?.trendPercent ?? 21,
+      trendUp: trendBase?.trendUp !== false,
+      comparisonText: trendBase?.comparisonText ?? 'Compared of $11,750 last year',
+      categoryItems: project2CategoryItems,
+      hideHeader: true,
+    },
+    {
+      id: 'proj2_sankey_1',
+      type: WidgetType.CHART_SANKEY,
+      title: 'Data visualisation',
+      config: sankeyConfig,
+      data: JSON.parse(JSON.stringify(PROJECT2_SANKEY_DATA)),
+      colSpan: 1,
+      rowSpan: 1,
+      hideHeader: true,
+      backgroundOpacity: 0,
+    },
+    { id: 'proj2_kpi_1', type: WidgetType.GENERAL_KPI, title: 'Active User', config: kpiConfig, data: [], colSpan: 1, rowSpan: 1, mainValue: '204', subValue: 'ACTIVE USER', icon: 'TrendingDown', hideHeader: true },
+    { id: 'proj2_kpi_2', type: WidgetType.GENERAL_KPI, title: 'All Time User', config: JSON.parse(JSON.stringify(kpiConfig)), data: [], colSpan: 1, rowSpan: 1, mainValue: '65,540', subValue: 'ALL TIME USER', icon: 'User', hideHeader: true },
+    { id: 'proj2_kpi_3', type: WidgetType.GENERAL_KPI, title: 'Total Projects', config: JSON.parse(JSON.stringify(kpiConfig)), data: [], colSpan: 1, rowSpan: 1, mainValue: '325', subValue: 'TOTAL PROJECTS', icon: 'Repeat', hideHeader: true },
+  ];
+})();
 
 export const INITIAL_PROJECT_LIST: Project[] = [
   {
@@ -698,6 +856,25 @@ export const INITIAL_PROJECT_LIST: Project[] = [
     }],
     activePageId: 'page_1',
     theme: DEFAULT_THEME
+  },
+  {
+    id: 'project_2',
+    name: 'new project2',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Dashboard',
+      widgets: PROJECT2_PAGE_WIDGETS,
+      header: DEFAULT_HEADER,
+      layout: {
+        ...DEFAULT_PAGE.layout,
+        backgroundImage: '/assets/bg-project2.png',
+        backgroundFlicker: true,
+        glassmorphism: true,
+      },
+    }],
+    activePageId: 'page_1',
+    theme: PROJECT2_CUSTOM_THEME,
   }
 ];
 

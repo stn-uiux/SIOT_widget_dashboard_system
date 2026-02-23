@@ -1,18 +1,28 @@
 
 import React, { useEffect } from 'react';
 import { DashboardTheme, ThemeMode } from './types';
+import designTokens from './design-tokens.json';
+
+type TokenObj = { value: string; type?: string };
+function tokenValue(obj: TokenObj | Record<string, TokenObj> | undefined): string {
+  if (!obj) return '';
+  if (obj && 'value' in obj && typeof (obj as TokenObj).value === 'string') return (obj as TokenObj).value;
+  return '';
+}
 
 interface DesignSystemProps {
     theme: DashboardTheme;
+    /** When set, theme is applied to this element (per-project scope). When unset, applied to document.documentElement. */
+    targetRef?: React.RefObject<HTMLElement | null>;
 }
 
 /**
  * DesignSystem Component
- * Dynamically generates color palettes (shades/tints) from the primary base color.
+ * Applies theme to a target element so each project has its own design system scope.
  */
-const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
+const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
     useEffect(() => {
-        const root = document.documentElement;
+        const root = targetRef?.current ?? document.documentElement;
 
         // Apply Primary Palette
         applyColorPalette(root, 'primary', theme.primaryColor);
@@ -44,15 +54,29 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme }) => {
         root.style.setProperty('--text-lg', `${theme.textLg}px`);
         root.style.setProperty('--text-hero', `${theme.textHero}px`);
 
-        // Mode Classes
+        // Glassmorphism (from design-tokens.json by theme mode)
+        type GlassVariant = { background?: TokenObj; border?: TokenObj; shadow?: TokenObj };
+        const components = (designTokens as { tokens?: { components?: { glassmorphism?: { blur?: TokenObj; light?: GlassVariant; dark?: GlassVariant } } } }).tokens?.components;
+        const glass = components?.glassmorphism;
+        const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
+        const variant: GlassVariant | undefined = glass && isDark ? glass.dark : glass?.light;
+        const blur = glass?.blur?.value ?? '12px';
+        const defBg = isDark ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)';
+        const defBorder = isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)';
+        const defShadow = isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)';
+        root.style.setProperty('--glass-bg', (variant && tokenValue(variant.background)) || defBg);
+        root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || defBorder);
+        root.style.setProperty('--glass-shadow', (variant && tokenValue(variant.shadow)) || defShadow);
+        root.style.setProperty('--glass-blur', blur);
+
+        // Mode Classes (on the same element we're theming)
         root.classList.remove('dark', 'cyber', 'midnight-pro');
         if (theme.mode === ThemeMode.DARK) {
             root.classList.add('dark');
         } else if (theme.mode === ThemeMode.CYBER) {
             root.classList.add('dark', 'cyber');
         }
-
-    }, [theme]);
+    }, [theme, targetRef]);
 
     return null;
 };
