@@ -37,7 +37,7 @@
     --purple-500: #8b5cf6;
     --pink-500: #ec4899;
 
-    --secondary-color: #6366f1;
+    --secondary-color: #0d9488;
     --premium-start: #7c3aed;
     --premium-end: #db2777;
     --primary-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
@@ -125,15 +125,15 @@
     --surface-muted: #1e293b;
     --text-main: #f8fafc;
     --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-muted: #cbd5e1;
     --border-base: rgba(255, 255, 255, 0.08);
     --border-muted: rgba(255, 255, 255, 0.05);
     --border-strong: rgba(255, 255, 255, 0.15);
 
-    /* Color Swap: Light Primary (#3b82f6) -> Dark Secondary */
+    /* Dark: primary 인디고 유지, secondary는 primary와 무관한 틸 */
     --primary-color: #6366f1;
     --primary-color-rgb: 99, 102, 241;
-    --secondary-color: #3b82f6;
+    --secondary-color: #2dd4bf;
 
     /* Dark Mode Selection: 은은한 흰색 */
     --selected-border-color: rgba(255, 255, 255, 0.45);
@@ -159,7 +159,7 @@
     --border-strong: rgba(99, 102, 241, 0.4);
     --primary-color: #6366f1;
     --primary-color-rgb: 99, 102, 241;
-    --secondary-color: #ec4899;
+    --secondary-color: #2dd4bf;
     --shadow-base: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     --shadow-premium: 0 0 40px rgba(99, 102, 241, 0.2);
 
@@ -705,6 +705,15 @@ body {
     background: #475569;
 }
 
+/* ─── 지구 배경(Globe) 사용 시: 빈 영역 드래그 → 지구 회전, 위젯은 클릭/드래그 유지 ─── */
+.globe-background-active .react-grid-layout {
+    pointer-events: none;
+}
+.globe-background-active .react-grid-item {
+    pointer-events: auto;
+}
+/* 그리드 빈 공간 클릭이 아래 지구로 전달되도록 (Tailwind pointer-events-none은 App에서 wrapper에 적용) */
+
 /* ─── react-grid-layout: resize handles & placeholder ─────────────────── */
 .react-grid-item>* {
     height: 100%;
@@ -939,6 +948,14 @@ body {
     border-color: var(--primary-color);
 }
 
+/* apexsankey: 툴바(Export chart) 및 워터마크 숨김 */
+.apex-sankey-container [class*="toolbar"],
+.apex-sankey-container [class*="watermark"],
+.apex-sankey-container [class*="branding"],
+.apex-sankey-container [class*="export"] {
+    display: none !important;
+}
+
 /* Standardized Switch Component */
 .stn-switch-container {
     position: relative;
@@ -990,39 +1007,31 @@ body {
     background-color: #334155;
 }
 
-/* ─── 배경 네온 번쩍임 (project2 등) ───────────────────────────────────────── */
+/* ─── 배경 네온 플리커: 천천히 밝아졌다가 천천히 많이 어두워지는 사이클 ─── */
 @keyframes neon-flicker-brightness {
     0%, 100% { filter: brightness(1); }
-    12% { filter: brightness(1.04); }
-    25% { filter: brightness(0.98); }
-    38% { filter: brightness(1.06); }
-    50% { filter: brightness(0.97); }
-    62% { filter: brightness(1.03); }
-    75% { filter: brightness(0.99); }
-    88% { filter: brightness(1.05); }
+    35% { filter: brightness(1.18); }
+    65% { filter: brightness(0.45); }
 }
 
 @keyframes neon-flicker-overlay {
     0%, 100% { opacity: 0; }
-    15% { opacity: 0.04; }
-    30% { opacity: 0; }
-    45% { opacity: 0.06; }
-    60% { opacity: 0.02; }
-    78% { opacity: 0.05; }
+    35% { opacity: 0.06; }
+    65% { opacity: 0.02; }
 }
 
 .bg-neon-flicker {
-    animation: neon-flicker-brightness 2.5s ease-in-out infinite;
+    animation: neon-flicker-brightness 5s ease-in-out infinite;
 }
 
 .bg-neon-flicker::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(0, 229, 255, 0.03), rgba(168, 85, 247, 0.04));
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.04), rgba(168, 85, 247, 0.05));
     pointer-events: none;
     z-index: 0;
-    animation: neon-flicker-overlay 2.2s ease-in-out infinite;
+    animation: neon-flicker-overlay 5s ease-in-out infinite;
 }
 
 /* ─── Glassmorphism (project2 위젯 카드) ─────────────────────────────────── */

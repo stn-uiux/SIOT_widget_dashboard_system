@@ -18,3 +18,8 @@ View your app in AI Studio: https://ai.studio/apps/drive/1OG1vXXKE2bPWE_7oPNExrO
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Figma / Cursor Plugin
+
+- **Cursor ↔ Figma plugin channel ID:** `4y002t6r`  
+  자세한 내용은 [docs/FIGMA_CURSOR_CHANNEL.md](docs/FIGMA_CURSOR_CHANNEL.md) 참고.

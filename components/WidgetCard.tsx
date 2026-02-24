@@ -68,6 +68,88 @@ const PIE_COLORS = [
   'var(--red-500)'
 ];
 
+/** Y축 레이블 길이에 맞춰 margin.left를 잡는 실시간 트래픽 차트 */
+const TrafficStatusChart: React.FC<{
+  currentData: any[];
+  valueKey: string;
+  contentSize: number;
+  labelColor: string;
+  strokeColor: string;
+  showGrid: boolean;
+  showXAxis: boolean;
+  showYAxis: boolean;
+  showLegend: boolean;
+  xAxisKey: string;
+  localSeries: { key: string; label: string; color?: string }[];
+  theme: DashboardTheme;
+  isCyber: boolean;
+  tooltipStyle: React.CSSProperties;
+  renderLegend: () => React.ReactNode;
+  resolveColor: (c: string | undefined, a: string, b: string) => string;
+}> = (props) => {
+  const measureRef = React.useRef<HTMLSpanElement>(null);
+  const [leftMargin, setLeftMargin] = React.useState(8);
+
+  const maxVal = React.useMemo(() => {
+    if (!props.currentData?.length) return 0;
+    return Math.max(...props.currentData.map((d: any) => Number(d[props.valueKey]) ?? 0));
+  }, [props.currentData, props.valueKey]);
+
+  React.useLayoutEffect(() => {
+    if (!measureRef.current || !props.showYAxis) {
+      setLeftMargin(0);
+      return;
+    }
+    const w = measureRef.current.offsetWidth;
+    setLeftMargin(w + 8);
+  }, [maxVal, props.contentSize, props.showYAxis]);
+
+  return (
+    <>
+      <span
+        ref={measureRef}
+        aria-hidden
+        style={{
+          position: 'absolute',
+          visibility: 'hidden',
+          whiteSpace: 'nowrap',
+          fontSize: props.contentSize,
+          fontWeight: 600,
+        }}
+      >
+        {maxVal.toLocaleString()}
+      </span>
+      <AreaChart data={props.currentData} margin={{ top: 5, right: 5, left: leftMargin, bottom: 5 }}>
+        <defs>
+          {props.localSeries.map((s, idx) => (
+            <linearGradient key={`gradTraffic-${idx}`} id={`gradTraffic-${idx}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={props.resolveColor(s.color, props.theme.primaryColor, props.theme.primaryColor)} stopOpacity={0.4} />
+              <stop offset="95%" stopColor={props.resolveColor(s.color, props.theme.primaryColor, props.theme.primaryColor)} stopOpacity={0} />
+            </linearGradient>
+          ))}
+        </defs>
+        {props.showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={props.strokeColor} opacity={0.3} />}
+        <XAxis dataKey={props.xAxisKey} hide={!props.showXAxis} stroke={props.labelColor} fontSize={props.contentSize} tickLine={false} axisLine={false} />
+        <YAxis hide={!props.showYAxis} stroke={props.labelColor} fontSize={props.contentSize} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+        <Tooltip contentStyle={props.tooltipStyle} />
+        {props.showLegend && <Legend content={props.renderLegend} verticalAlign="top" align="right" />}
+        {props.localSeries.map((s, idx) => (
+          <Area
+            key={s.key}
+            type="natural"
+            dataKey={s.key}
+            stroke={props.resolveColor(s.color, props.theme.primaryColor, props.theme.primaryColor)}
+            strokeWidth={props.isCyber ? 4 : 3}
+            fillOpacity={1}
+            fill={`url(#gradTraffic-${idx})`}
+            dot={false}
+          />
+        ))}
+      </AreaChart>
+    </>
+  );
+};
+
 const AmChartComponent: React.FC<{
   widget: Widget,
   theme: DashboardTheme,
@@ -85,6 +167,8 @@ const AmChartComponent: React.FC<{
     root._logo?.dispose();
 
     const localResolve = (c: string | undefined) => resolveColor(c, theme.primaryColor, theme.primaryColor);
+    const labelFill = am5.color(isDark ? '#f1f5f9' : resolveColor(labelColor, '#64748b'));
+    const axisStroke = am5.color(isDark ? '#94a3b8' : resolveColor(strokeColor, '#444444'));
 
     root.setThemes([
       am5themes_Animated.new(root),
@@ -106,6 +190,8 @@ const AmChartComponent: React.FC<{
       }));
 
       series.get("colors").set("colors", PIE_COLORS.map(c => am5.color(localResolve(c))));
+      series.labels.template.setAll({ fill: labelFill, fontSize: contentSize });
+      series.ticks.template.setAll({ stroke: axisStroke });
 
       series.data.setAll(widget.data);
       series.appear(1000, 100);
@@ -118,7 +204,7 @@ const AmChartComponent: React.FC<{
       }));
 
       const xRenderer = am5radar.AxisRendererCircular.new(root, {});
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
         categoryField: xAxisKey,
@@ -127,7 +213,7 @@ const AmChartComponent: React.FC<{
       xAxis.data.setAll(widget.data);
 
       const yRenderer = am5radar.AxisRendererRadial.new(root, {});
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
         renderer: yRenderer
@@ -185,7 +271,7 @@ const AmChartComponent: React.FC<{
       });
       series.nodes.labels.template.setAll({
         fontSize: contentSize,
-        fill: am5.color(resolveColor(labelColor, '#888888')),
+        fill: labelFill,
         paddingLeft: 5,
         paddingRight: 5
       });
@@ -211,15 +297,15 @@ const AmChartComponent: React.FC<{
       const xRenderer = am5xy.AxisRendererX.new(root, {
         minGridDistance: 30,
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const yRenderer = am5xy.AxisRendererY.new(root, {
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       let xAxis, yAxis;
       if (isHorizontal) {
@@ -281,9 +367,9 @@ const AmChartComponent: React.FC<{
 
       const xRenderer = am5xy.AxisRendererX.new(root, {
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
         categoryField: xAxisKey,
@@ -294,9 +380,9 @@ const AmChartComponent: React.FC<{
 
       const yRenderer = am5xy.AxisRendererY.new(root, {
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
         renderer: yRenderer
@@ -334,7 +420,7 @@ const AmChartComponent: React.FC<{
           });
         }
         if (widget.type === WidgetType.DASH_TRAFFIC_STATUS) {
-          series.set("tensionX", 0.77);
+          (series as any).set("tensionX", 0.77);
         }
         series.data.setAll(widget.data);
         series.appear(1000);
@@ -351,9 +437,9 @@ const AmChartComponent: React.FC<{
 
       const xRenderer = am5xy.AxisRendererX.new(root, {
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      xRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
         categoryField: xAxisKey,
@@ -364,9 +450,9 @@ const AmChartComponent: React.FC<{
 
       const yRenderer = am5xy.AxisRendererY.new(root, {
         strokeOpacity: 0.1,
-        stroke: am5.color(resolveColor(strokeColor, '#444444'))
+        stroke: axisStroke
       });
-      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: am5.color(resolveColor(labelColor, '#888888')) });
+      yRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
 
       const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
         renderer: yRenderer
@@ -432,6 +518,124 @@ const AmChartComponent: React.FC<{
   return <div ref={chartRef} className="w-full h-full" />;
 };
 
+/** ApexCharts 선택 시 Sankey 전용. wrapper 크기를 관찰해 위젯 폭에 맞춰 다시 그립니다. */
+const ApexSankeyWidget: React.FC<{
+  data: { nodes: { id: string; title: string }[]; edges: { source: string; target: string; value: number }[] };
+  fontColor?: string;
+  nodeWidth?: number;
+}> = ({ data, fontColor = '#333', nodeWidth = 20 }) => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const mountedRef = React.useRef(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [size, setSize] = React.useState({ w: 0, h: 0 });
+
+  React.useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const updateSize = () => {
+      if (!wrapper) return;
+      const rect = wrapper.getBoundingClientRect();
+      const w = Math.round(rect.width) || 0;
+      const h = Math.round(rect.height) || 0;
+      if (w > 0 && h > 0) setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(wrapper);
+    updateSize();
+    const t1 = requestAnimationFrame(updateSize);
+    const t2 = setTimeout(updateSize, 50);
+    const t3 = setTimeout(updateSize, 200);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setLoadError(null);
+    mountedRef.current = true;
+    const el = containerRef.current;
+    const wrapper = wrapperRef.current;
+    if (!el || !data.nodes.length) return;
+    const w = size.w > 0 ? size.w : (wrapper ? Math.round(wrapper.getBoundingClientRect().width) : 0) || el.offsetWidth || 400;
+    const h = size.h > 0 ? size.h : (wrapper ? Math.round(wrapper.getBoundingClientRect().height) : 0) || el.offsetHeight || 300;
+    if (w <= 0 || h <= 0) return;
+
+    (async () => {
+      try {
+        const mod = await import('apexsankey');
+        if (!mountedRef.current || !el) return;
+        const ApexSankeyLib = (mod as any).default ?? mod;
+        if (!ApexSankeyLib) return;
+        const licenseKey = (import.meta as any).env?.VITE_APEXSANKEY_LICENSE;
+        if (typeof ApexSankeyLib.setLicense === 'function' && licenseKey) {
+          ApexSankeyLib.setLicense(licenseKey);
+        }
+        el.style.width = '';
+        el.style.height = '';
+        el.style.minWidth = '';
+        el.style.minHeight = '';
+        const sankey = new ApexSankeyLib(el, {
+          width: w,
+          height: h,
+          fontColor,
+          nodeWidth,
+          enableTooltip: true,
+          edgeOpacity: 0.5,
+          canvasStyle: 'border: none; background: transparent;',
+          enableToolbar: false,
+        });
+        sankey.render(data);
+        if (!licenseKey && mountedRef.current && el) {
+          const hideWatermark = (node: HTMLElement) => {
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            const elem = node as HTMLElement;
+            const text = elem.textContent?.trim().replace(/\s+/g, ' ') ?? '';
+            const onlyApex = /^(APEXCHARTS\s*)+$/i.test(text) || text === 'APEXCHARTS';
+            if (elem.children.length === 0 && onlyApex) {
+              elem.style.display = 'none';
+              return;
+            }
+            Array.from(elem.children).forEach((c) => hideWatermark(c as HTMLElement));
+          };
+          const run = () => {
+            if (!mountedRef.current || !el) return;
+            hideWatermark(el);
+          };
+          requestAnimationFrame(run);
+          setTimeout(run, 150);
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          setLoadError('apexsankey 로드 실패. 터미널에서 npm install 후 dev 서버를 다시 실행하세요.');
+          if (el) el.innerHTML = '';
+        }
+      }
+    })();
+
+    return () => {
+      mountedRef.current = false;
+      if (el) el.innerHTML = '';
+    };
+  }, [data, fontColor, nodeWidth, size.w, size.h]);
+
+  if (loadError) {
+    return (
+      <div className="w-full h-full min-h-[200px] flex items-center justify-center p-4 text-center text-sm text-red-400 bg-red-950/20 rounded">
+        {loadError}
+      </div>
+    );
+  }
+  return (
+    <div ref={wrapperRef} className="w-full h-full min-w-0 min-h-[200px]" style={{ minHeight: '200px' }}>
+      <div ref={containerRef} className="apex-sankey-container w-full h-full" />
+    </div>
+  );
+};
+
 interface WidgetCardProps {
   widget: Widget;
   theme: DashboardTheme;
@@ -453,7 +657,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   const titleWeight = theme.titleWeight;
 
   const strokeColor = isCyber ? 'var(--cyber-border-alpha)' : 'var(--border-base)';
-  const labelColor = isCyber ? 'var(--cyber-text)' : 'var(--text-muted)';
+  const labelColor = isCyber ? 'var(--cyber-text)' : (isDark ? '#f1f5f9' : 'var(--text-muted)');
 
   const series = widget.config.series && widget.config.series.length > 0
     ? widget.config.series
@@ -526,14 +730,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         {items.map((entry, index) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="font-bold whitespace-nowrap text-muted" style={{ fontSize: 'var(--content-size)' }}>
+            <span className="font-bold whitespace-nowrap" style={{ fontSize: 'var(--content-size)', color: isDark ? '#f1f5f9' : 'var(--text-muted)' }}>
               {entry.value}
             </span>
           </div>
         ))}
         {showUnitInLegend && unit && (
           <div className="flex items-center gap-1.5 border-l pl-4 border-[var(--border-base)]">
-            <span className="font-bold tracking-tight uppercase opacity-60 text-muted" style={{ fontSize: 'calc(var(--content-size) * 0.85)' }}>
+            <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: isDark ? '#e2e8f0' : 'var(--text-muted)' }}>
               단위: {unit}
             </span>
           </div>
@@ -556,12 +760,32 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     const PIE_COLORS_LOCAL = PIE_COLORS;
 
     const renderApexChart = () => {
-      // Fallback for Sankey since ApexCharts doesn't support it natively
-      if (currentType === WidgetType.CHART_SANKEY) {
-        return renderAmChart();
-      }
-
       const { xAxisKey, showLegend, showGrid, showXAxis, showYAxis, unit } = currentConfig;
+
+      if (currentType === WidgetType.CHART_SANKEY) {
+        const sKey = xAxisKey || 'source';
+        const tKey = currentConfig.yAxisKey || 'target';
+        const vKey = localSeries[0]?.key || 'value';
+        const nodeIds = new Set<string>();
+        const edges: { source: string; target: string; value: number }[] = [];
+        currentData.forEach((item: any) => {
+          const sName = String(item[sKey] ?? item.source ?? item.from ?? '');
+          const tName = String(item[tKey] ?? item.target ?? item.to ?? '');
+          const val = Number(item[vKey] ?? item.value ?? 0);
+          if (sName && tName) {
+            nodeIds.add(sName);
+            nodeIds.add(tName);
+            edges.push({ source: sName, target: tName, value: val });
+          }
+        });
+        const nodes = Array.from(nodeIds).map((id) => ({ id, title: id }));
+        const resolvedFontColor = isDark ? '#e2e8f0' : '#334155';
+        return (
+          <div className="w-full h-full min-w-0 min-h-0 flex flex-col border-0 outline-none [&_*]:outline-none" style={{ border: 'none', boxShadow: 'none' }}>
+            <ApexSankeyWidget data={{ nodes, edges }} fontColor={resolvedFontColor} nodeWidth={Math.max(14, theme.chartRadius * 2)} />
+          </div>
+        );
+      }
 
       const categories = currentData.map(d => String(d[xAxisKey] || ''));
       const apexSeries = localSeries.map(s => ({
@@ -692,6 +916,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           break;
       }
 
+      if (currentType === WidgetType.CHART_RADAR) {
+        options.grid = { ...options.grid, show: false };
+      }
+      if (currentType === WidgetType.CHART_BAR_HORIZONTAL) {
+        const pad = options.grid?.padding || {};
+        options.grid = { ...options.grid, padding: { ...pad, left: 0, right: 8 } };
+      }
+
       return (
         <div className="h-full flex flex-col">
           <div className="flex-1 min-h-0">
@@ -713,6 +945,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         }));
       }
 
+      const amChartLabelColor = isDark ? 'var(--text-main)' : labelColor;
       return (
         <div className="h-full flex flex-col">
           <div className="flex-1 min-h-0 overflow-hidden">
@@ -721,7 +954,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
               theme={theme}
               isDark={isDark}
               contentSize={contentSize}
-              labelColor={labelColor}
+              labelColor={amChartLabelColor}
               strokeColor={strokeColor}
             />
           </div>
@@ -736,9 +969,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       WidgetType.EARNING_PROGRESS,
       WidgetType.EARNING_TREND,
       WidgetType.BLANK,
+      WidgetType.TEXT_BLOCK,
       WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2,
       WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS,
-      WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST
+      WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5
     ].includes(currentType);
 
     if (theme.chartLibrary === ChartLibrary.APEXCHARTS && !isGeneralWidget) {
@@ -1162,6 +1396,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     key={s.key}
                     name={s.label}
                     dataKey={s.key}
+                    stackId={localSeries.length > 1 ? 'stack1' : undefined}
                     fill={currentConfig.useGradient ? `url(#grad-bar-${s.key}-${idx})` : resolveColor(s.color, isCyber ? 'var(--cyber-text)' : theme.primaryColor, theme.primaryColor)}
                     radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
                   />
@@ -1171,11 +1406,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
-      case WidgetType.CHART_BAR_HORIZONTAL:
+      case WidgetType.CHART_BAR_HORIZONTAL: {
+        const catStrings = (currentData || []).map((d: any) => String(d[xAxisKey] ?? ''));
+        const maxCatLen = catStrings.length ? Math.max(...catStrings.map((s: string) => s.length)) : 0;
+        const yAxisWidth = Math.max(56, Math.min(180, Math.ceil(maxCatLen * (contentSize * 0.48))));
         return (
           <div className={`h-full ${isCyber ? 'neon-glow' : ''}`}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart key={chartKey} layout="vertical" data={currentData} margin={{ top: 5, right: 10, left: 30, bottom: 0 }}>
+              <BarChart key={chartKey} layout="vertical" data={currentData} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
                 {currentConfig.useGradient && (
                   <defs>
                     {localSeries.map((s, idx) => {
@@ -1194,10 +1432,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   </defs>
                 )}
                 {showGrid && <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={strokeColor} />}
-                {/* Note: In vertical layout, XAxis is the value axis, YAxis is the category axis */}
-                {/* We map 'showXAxis' to the value axis (bottom) and 'showYAxis' to the category axis (left) */}
                 <XAxis type="number" hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                <YAxis dataKey={xAxisKey} type="category" hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} width={65} />
+                <YAxis
+                  dataKey={xAxisKey}
+                  type="category"
+                  hide={!showYAxis}
+                  stroke={labelColor}
+                  fontSize={contentSize}
+                  tickLine={false}
+                  axisLine={false}
+                  width={yAxisWidth}
+                  tick={{ style: { whiteSpace: 'nowrap' } }}
+                />
                 <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
                 {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
                 {localSeries.map((s, idx) => (
@@ -1213,6 +1459,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             </ResponsiveContainer>
           </div>
         );
+      }
 
       case WidgetType.CHART_LINE:
         return (
@@ -1364,7 +1611,6 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           <div className="h-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={currentData}>
-                <PolarGrid stroke={strokeColor} />
                 <PolarAngleAxis dataKey={xAxisKey} tick={{ fill: labelColor, fontSize: contentSize }} />
                 <PolarRadiusAxis stroke={strokeColor} tick={{ fill: labelColor, fontSize: contentSize }} />
                 {localSeries.map(s => (
@@ -1440,7 +1686,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       width={width}
                       height={height}
                       fill={getNodeColor(payload.name)}
-                      fillOpacity={0.85}
+                      fillOpacity={1}
+                      stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)'}
+                      strokeWidth={1}
                       rx={theme.chartRadius}
                     />
                     <text
@@ -1466,8 +1714,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       d={path}
                       fill="none"
                       stroke={linkColor}
-                      strokeOpacity={0.4}
-                      strokeWidth={Math.max(1, linkWidth ?? 2)}
+                      strokeOpacity={isDark ? 0.82 : 0.75}
+                      strokeWidth={Math.max(1.5, linkWidth ?? 2)}
                     />
                   );
                 }}
@@ -1692,6 +1940,35 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
+      case WidgetType.DASH_TRAFFIC_TOP5:
+        return (
+          <div className="h-full flex flex-col gap-1.5 min-h-0 overflow-y-auto py-1">
+            {currentData.map((d: any, idx: number) => {
+              const maxVal = Math.max(...currentData.map((i: any) => i.value)) || 1;
+              const widthPercent = (d.value / maxVal) * 100;
+              return (
+                <div key={idx} className="flex items-center gap-2 flex-shrink-0" style={{ minHeight: 28 }}>
+                  <div className="w-14 flex-shrink-0 text-center font-bold text-main" style={{ fontSize: 'var(--text-small)' }}>
+                    {d.name}
+                  </div>
+                  <div className="flex-1 h-4 bg-[var(--surface-muted)] rounded overflow-hidden min-w-0">
+                    <div
+                      className="h-full rounded transition-all duration-500"
+                      style={{
+                        width: `${widthPercent}%`,
+                        background: 'linear-gradient(to right, #4ac0ef 0%, #648be3 30%, #8777e3 50%, #a864e3 70%, #e3649b 100%)'
+                      }}
+                    />
+                  </div>
+                  <div className="w-14 flex-shrink-0 text-right font-bold text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                    {Number(d.value).toLocaleString()}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+
       case WidgetType.DASH_FAILURE_STATS:
         return (
           <div className="h-full">
@@ -1761,35 +2038,26 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.DASH_TRAFFIC_STATUS:
         return (
-          <div className="h-full p-2">
+          <div className="h-full pt-2 pr-2 pb-2 pl-0 relative">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={currentData}>
-                <defs>
-                  {localSeries.map((s, idx) => (
-                    <linearGradient key={`gradTraffic-${idx}`} id={`gradTraffic-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} opacity={0.3} />}
-                <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                <YAxis hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
-                {localSeries.map((s, idx) => (
-                  <Area
-                    key={s.key}
-                    type="natural"
-                    dataKey={s.key}
-                    stroke={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
-                    strokeWidth={isCyber ? 4 : 3}
-                    fillOpacity={1}
-                    fill={`url(#gradTraffic-${idx})`}
-                    dot={false}
-                  />
-                ))}
-              </AreaChart>
+              <TrafficStatusChart
+                currentData={currentData}
+                valueKey={currentConfig.series[0]?.key || 'value'}
+                contentSize={contentSize}
+                labelColor={labelColor}
+                strokeColor={strokeColor}
+                showGrid={showGrid}
+                showXAxis={showXAxis}
+                showYAxis={showYAxis}
+                showLegend={showLegend}
+                xAxisKey={xAxisKey}
+                localSeries={localSeries}
+                theme={theme}
+                isCyber={isCyber}
+                tooltipStyle={tooltipStyle}
+                renderLegend={renderLegend}
+                resolveColor={resolveColor}
+              />
             </ResponsiveContainer>
           </div>
         );
@@ -1798,7 +2066,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         return (
           <div className="h-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={currentData}>
+              <AreaChart data={currentData} margin={{ top: 5, right: 5, left: 4, bottom: 5 }}>
                 <defs>
                   {localSeries.map((s, idx) => (
                     <linearGradient key={idx} id={`gradNet-${idx}`} x1="0" y1="0" x2="0" y2="1">
@@ -1880,6 +2148,32 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
+      case WidgetType.TEXT_BLOCK: {
+        const textContent = widget.mainValue ?? '';
+        const fontSize = widget.titleSize ?? theme.contentSize ?? 16;
+        const fontWeight = widget.titleWeight ?? '400';
+        return (
+          <div className="h-full flex flex-col justify-center p-2 overflow-hidden">
+            {isEditMode ? (
+              <textarea
+                value={textContent}
+                onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
+                placeholder="텍스트 입력..."
+                className="w-full h-full min-h-[80px] bg-transparent border-none p-0 resize-none focus:ring-0 outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
+                style={{ fontSize: `${fontSize}px`, fontWeight }}
+              />
+            ) : (
+              <div
+                className="text-[var(--text-main)] break-words whitespace-pre-wrap overflow-auto"
+                style={{ fontSize: `${fontSize}px`, fontWeight }}
+              >
+                {textContent || <span className="text-[var(--text-muted)] italic">텍스트를 입력하세요</span>}
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case WidgetType.BLANK:
 
       default:
@@ -1890,11 +2184,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   const bgOpacity = widget.backgroundOpacity ?? 100;
   const cardStyle: React.CSSProperties | undefined = glassStyle
     ? undefined
-    : !widget.noBezel
-      ? (bgOpacity >= 100
-          ? { backgroundColor: 'var(--surface, #0f172a)' }
-          : { backgroundColor: `color-mix(in srgb, var(--surface, #0f172a) ${bgOpacity}%, transparent)` })
-      : undefined;
+    : (bgOpacity >= 100
+        ? { backgroundColor: 'var(--surface, #0f172a)' }
+        : { backgroundColor: `color-mix(in srgb, var(--surface, #0f172a) ${bgOpacity}%, transparent)` });
   const glassStyleInline: React.CSSProperties | undefined = glassStyle
     ? {
         background: 'var(--glass-bg)',
@@ -1909,7 +2201,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     <div className={`h-full flex flex-col group relative ${isCyber ? 'cyber-frame' : ''}`}>
       {isCyber && <div className="cyber-frame-inner absolute inset-0 pointer-events-none z-10" />}
       <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${!widget.noBezel && !glassStyle ? `rounded-design border-main shadow-base p-design ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} ${glassStyle ? 'rounded-design p-design widget-glass' : ''} ${isEditMode ? 'edit-mode-indicator' : ''} ${widget.noBezel && !glassStyle ? 'bg-surface' : ''}`}
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${!widget.noBezel && !glassStyle ? `rounded-design shadow-base p-design ${theme.chartLibrary === ChartLibrary.APEXCHARTS && widget.type === WidgetType.CHART_SANKEY ? 'border-0' : 'border-main'} ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} ${glassStyle ? 'rounded-design p-design widget-glass' : ''} ${isEditMode ? 'edit-mode-indicator' : ''} ${widget.noBezel && !glassStyle && bgOpacity >= 100 ? 'bg-surface' : ''}`}
         style={glassStyleInline ?? cardStyle}
       >
         {(!widget.hideHeader || isEditMode) && (
@@ -1971,7 +2263,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         )}
 
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden">
           {isCyber && <div className="widget-scan" />}
           {widget.isDual ? (
             <div

@@ -554,6 +554,29 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[]; config: any; mainV
       ]
     }
   },
+  [WidgetType.DASH_TRAFFIC_TOP5]: {
+    title: '업무망 트래픽 사용량 TOP5',
+    data: [
+      { name: '서버1', value: 2130 },
+      { name: '서버2', value: 1970 },
+      { name: '서버3', value: 1700 },
+      { name: '서버4', value: 1412 },
+      { name: '서버5', value: 996 }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '트래픽', color: 'var(--primary-color)' }]
+    }
+  },
   [WidgetType.DASH_SECURITY_STATUS]: {
     mainValue: '545',
     data: [
@@ -615,6 +638,14 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[]; config: any; mainV
     data: [],
     config: {}
   },
+  [WidgetType.TEXT_BLOCK]: {
+    title: '텍스트',
+    mainValue: '여기에 글자를 입력하세요.',
+    titleSize: 18,
+    titleWeight: '400',
+    data: [],
+    config: {}
+  },
   [WidgetType.EARNING_TREND]: {
     mainValue: '$12,875',
     subValue: '21',
@@ -660,7 +691,7 @@ export const TYPE_DEFAULT_DATA: Record<string, { data: any[]; config: any; mainV
 import {
   BarChart3, TrendingUp, PieChart, Table, Database,
   Activity, Monitor, LayoutGrid, CloudSun, Image as ImageIcon, MapPin,
-  Hexagon, BarChartHorizontal, AreaChart, Layers, Workflow, Info, Square
+  Hexagon, BarChartHorizontal, AreaChart, Layers, Workflow, Info, Square, Type
 } from 'lucide-react';
 
 export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: any, category: 'viz' | 'premium' | 'general' }>> = {
@@ -684,6 +715,7 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.DASH_FACILITY_2]: { label: '시설 현황 (Type 2)', icon: Monitor, category: 'premium' },
   [WidgetType.DASH_RANK_LIST]: { label: '순위 리스트', icon: BarChartHorizontal, category: 'premium' },
   [WidgetType.DASH_TRAFFIC_STATUS]: { label: '실시간 트래픽', icon: TrendingUp, category: 'premium' },
+  [WidgetType.DASH_TRAFFIC_TOP5]: { label: '업무망 트래픽 TOP5', icon: Activity, category: 'premium' },
   [WidgetType.DASH_VDI_STATUS]: { label: 'VDI 접속 현황', icon: Table, category: 'premium' },
 
   [WidgetType.TABLE]: { label: '데이터 테이블', icon: Table, category: 'general' },
@@ -693,7 +725,7 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.GENERAL_KPI]: { label: 'KPI (General)', icon: Activity, category: 'general' },
   [WidgetType.EARNING_PROGRESS]: { label: 'Total Earning (Progress)', icon: TrendingUp, category: 'general' },
   [WidgetType.EARNING_TREND]: { label: 'Earning Trend (Chart + KPI)', icon: Activity, category: 'general' },
-  [WidgetType.BLANK]: { label: '빈 위젯', icon: Square, category: 'general' },
+  [WidgetType.TEXT_BLOCK]: { label: '텍스트 (글자만)', icon: Type, category: 'general' },
 };
 
 /** Icon options for General KPI widget (value = Lucide icon name stored in widget.icon) */
@@ -742,6 +774,7 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.DASH_RANK_LIST,
   WidgetType.DASH_RESOURCE_USAGE,
   WidgetType.DASH_TRAFFIC_STATUS,
+  WidgetType.DASH_TRAFFIC_TOP5,
   WidgetType.DASH_SECURITY_STATUS,
   WidgetType.DASH_VDI_STATUS,
   WidgetType.SUMMARY,
@@ -752,29 +785,70 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.GENERAL_KPI,
   WidgetType.EARNING_PROGRESS,
   WidgetType.EARNING_TREND,
-  WidgetType.BLANK,
+  WidgetType.TEXT_BLOCK,
 ];
 
 // rowHeight 20 → height 200 = 10 rows
 const EXAMPLES_ROW_SPAN = 10;
 
-export const EXAMPLES_PAGE_WIDGETS: Widget[] = EXAMPLES_WIDGET_TYPES.map((type, idx) => {
-  const def = TYPE_DEFAULT_DATA[type];
-  return {
-    id: `ex_${idx + 1}`,
-    type,
-    title: (def as any)?.title ?? EXAMPLES_LABELS[type] ?? type,
-    colSpan: 6,
-    rowSpan: EXAMPLES_ROW_SPAN,
-    config: def?.config ? JSON.parse(JSON.stringify(def.config)) : defaultChartConfig,
-    data: def?.data ? JSON.parse(JSON.stringify(def.data)) : [],
-    mainValue: def?.mainValue,
-    subValue: def?.subValue,
-    icon: def?.icon,
-    progressValue: def?.progressValue,
-    noBezel: false,
-  };
-});
+/** Figma 선택(층별 스택 막대) 기반 스택 막대 차트 위젯 — Y 0~100%, X 지하1층~5층 */
+const FLOOR_STACK_CHART_WIDGET: Widget = {
+  id: 'ex_figma_floor_stack',
+  type: WidgetType.CHART_BAR,
+  title: '층별 공간 현황',
+  colSpan: 6,
+  rowSpan: EXAMPLES_ROW_SPAN,
+  config: {
+    xAxisKey: 'name',
+    yAxisKey: 'value',
+    unit: '%',
+    showLegend: true,
+    showGrid: true,
+    showXAxis: true,
+    showYAxis: true,
+    showUnit: true,
+    showUnitInLegend: false,
+    showLabels: false,
+    useGradient: false,
+    series: [
+      { key: 's1', label: '엑티브 스튜디오', color: '#62cdff' },
+      { key: 's2', label: '힙 플레이스 + 전시홀', color: '#5ea9ff' },
+      { key: 's3', label: '커뮤니티 룸', color: '#7c87ff' },
+      { key: 's4', label: 'AI 스튜디오 + 다목적홀', color: '#bb8bff' },
+      { key: 's5', label: 'LED 스튜디오 + 책공방', color: '#e09cff' },
+    ],
+  },
+  data: [
+    { name: '지하 1층', s1: 14, s2: 19, s3: 28, s4: 11, s5: 9 },
+    { name: '1층', s1: 8, s2: 19, s3: 23, s4: 20, s5: 8 },
+    { name: '2층', s1: 6, s2: 22, s3: 13, s4: 22, s5: 7 },
+    { name: '3층', s1: 12, s2: 9, s3: 13, s4: 8, s5: 5 },
+    { name: '4층', s1: 8, s2: 9, s3: 11, s4: 7, s5: 8 },
+    { name: '5층', s1: 9, s2: 9, s3: 11, s4: 8, s5: 8 },
+  ],
+  noBezel: false,
+};
+
+export const EXAMPLES_PAGE_WIDGETS: Widget[] = [
+  ...EXAMPLES_WIDGET_TYPES.map((type, idx) => {
+    const def = TYPE_DEFAULT_DATA[type];
+    return {
+      id: `ex_${idx + 1}`,
+      type,
+      title: (def as any)?.title ?? EXAMPLES_LABELS[type] ?? type,
+      colSpan: 6,
+      rowSpan: EXAMPLES_ROW_SPAN,
+      config: def?.config ? JSON.parse(JSON.stringify(def.config)) : defaultChartConfig,
+      data: def?.data ? JSON.parse(JSON.stringify(def.data)) : [],
+      mainValue: def?.mainValue,
+      subValue: def?.subValue,
+      icon: def?.icon,
+      progressValue: def?.progressValue,
+      noBezel: false,
+    };
+  }),
+  FLOOR_STACK_CHART_WIDGET,
+];
 
 /** Sankey data: Finance → Sales/Investments/Salary → Main projects/Development/Outsourcing (image flow). */
 const PROJECT2_SANKEY_DATA = [
@@ -844,6 +918,91 @@ const PROJECT2_PAGE_WIDGETS: Widget[] = (() => {
   ];
 })();
 
+/** new project 3: 2x2 다크 대시보드 — 가로 막대(AMR), Earning Trend, 단일 수치(평균 활성 사용자), 트렌드 요약(누적 방문) */
+const PROJECT3_PAGE_WIDGETS: Widget[] = (() => {
+  const barData = [
+    { name: 'AMR1', value: 2130 },
+    { name: 'AMR2', value: 1970 },
+    { name: 'AMR3', value: 1700 },
+    { name: 'AMR4', value: 1452 },
+    { name: 'AMR5', value: 995 },
+  ];
+  const barConfig = {
+    xAxisKey: 'name',
+    yAxisKey: 'value',
+    unit: '',
+    showLegend: false,
+    showGrid: true,
+    showXAxis: true,
+    showYAxis: true,
+    showUnit: false,
+    showUnitInLegend: false,
+    showLabels: false,
+    useGradient: true,
+    series: [{ key: 'value', label: '수치', color: '#7dd3fc', endColor: '#ec4899' }],
+  };
+  const trendBase = TYPE_DEFAULT_DATA[WidgetType.EARNING_TREND] as any;
+  const trendConfig = trendBase?.config ? JSON.parse(JSON.stringify(trendBase.config)) : defaultChartConfig;
+  const trendData = trendBase?.data ? JSON.parse(JSON.stringify(trendBase.data)) : [];
+  const trendCategoryItems = [
+    { label: 'Sales', value: 8, color: '#7dd3fc' },
+    { label: 'Product', value: 68, color: '#fb923c' },
+    { label: 'Marketing', value: 12, color: '#7dd3fc' },
+  ];
+  const summaryConfig = TYPE_DEFAULT_DATA[WidgetType.SUMMARY]?.config ? JSON.parse(JSON.stringify(TYPE_DEFAULT_DATA[WidgetType.SUMMARY].config)) : defaultChartConfig;
+  const summaryChartConfig = TYPE_DEFAULT_DATA[WidgetType.SUMMARY_CHART]?.config ? JSON.parse(JSON.stringify(TYPE_DEFAULT_DATA[WidgetType.SUMMARY_CHART].config)) : defaultChartConfig;
+  const summaryChartData = TYPE_DEFAULT_DATA[WidgetType.SUMMARY_CHART]?.data ? JSON.parse(JSON.stringify(TYPE_DEFAULT_DATA[WidgetType.SUMMARY_CHART].data)) : [];
+
+  return [
+    {
+      id: 'proj3_bar_1',
+      type: WidgetType.CHART_BAR_HORIZONTAL,
+      title: 'New Analysis',
+      config: barConfig,
+      data: barData,
+      colSpan: 12,
+      rowSpan: 8,
+    },
+    {
+      id: 'proj3_summary_1',
+      type: WidgetType.SUMMARY,
+      title: 'New Analysis',
+      config: summaryConfig,
+      data: [],
+      colSpan: 12,
+      rowSpan: 8,
+      mainValue: '1,234',
+      subValue: '평균 활성 사용자',
+      icon: 'monitoring',
+    },
+    {
+      id: 'proj3_trend_1',
+      type: WidgetType.EARNING_TREND,
+      title: 'New Analysis',
+      config: { ...trendConfig, series: [{ key: 'value', label: 'Revenue', color: '#ec4899', endColor: '#8b5cf6' }] },
+      data: trendData,
+      colSpan: 12,
+      rowSpan: 8,
+      mainValue: '$12,875',
+      trendPercent: 2.7,
+      trendUp: true,
+      comparisonText: 'Compared of $11,750 last year',
+      categoryItems: trendCategoryItems,
+    },
+    {
+      id: 'proj3_summary_chart_1',
+      type: WidgetType.SUMMARY_CHART,
+      title: 'New Analysis',
+      config: summaryChartConfig,
+      data: summaryChartData,
+      colSpan: 12,
+      rowSpan: 8,
+      mainValue: '2,345,678',
+      subValue: '행사 기간 누적 방문',
+    },
+  ];
+})();
+
 export const INITIAL_PROJECT_LIST: Project[] = [
   {
     id: 'project_1',
@@ -875,7 +1034,24 @@ export const INITIAL_PROJECT_LIST: Project[] = [
     }],
     activePageId: 'page_1',
     theme: PROJECT2_CUSTOM_THEME,
-  }
+  },
+  {
+    id: 'project_3',
+    name: 'new project 3',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Dashboard',
+      widgets: PROJECT3_PAGE_WIDGETS,
+      header: DEFAULT_HEADER,
+      layout: {
+        ...DEFAULT_PAGE.layout,
+        backgroundGlobe: true,
+      },
+    }],
+    activePageId: 'page_1',
+    theme: DEFAULT_THEME,
+  },
 ];
 
 export const BRAND_COLORS = [

@@ -32,10 +32,14 @@ export enum WidgetType {
   DASH_RESOURCE_USAGE = "DASH_RESOURCE_USAGE",
   DASH_TRAFFIC_STATUS = "DASH_TRAFFIC_STATUS",
   DASH_NET_TRAFFIC = "DASH_NET_TRAFFIC",
+  /** 업무망 트래픽 사용량 TOP5 (Figma 위젯 컨테이너) */
+  DASH_TRAFFIC_TOP5 = "DASH_TRAFFIC_TOP5",
   DASH_SECURITY_STATUS = "DASH_SECURITY_STATUS",
   DASH_VDI_STATUS = "DASH_VDI_STATUS",
   /** 빈 위젯 — 플레이스홀더/여백용 */
   BLANK = "BLANK",
+  /** 텍스트 전용 — 글자만 표시, 크기·굵기 설정 가능 */
+  TEXT_BLOCK = "TEXT_BLOCK",
 }
 
 export enum ThemeMode {
@@ -213,12 +217,20 @@ export interface LayoutConfig {
   rows: number;
   fitToScreen: boolean;
   defaultRowHeight: number;
-  /** 배경 이미지 URL (project2 등). 예: '/bg-project2.png' 또는 전체 URL */
+  /** 배경 이미지 URL (공통 fallback). 라이트/다크 미설정 시 사용 */
   backgroundImage?: string;
+  /** 라이트 모드 전용 배경 이미지 URL */
+  backgroundImageLight?: string;
+  /** 다크 모드 전용 배경 이미지 URL */
+  backgroundImageDark?: string;
   /** 배경 이미지 위에 네온 불빛 번쩍임 효과 */
   backgroundFlicker?: boolean;
+  /** 지구(Globe) 배경 사용 — 마우스 드래그로 회전 */
+  backgroundGlobe?: boolean;
   /** project2 등 위젯 카드를 글래스모피즘(반투명·블러·테두리) 스타일로 표시 */
   glassmorphism?: boolean;
+  /** 글래스모피즘 배경 투명도 (0–100). 미설정 시 테마 기본값(다크 35, 라이트 55) 사용 */
+  glassmorphismOpacity?: number;
   /**
    * breakpoint 기반 반응형 그리드 사용 (lg/md/sm/xs).
    * true면 화면 너비에 따라 컬럼 수·레이아웃이 전환됩니다.

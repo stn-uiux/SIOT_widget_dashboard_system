@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { GridLayout, ResponsiveGridLayout, useContainerWidth } from "react-grid-layout";
 import type { LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -51,6 +51,59 @@ import DesignSystem from "./DesignSystem";
 import WidgetPicker from "./components/WidgetPicker";
 import { TYPE_DEFAULT_DATA } from "./constants";
 import ModeToggle from "./components/ModeToggle";
+import GlobeBackground from "./components/GlobeBackground";
+
+const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
+const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
+
+type LayoutStore = Record<string, Record<string, LayoutItem[] | Record<string, LayoutItem[]>>>;
+
+function loadLayoutStore(): LayoutStore {
+  try {
+    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as LayoutStore;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLayoutStore(store: LayoutStore) {
+  try {
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(store));
+  } catch (_) {}
+}
+
+type ProjectsState = { projects: Project[]; activeProjectId: string };
+
+function loadProjectsState(initial: Project[]): ProjectsState {
+  try {
+    const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (!raw) return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
+    const parsed = JSON.parse(raw) as ProjectsState;
+    if (!parsed?.projects?.length || !Array.isArray(parsed.projects))
+      return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
+    const id = parsed.activeProjectId && parsed.projects.some((p: Project) => p.id === parsed.activeProjectId)
+      ? parsed.activeProjectId
+      : parsed.projects[0].id;
+    return { projects: parsed.projects, activeProjectId: id };
+  } catch {
+    return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
+  }
+}
+
+function saveProjectsState(projects: Project[], activeProjectId: string) {
+  try {
+    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify({ projects, activeProjectId }));
+  } catch (_) {}
+}
+
+let _cachedProjectsState: ProjectsState | null = null;
+function getInitialProjectsState(): ProjectsState {
+  if (!_cachedProjectsState) _cachedProjectsState = loadProjectsState(INITIAL_PROJECT_LIST);
+  return _cachedProjectsState;
+}
 
 /** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
 const computeInitialLayout = (
@@ -136,7 +189,7 @@ const DashboardGrid: React.FC<{
   return (
     <div
       ref={gridContainerRef as React.RefObject<HTMLDivElement>}
-      className={`${layout.fitToScreen ? "h-full" : "h-auto"}`}
+      className={`${layout.fitToScreen ? "h-full" : "h-auto"} ${layout.backgroundGlobe ? "pointer-events-none" : ""}`}
       style={{ padding: "var(--dashboard-padding)" }}
     >
       {widgets.length === 0 && isEditMode ? (
@@ -464,10 +517,10 @@ const getSmartColorForMode = (
 };
 
 const App: React.FC = () => {
-  // Navigation & Project State
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECT_LIST);
+  // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
+  const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
   const [activeProjectId, setActiveProjectId] = useState<string>(
-    INITIAL_PROJECT_LIST[0].id,
+    () => getInitialProjectsState().activeProjectId,
   );
 
   const currentProject =
@@ -484,9 +537,24 @@ const App: React.FC = () => {
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
 
-  // react-grid-layout state: pageId → LayoutItem[] (단일) 또는 breakpoint별 레이아웃 (useResponsive 시)
-  type RglLayoutsState = Record<string, LayoutItem[] | Record<string, LayoutItem[]>>;
-  const [rglLayouts, setRglLayouts] = useState<RglLayoutsState>({});
+  // 레이아웃: projectId → pageId → LayoutItem[] (재시작 후에도 유지되도록 localStorage 저장)
+  const [layoutStore, setLayoutStore] = useState<LayoutStore>(loadLayoutStore);
+  const rglLayouts = useMemo(
+    () => layoutStore[activeProjectId] ?? {},
+    [layoutStore, activeProjectId],
+  );
+  const applyLayoutUpdate = useCallback(
+    (updater: (prev: Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => {
+      setLayoutStore((prev) => {
+        const byProject = prev[activeProjectId] ?? {};
+        const nextByProject = updater(byProject);
+        const next = { ...prev, [activeProjectId]: nextByProject };
+        saveLayoutStore(next);
+        return next;
+      });
+    },
+    [activeProjectId],
+  );
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
@@ -504,6 +572,11 @@ const App: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
+
+  // 프로젝트·위젯 내용 변경 시 localStorage에 저장 (새로고침 후 1번처럼 유지)
+  useEffect(() => {
+    saveProjectsState(projects, activeProjectId);
+  }, [projects, activeProjectId]);
 
   const showToast = (
     message: string,
@@ -609,18 +682,20 @@ const App: React.FC = () => {
       subValue: defaultData?.subValue,
       icon: defaultData?.icon,
       progressValue: defaultData?.progressValue,
+      titleSize: (defaultData as any)?.titleSize,
+      titleWeight: (defaultData as any)?.titleWeight,
       noBezel: false,
     };
 
     // Explicitly update RGL layout to place new widget at bottom
-    setRglLayouts((prev) => {
-      const cur = prev[currentPage.id];
+    applyLayoutUpdate((byProject) => {
+      const cur = byProject[currentPage.id];
       const newItem = { i: newId, x: 0, y: bottomY, w: 4, h: 10 } as LayoutItem;
       if (layout.useResponsive) {
         const layouts = (cur && !Array.isArray(cur) ? cur : { lg: Array.isArray(cur) ? (cur as LayoutItem[]) : [] }) as Record<string, LayoutItem[]>;
-        return { ...prev, [currentPage.id]: { ...layouts, lg: [...(layouts.lg || []), newItem] } };
+        return { ...byProject, [currentPage.id]: { ...layouts, lg: [...(layouts.lg || []), newItem] } };
       }
-      return { ...prev, [currentPage.id]: [...(Array.isArray(cur) ? cur : []), newItem] };
+      return { ...byProject, [currentPage.id]: [...(Array.isArray(cur) ? cur : []), newItem] };
     });
 
     updateCurrentPage({ widgets: [...widgets, newWidget] });
@@ -644,13 +719,13 @@ const App: React.FC = () => {
     updateCurrentPage({
       widgets: widgets.filter((w) => w.id !== deleteConfirmId),
     });
-    setRglLayouts((prev) => {
-      const cur = prev[currentPage.id];
-      if (!cur) return prev;
-      if (Array.isArray(cur)) return { ...prev, [currentPage.id]: cur.filter((l) => keepIds.has(l.i)) };
+    applyLayoutUpdate((byProject) => {
+      const cur = byProject[currentPage.id];
+      if (!cur) return byProject;
+      if (Array.isArray(cur)) return { ...byProject, [currentPage.id]: cur.filter((l) => keepIds.has(l.i)) };
       const filtered: Record<string, LayoutItem[]> = {};
       for (const bp of Object.keys(cur)) filtered[bp] = (cur as Record<string, LayoutItem[]>)[bp].filter((l) => keepIds.has(l.i));
-      return { ...prev, [currentPage.id]: filtered };
+      return { ...byProject, [currentPage.id]: filtered };
     });
     setDeleteConfirmId(null);
     showToast("Widget removed successfully", "success");
@@ -794,7 +869,7 @@ const App: React.FC = () => {
     (newLayout: readonly LayoutItem[]) => {
       const widgetIds = new Set(widgets.map((w) => w.id));
       const filtered = Array.from(newLayout).filter((l) => widgetIds.has(l.i));
-      setRglLayouts((prev) => ({ ...prev, [currentPage.id]: filtered }));
+      applyLayoutUpdate((byProject) => ({ ...byProject, [currentPage.id]: filtered }));
       updateCurrentPage({
         widgets: widgets.map((w) => {
           const item = filtered.find((l) => l.i === w.id);
@@ -803,7 +878,7 @@ const App: React.FC = () => {
         }),
       });
     },
-    [widgets, currentPage.id],
+    [widgets, currentPage.id, applyLayoutUpdate],
   );
 
   const handleResponsiveLayoutChange = useCallback(
@@ -813,7 +888,7 @@ const App: React.FC = () => {
       for (const bp of Object.keys(layouts)) {
         filteredLayouts[bp] = layouts[bp].filter((l) => widgetIds.has(l.i));
       }
-      setRglLayouts((prev) => ({ ...prev, [currentPage.id]: filteredLayouts }));
+      applyLayoutUpdate((byProject) => ({ ...byProject, [currentPage.id]: filteredLayouts }));
       const lg = filteredLayouts.lg ?? [];
       updateCurrentPage({
         widgets: widgets.map((w) => {
@@ -823,7 +898,7 @@ const App: React.FC = () => {
         }),
       });
     },
-    [widgets, currentPage.id],
+    [widgets, currentPage.id, applyLayoutUpdate],
   );
 
   const responsiveLayoutsForGrid = useMemo(() => {
@@ -1147,7 +1222,8 @@ const App: React.FC = () => {
           <aside
             style={{
               width: `${header.width}px`,
-              backgroundColor: header.backgroundColor,
+              backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
+              background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
               color: header.textColor,
               padding: `${header.padding}px`,
               margin: `${header.margin}px`,
@@ -1192,9 +1268,79 @@ const App: React.FC = () => {
           </aside>
         )}
 
-        {/* Central Area: project_2 = Duplicate Design UI, else = Dashboard grid */}
+        {/* Central Area: project_2 = 디자인 시스템 헤더 + Duplicate Design 본문, else = Dashboard grid */}
         {activeProjectId === "project_2" ? (
-          <div className="flex-1 flex flex-col relative overflow-hidden min-h-0">
+          <div className="flex-1 flex flex-col relative overflow-hidden min-h-0 bg-[var(--background)]">
+            {/* MY DASHBOARD와 동일한 디자인 시스템 TOP 헤더 */}
+            {header.show && header.position === HeaderPosition.TOP && (
+              <header
+                style={{
+                  height: `${header.height}px`,
+                  backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
+                  background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
+                  color: header.textColor,
+                  padding: `0 ${header.padding}px`,
+                  margin: `${header.margin}px`,
+                }}
+                className={`flex items-center z-20 transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""}`}
+              >
+                <div
+                  className={`flex items-center gap-8 w-full relative ${
+                    header.textAlignment === TextAlignment.CENTER
+                      ? "justify-between"
+                      : header.textAlignment === TextAlignment.RIGHT
+                        ? "flex-row-reverse"
+                        : "justify-between"
+                  }`}
+                >
+                  <div
+                    className={`flex items-center gap-6 ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
+                  >
+                    <div
+                      className={`flex items-center gap-3 ${
+                        header.textAlignment === TextAlignment.CENTER
+                          ? "absolute left-1/2 -translate-x-1/2 px-4"
+                          : ""
+                      } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
+                    >
+                      {header.logo && (
+                        <img
+                          src={header.logo}
+                          alt="Logo"
+                          className="h-6 w-auto object-contain"
+                        />
+                      )}
+                      <h2 className="text-lg font-black tracking-tighter uppercase whitespace-nowrap">
+                        {header.title}
+                      </h2>
+                    </div>
+                  </div>
+                  {theme.showPageTabs !== false && (
+                    <nav
+                      className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 z-10 ${isCyber ? "bg-transparent" : "rounded-xl bg-[var(--surface-muted)]"}`}
+                    >
+                      {currentProject.pages.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => handlePageChange(p.id)}
+                          className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${currentPage.id === p.id ? "active" : ""}`}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                      {isEditMode && (
+                        <button
+                          onClick={addPage}
+                          className={`p-2 text-muted hover:text-primary transition-all ${isCyber ? "rounded-md" : "rounded-xl"}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </nav>
+                  )}
+                </div>
+              </header>
+            )}
             <DuplicateDesignContent
               theme={theme}
               layout={layout}
@@ -1209,6 +1355,11 @@ const App: React.FC = () => {
               onOpenExcel={(id) => setExcelWidgetId(id)}
               onOpenWidgetPicker={handleOpenWidgetPicker}
               onModeSwitch={handleModeSwitch}
+              pages={currentProject.pages}
+              activePageId={currentPage.id}
+              onPageChange={handlePageChange}
+              onAddPage={addPage}
+              useAppHeader
             />
           </div>
         ) : (
@@ -1218,7 +1369,8 @@ const App: React.FC = () => {
             <header
               style={{
                 height: `${header.height}px`,
-                backgroundColor: header.backgroundColor,
+                backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
+                background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
                 color: header.textColor,
                 padding: `0 ${header.padding}px`,
                 margin: `${header.margin}px`,
@@ -1286,21 +1438,38 @@ const App: React.FC = () => {
             </header>
           )}
 
-          {/* Widgets Grid Container — layout.backgroundImage / backgroundFlicker 적용 (My Custom Dashboard) */}
+          {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
           <main
             ref={mainAreaRef}
-            className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundImage && layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
-            style={
-              layout?.backgroundImage
-                ? {
-                    backgroundImage: `url(${layout.backgroundImage})`,
+            className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active" : ""}`}
+            style={layout?.glassmorphism ? (() => {
+              const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
+              const alpha = 0.005 + 0.995 * Math.pow(p, 0.45);
+              return {
+                ['--glass-opacity' as string]: String(alpha),
+                ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
+              };
+            })() : undefined}
+          >
+            {layout?.backgroundGlobe ? <GlobeBackground /> : null}
+            {(() => {
+              const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
+                ? (layout.backgroundImageLight ?? layout.backgroundImage)
+                : (layout.backgroundImageDark ?? layout.backgroundImage));
+              return bgUrl ? (
+                <div
+                  className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
+                  style={{
+                    backgroundImage: `url(${bgUrl})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
-                  }
-                : undefined
-            }
-          >
+                  }}
+                  aria-hidden
+                />
+              ) : null;
+            })()}
+            <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
             <DashboardGrid
               layout={layout}
               theme={theme}
@@ -1318,6 +1487,7 @@ const App: React.FC = () => {
               onOpenExcel={(id) => setExcelWidgetId(id)}
               onOpenWidgetPicker={handleOpenWidgetPicker}
             />
+            </div>
           </main>
         </div>
         )}

@@ -57,8 +57,9 @@
                     }
                 },
                 "secondary": {
-                    "value": "#6366f1",
-                    "type": "color"
+                    "value": "#0d9488",
+                    "type": "color",
+                    "description": "Primary와 구분되는 악센트(틸)"
                 },
                 "neon_cyan": {
                     "value": "#00e5ff",

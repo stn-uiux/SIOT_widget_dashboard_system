@@ -3,7 +3,7 @@ import { GridLayout, useContainerWidth } from 'react-grid-layout';
 import type { LayoutItem } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { Search, Bell, Plus } from 'lucide-react';
-import { HeaderPosition, Widget, WidgetType, DashboardTheme, LayoutConfig, ThemeMode } from '../../types';
+import { HeaderPosition, Widget, WidgetType, DashboardTheme, LayoutConfig, ThemeMode, DashboardPage } from '../../types';
 import WidgetCard from '../WidgetCard';
 import ModeToggle from '../ModeToggle';
 
@@ -102,6 +102,16 @@ export interface DuplicateDesignContentProps {
   onOpenWidgetPicker?: () => void;
   /** project2에서 Dual Mode 전환 (라이트/다크) */
   onModeSwitch?: (mode: ThemeMode) => void;
+  /** project2 페이지 탭: 페이지 목록 (전달 시 탭 + 새 페이지 버튼 표시) */
+  pages?: DashboardPage[];
+  /** 현재 활성 페이지 ID */
+  activePageId?: string;
+  /** 페이지 전환 */
+  onPageChange?: (pageId: string) => void;
+  /** 새 페이지 추가 (플러스 클릭) */
+  onAddPage?: () => void;
+  /** true면 앱 디자인 시스템 헤더 사용(ORION 바 미표시) */
+  useAppHeader?: boolean;
 }
 
 /**
@@ -121,16 +131,36 @@ export function DuplicateDesignContent({
   onOpenExcel,
   onOpenWidgetPicker,
   onModeSwitch,
+  pages,
+  activePageId,
+  onPageChange,
+  onAddPage,
+  useAppHeader = false,
 }: DuplicateDesignContentProps) {
-  const isLeft = headerPosition === HeaderPosition.LEFT;
+  const isLeft = !useAppHeader && headerPosition === HeaderPosition.LEFT;
   const fitToScreen = layout?.fitToScreen ?? false;
   const allWidgets = kpiWidgets?.length ? kpiWidgets : [];
 
-  /* Timeline 섹션 문구 (edit 모드에서 수정 가능) */
+  /* Timeline 섹션: 대시보드(첫 페이지)는 기본값 유지, 추가 페이지(newpage2 등)는 비움 */
+  const isFirstPage = !pages?.length || activePageId === pages?.[0]?.id;
   const [timelineLabel, setTimelineLabel] = useState('TIMELINE');
   const [timelineTitle, setTimelineTitle] = useState('Data visualisation');
-  const [timeframeOptions, setTimeframeOptions] = useState(['5W', '1M', '3M', '6Y', 'ALL']);
+  const [timeframeOptions, setTimeframeOptions] = useState<string[]>(['5W', '1M', '3M', '6Y', 'ALL']);
   const [selectedTimeframeIndex, setSelectedTimeframeIndex] = useState(2);
+
+  useEffect(() => {
+    if (isFirstPage) {
+      setTimelineLabel('TIMELINE');
+      setTimelineTitle('Data visualisation');
+      setTimeframeOptions(['5W', '1M', '3M', '6Y', 'ALL']);
+      setSelectedTimeframeIndex(2);
+    } else {
+      setTimelineLabel('');
+      setTimelineTitle('');
+      setTimeframeOptions([]);
+      setSelectedTimeframeIndex(0);
+    }
+  }, [isFirstPage, activePageId]);
 
   /* project2: 왼쪽 2개 그리드(리사이즈) + 오른쪽 4개 그리드(드래그/리사이즈) */
   const widgetById = new Map(allWidgets.map((w) => [w.id, w]));
@@ -204,8 +234,8 @@ export function DuplicateDesignContent({
 
   return (
     <div className={`flex-1 flex overflow-hidden min-h-0 w-full bg-[var(--background)] text-[var(--text-main)] ${isLeft ? 'flex-row' : 'flex-col'}`}>
-      {/* ORION bar: top (w-full px-6 py-4) or left sidebar */}
-      {isLeft ? (
+      {/* ORION bar: top (w-full px-6 py-4) or left sidebar — useAppHeader 시 미표시 */}
+      {!useAppHeader && isLeft ? (
         <aside
           className="shrink-0 h-full flex flex-col border-r border-[var(--border-base)] bg-[var(--surface)] px-4 py-4"
           style={{ width: headerWidth }}
@@ -215,9 +245,33 @@ export function DuplicateDesignContent({
               <ModeToggle key={theme.mode} mode={theme.mode} onChange={onModeSwitch} />
             </div>
           )}
+          {/* Page tabs (mydashboard와 동일) — LEFT 레이아웃일 때 */}
+          {pages != null && onPageChange && (
+            <nav className="flex flex-col gap-1 mb-4">
+              {(pages as DashboardPage[]).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => onPageChange(p.id)}
+                  className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activePageId === p.id ? 'bg-[var(--primary-color)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--surface-muted)]'}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+              {isEditMode && onAddPage && (
+                <button
+                  type="button"
+                  onClick={onAddPage}
+                  className="w-full mt-2 p-3 border-2 border-dashed border-[var(--border-base)] rounded-xl text-[var(--text-muted)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                >
+                  <Plus className="w-4 h-4" /> New Page
+                </button>
+              )}
+            </nav>
+          )}
           <OrionBarContent isLeft />
         </aside>
-      ) : (
+      ) : !useAppHeader ? (
         <header className="shrink-0 border-b border-[var(--border-base)] bg-[var(--surface)]">
           <div className="w-full px-6 py-4">
             <div className="flex items-center justify-between">
@@ -236,6 +290,31 @@ export function DuplicateDesignContent({
                     className="bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-lg pl-10 pr-4 py-2 w-[300px] text-sm text-[var(--text-main)] focus:outline-none focus:border-[var(--primary-color)]"
                   />
                 </div>
+                {/* Page tabs + 새 페이지 (mydashboard와 동일) */}
+                {pages != null && onPageChange && (
+                  <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded-xl bg-[var(--surface-muted)]">
+                    {(pages as DashboardPage[]).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => onPageChange(p.id)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activePageId === p.id ? 'bg-[var(--primary-color)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)]'}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {isEditMode && onAddPage && (
+                      <button
+                        type="button"
+                        onClick={onAddPage}
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--primary-color)] transition-colors rounded-lg hover:bg-[var(--surface-elevated)]"
+                        aria-label="새 페이지 추가"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </nav>
+                )}
               </div>
               <nav className="flex items-center gap-8">
                 <a href="#" className="text-[var(--text-muted)] hover:text-[var(--text-main)] text-sm transition-colors">Statistics</a>
@@ -254,23 +333,38 @@ export function DuplicateDesignContent({
             </div>
           </div>
         </header>
-      )}
+      ) : null}
 
-      {/* Main Content — 왼쪽 2개 위젯 | 오른쪽(타임라인 + 그리드 4개). layout.backgroundImage 있으면 배경 이미지, backgroundFlicker 시 네온 번쩍임 */}
+      {/* Main Content — 배경만 플리커, 위젯/타임라인은 고정 */}
       <main
-        className={`flex-1 min-h-0 flex flex-col min-w-0 relative ${fitToScreen ? 'overflow-hidden h-full' : 'overflow-auto'} ${layout?.backgroundImage && layout?.backgroundFlicker ? 'bg-neon-flicker' : ''}`}
-        style={
-          layout?.backgroundImage
-            ? {
-                backgroundImage: `url(${layout.backgroundImage})`,
+        className={`flex-1 min-h-0 flex flex-col min-w-0 relative ${fitToScreen ? 'overflow-hidden h-full' : 'overflow-auto'}`}
+        style={layout?.glassmorphism ? (() => {
+          const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
+          const alpha = 0.005 + 0.995 * Math.pow(p, 0.45);
+          return {
+            ['--glass-opacity' as string]: String(alpha),
+            ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
+          };
+        })() : undefined}
+      >
+        {(() => {
+          const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
+            ? (layout.backgroundImageLight ?? layout.backgroundImage)
+            : (layout.backgroundImageDark ?? layout.backgroundImage));
+          return bgUrl ? (
+            <div
+              className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? 'bg-neon-flicker' : ''}`}
+              style={{
+                backgroundImage: `url(${bgUrl})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-              }
-            : undefined
-        }
-      >
-        <div className="flex gap-8 w-full max-w-[1920px] mx-auto min-h-0 flex-1 relative z-0" style={{ padding: 'var(--dashboard-padding)' }}>
+              }}
+              aria-hidden
+            />
+          ) : null;
+        })()}
+        <div className="flex gap-8 w-full max-w-[1920px] mx-auto min-h-0 flex-1 relative z-10" style={{ padding: 'var(--dashboard-padding)' }}>
           {/* 왼쪽 컬럼: 2개 위젯 — edit 모드에서 리사이즈 가능 (1열 그리드) */}
           <div
             ref={leftGridContainerRef as React.RefObject<HTMLDivElement>}
@@ -318,7 +412,8 @@ export function DuplicateDesignContent({
 
           {/* 오른쪽: 타임라인 섹션 + 그리드(생키 + KPI 3개, edit 모드에서 드래그/리사이즈) */}
           <div className={`relative flex-1 min-w-0 flex flex-col min-h-0 ${fitToScreen ? 'overflow-hidden' : ''}`}>
-            {/* Timeline — 왼쪽 위젯 옆(원래 위치) */}
+            {/* Timeline — 첫 페이지(대시보드)에서만 표시. 탭 추가 페이지(newpage2 등)에서는 미표시 */}
+            {isFirstPage && (isEditMode || timelineLabel || timelineTitle || timeframeOptions.length > 0) && (
             <div className="shrink-0 mb-6">
               {isEditMode ? (
                 <input
@@ -329,7 +424,7 @@ export function DuplicateDesignContent({
                   placeholder="예: TIMELINE"
                 />
               ) : (
-                <div className="text-[var(--text-muted)] text-sm mb-2 tracking-wider">{timelineLabel}</div>
+                timelineLabel ? <div className="text-[var(--text-muted)] text-sm mb-2 tracking-wider">{timelineLabel}</div> : null
               )}
               {isEditMode ? (
                 <input
@@ -340,8 +435,9 @@ export function DuplicateDesignContent({
                   placeholder="예: Data visualisation"
                 />
               ) : (
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-main)]">{timelineTitle}</h1>
+                timelineTitle ? <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-main)]">{timelineTitle}</h1> : null
               )}
+              {(isEditMode || timeframeOptions.length > 0) && (
               <div className="flex flex-wrap gap-2">
                 {timeframeOptions.map((label, idx) =>
                   isEditMode ? (
@@ -368,12 +464,14 @@ export function DuplicateDesignContent({
                   )
                 )}
               </div>
+              )}
             </div>
+            )}
 
-            {/* 오른쪽 그리드: 생키 + KPI 3개 — edit 모드에서 드래그/리사이즈 */}
+            {/* 오른쪽 그리드: 콘텐츠 높이만 사용해 위젯 추가 버튼이 위젯 바로 아래에 붙도록 함 */}
             <div
               ref={gridContainerRef as React.RefObject<HTMLDivElement>}
-              className={`flex-1 min-h-0 ${fitToScreen ? 'min-h-[280px]' : ''}`}
+              className={`min-h-0 ${fitToScreen ? 'min-h-[280px] flex-1' : ''}`}
             >
               <GridLayout
                 layout={currentLayout}

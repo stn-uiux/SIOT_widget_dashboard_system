@@ -9,6 +9,12 @@ function tokenValue(obj: TokenObj | Record<string, TokenObj> | undefined): strin
   if (obj && 'value' in obj && typeof (obj as TokenObj).value === 'string') return (obj as TokenObj).value;
   return '';
 }
+/** "rgba(15, 23, 42, 0.35)" -> { rgb: "15, 23, 42", opacity: 0.35 } */
+function parseRgba(rgba: string): { rgb: string; opacity: number } | null {
+  const m = rgba.trim().match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
+  if (!m) return null;
+  return { rgb: `${m[1]}, ${m[2]}, ${m[3]}`, opacity: Number(m[4]) };
+}
 
 interface DesignSystemProps {
     theme: DashboardTheme;
@@ -62,9 +68,16 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         const variant: GlassVariant | undefined = glass && isDark ? glass.dark : glass?.light;
         const blur = glass?.blur?.value ?? '12px';
         const defBg = isDark ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)';
+        const defOpacity = isDark ? 0.35 : 0.55;
         const defBorder = isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)';
         const defShadow = isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)';
-        root.style.setProperty('--glass-bg', (variant && tokenValue(variant.background)) || defBg);
+        const tokenBg = variant && tokenValue(variant.background);
+        const parsed = tokenBg ? parseRgba(tokenBg) : null;
+        const glassRgb = parsed?.rgb ?? (isDark ? '15, 23, 42' : '255, 255, 255');
+        const glassOpacity = parsed?.opacity ?? defOpacity;
+        root.style.setProperty('--glass-bg-rgb', glassRgb);
+        root.style.setProperty('--glass-opacity', String(glassOpacity));
+        root.style.setProperty('--glass-bg', 'rgba(var(--glass-bg-rgb), var(--glass-opacity))');
         root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || defBorder);
         root.style.setProperty('--glass-shadow', (variant && tokenValue(variant.shadow)) || defShadow);
         root.style.setProperty('--glass-blur', blur);

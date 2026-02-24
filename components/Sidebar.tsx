@@ -239,12 +239,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const isGeneralKpi = currentType === WidgetType.GENERAL_KPI;
   const isEarningProgress = currentType === WidgetType.EARNING_PROGRESS;
   const isEarningTrend = currentType === WidgetType.EARNING_TREND;
+  const isTextBlock = currentType === WidgetType.TEXT_BLOCK;
   const isPremiumSummary = [WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
   const isSummaryChart = currentType === WidgetType.SUMMARY_CHART;
   const isTable = currentType === WidgetType.TABLE;
   const isPie = currentType === WidgetType.CHART_PIE;
   const isImage = currentType === WidgetType.IMAGE;
-  const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+  const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
@@ -258,7 +259,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   ].includes(currentType);
 
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
-  const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+  const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   // 위젯 타입별 가용 옵션 필터링
   const appearanceOptions = [
@@ -506,6 +507,59 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
                   {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
                 </span>
+              </div>
+            </div>
+          </section>
+        )
+      }
+
+      {
+        isTextBlock && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <Smile className="w-4 h-4" /> 텍스트 설정
+            </label>
+            <div className="space-y-3">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
+                <textarea
+                  value={selectedWidget.mainValue ?? ''}
+                  onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                  rows={4}
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                  placeholder="여기에 글자를 입력하세요."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
+                  <input
+                    type="number"
+                    min={8}
+                    max={72}
+                    value={selectedWidget.titleSize ?? 18}
+                    onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 18 })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
+                  <select
+                    value={selectedWidget.titleWeight ?? '400'}
+                    onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="100">100 (Thin)</option>
+                    <option value="200">200 (Extra Light)</option>
+                    <option value="300">300 (Light)</option>
+                    <option value="400">400 (Normal)</option>
+                    <option value="500">500 (Medium)</option>
+                    <option value="600">600 (Semi Bold)</option>
+                    <option value="700">700 (Bold)</option>
+                    <option value="800">800 (Extra Bold)</option>
+                    <option value="900">900 (Black)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </section>
