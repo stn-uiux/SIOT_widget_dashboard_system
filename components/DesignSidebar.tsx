@@ -1,10 +1,48 @@
 import React, { useState } from 'react';
-import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download } from 'lucide-react';
+import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download, Clock, Activity, ToggleLeft } from 'lucide-react';
 import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
-import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset } from '../types';
+import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, HeaderWidgetType, HeaderWidget } from '../types';
 import { BRAND_COLORS } from '../constants';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
+
+/** 배경 이미지: 화질 유지 위해 리사이즈만 하고 JPEG 품질 최대(0.98). 원본에 가깝게 저장 */
+const MAX_BG_DIMENSION = 3840;
+const JPEG_QUALITY = 0.98;
+function compressImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      const scale = Math.min(1, MAX_BG_DIMENSION / Math.max(w, h));
+      const cw = Math.round(w * scale);
+      const ch = Math.round(h * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas not available'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, cw, ch);
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+        resolve(dataUrl);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load failed'));
+    };
+    img.src = url;
+  });
+}
 
 interface DesignSidebarProps {
   theme: DashboardTheme;
@@ -331,6 +369,64 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     </div>
                   </div>
 
+                  {/* Header Background Image */}
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1.5">
+                        <Image className="w-3.5 h-3.5" /> Background Image
+                      </span>
+                      {header.backgroundImage && (
+                        <button
+                          type="button"
+                          onClick={() => updateHeader({ backgroundImage: undefined })}
+                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[9px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                        >
+                          리셋
+                        </button>
+                      )}
+                    </div>
+                    {header.backgroundImage && (
+                      <div className="relative w-full h-16 rounded-xl overflow-hidden border border-[var(--border-base)]">
+                        <img
+                          src={header.backgroundImage}
+                          alt="Header BG"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
+                        <span className="absolute bottom-1 left-2 text-[8px] font-bold text-white/80 uppercase tracking-widest drop-shadow">Preview</span>
+                      </div>
+                    )}
+                    <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                        className="hidden"
+                        id="header-bg-image-file"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            updateHeader({ backgroundImage: reader.result as string });
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <label htmlFor="header-bg-image-file" className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">파일 선택</label>
+                      <span className={`text-xs truncate ${header.backgroundImage ? 'text-[var(--success)]' : 'text-muted'}`}>
+                        {header.backgroundImage ? '이미지 적용됨' : '선택된 파일 없음'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="URL (예: /assets/header-bg.png)"
+                      value={header.backgroundImage?.startsWith('data:') ? '' : (header.backgroundImage ?? '')}
+                      onChange={(e) => updateHeader({ backgroundImage: e.target.value.trim() || undefined })}
+                      className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <span className="text-[10px] uppercase font-bold text-gray-400">Text Color</span>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
@@ -361,6 +457,61 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+                    <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
+                      Header Components
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { type: HeaderWidgetType.CLOCK, icon: Clock, label: 'Clock' },
+                        { type: HeaderWidgetType.MONITOR, icon: Activity, label: 'Monitor' },
+                        { type: HeaderWidgetType.THEME_TOGGLE, icon: ToggleLeft, label: 'Toggle' },
+                      ].map((item) => (
+                        <div
+                          key={item.type}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('headerWidgetType', item.type);
+                          }}
+                          onClick={() => {
+                            const currentWidgets = header.widgets || [];
+                            const widgetWidth = item.type === HeaderWidgetType.CLOCK ? 6 : (item.type === HeaderWidgetType.MONITOR ? 5 : 4);
+
+                            // 겹치지 않는 X 위치 찾기 (60칸 기준)
+                            let nextX = 0;
+                            const isOccupied = (x: number) => currentWidgets.some(w =>
+                              w.y === 0 && (
+                                (x >= w.x && x < w.x + w.w) ||
+                                (x + widgetWidth > w.x && x + widgetWidth <= w.x + w.w)
+                              )
+                            );
+
+                            while (isOccupied(nextX) && nextX < 54) {
+                              nextX += 2;
+                            }
+
+                            const newWidget: HeaderWidget = {
+                              id: `hw_${Date.now()}`,
+                              type: item.type,
+                              x: nextX,
+                              y: 0,
+                              w: widgetWidth,
+                              h: 6,
+                            };
+                            updateHeader({
+                              widgets: [...currentWidgets, newWidget]
+                            });
+                          }}
+                          className="flex flex-col items-center gap-2 p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface)] hover:border-primary hover:bg-primary/5 transition-all cursor-grab active:cursor-grabbing group"
+                        >
+                          <item.icon className="w-5 h-5 text-muted group-hover:text-primary transition-colors" />
+                          <span className="text-[8px] font-bold uppercase text-muted group-hover:text-primary truncate w-full text-center">{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-muted italic text-center">Drag or click to add to header</p>
                   </div>
                 </div>
               )}
@@ -462,12 +613,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        const dataUrl = reader.result as string;
+                      compressImageToDataUrl(file).then((dataUrl) => {
                         onUpdatePage({ layout: { ...currentPage.layout, backgroundImageLight: dataUrl } });
-                      };
-                      reader.readAsDataURL(file);
+                      }).catch(() => { /* 이미지 로드 실패 시 무시 */ });
                       e.target.value = '';
                     }}
                   />
@@ -496,12 +644,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        const dataUrl = reader.result as string;
+                      compressImageToDataUrl(file).then((dataUrl) => {
                         onUpdatePage({ layout: { ...currentPage.layout, backgroundImageDark: dataUrl } });
-                      };
-                      reader.readAsDataURL(file);
+                      }).catch(() => { /* 이미지 로드 실패 시 무시 */ });
                       e.target.value = '';
                     }}
                   />
@@ -569,7 +714,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphismOpacity: Number(e.target.value) } })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[var(--surface-muted)] accent-[var(--primary-color)]"
                   />
-                  <p className="text-[9px] text-muted uppercase tracking-tight">왼쪽(0)=많이 투명, 오른쪽(100)=불투명. 낮을수록 배경이 더 비침</p>
+                  <p className="text-[9px] text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
                 </div>
               )}
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
@@ -580,6 +725,14 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 />
               </div>
               <p className="text-[9px] text-muted uppercase tracking-tight">lg(1200px) / md(996px) / sm(768px) / xs(480px) 구간별로 컬럼·레이아웃 전환</p>
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
+                <span className="text-[10px] font-bold uppercase text-muted">자유 배치 (Free Position)</span>
+                <Switch
+                  checked={currentPage.layout?.freePosition ?? false}
+                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, freePosition: checked } })}
+                />
+              </div>
+              <p className="text-[9px] text-muted uppercase tracking-tight">위젯이 위로 쏠리지 않고 원하는 위치(정중앙 등)에 고정되도록 합니다.</p>
             </section>
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
@@ -607,7 +760,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   { label: 'Small Scale', key: 'textSmall', min: 8, max: 20 },
                   { label: 'Medium Scale', key: 'textMd', min: 12, max: 32 },
                   { label: 'Large Scale', key: 'textLg', min: 20, max: 60 },
-                  { label: 'Hero Scale', key: 'textHero', min: 30, max: 100 },
+                  { label: 'Hero Scale', key: 'textHero', min: 0, max: 100 },
                 ].map((item) => (
                   <div key={item.key} className="space-y-2">
                     <div className="flex justify-between items-center">

@@ -709,10 +709,25 @@ body {
 .globe-background-active .react-grid-layout {
     pointer-events: none;
 }
+
 .globe-background-active .react-grid-item {
     pointer-events: auto;
 }
+
 /* 그리드 빈 공간 클릭이 아래 지구로 전달되도록 (Tailwind pointer-events-none은 App에서 wrapper에 적용) */
+
+/* ─── react-grid-layout: grid item rounded corners ───────────────────── */
+.react-grid-item {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+/* 드래그/리사이즈 중에는 resize handle이 보여야 하므로 overflow 풀기 */
+.react-grid-item:hover,
+.react-grid-item.resizing,
+.react-grid-item.react-draggable-dragging {
+    overflow: visible;
+}
 
 /* ─── react-grid-layout: resize handles & placeholder ─────────────────── */
 .react-grid-item>* {
@@ -907,14 +922,14 @@ body {
 .edit-mode-indicator {
     outline: 1px dashed var(--border-strong);
     outline-offset: -1px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--border-radius);
 }
 
 /* 선택된 위젯 — 은은한 테두리 + 네온 (편집 모드 선택 효과) */
 .widget-selected {
     outline: 1.5px solid var(--selected-border-color);
     outline-offset: 2px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--border-radius);
     box-shadow:
         0 0 0 1px rgba(var(--primary-color-rgb), 0.18),
         var(--selected-shadow-glow),
@@ -1009,15 +1024,35 @@ body {
 
 /* ─── 배경 네온 플리커: 천천히 밝아졌다가 천천히 많이 어두워지는 사이클 ─── */
 @keyframes neon-flicker-brightness {
-    0%, 100% { filter: brightness(1); }
-    35% { filter: brightness(1.18); }
-    65% { filter: brightness(0.45); }
+
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+
+    35% {
+        filter: brightness(1.18);
+    }
+
+    65% {
+        filter: brightness(0.45);
+    }
 }
 
 @keyframes neon-flicker-overlay {
-    0%, 100% { opacity: 0; }
-    35% { opacity: 0.06; }
-    65% { opacity: 0.02; }
+
+    0%,
+    100% {
+        opacity: 0;
+    }
+
+    35% {
+        opacity: 0.06;
+    }
+
+    65% {
+        opacity: 0.02;
+    }
 }
 
 .bg-neon-flicker {

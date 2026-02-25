@@ -215,7 +215,7 @@ export function DuplicateDesignContent({
     [widgetById, onUpdateWidget]
   );
   const leftCurrentLayout = useMemo(() => {
-    const byId = new Map(leftRglLayout.map((l) => [l.i, l]));
+    const byId = new Map<string, LayoutItem>(leftRglLayout.map((l) => [l.i, l]));
     return leftGridWidgets.map((w): LayoutItem => {
       const item = byId.get(w.id);
       const h = item?.h ?? w.rowSpan;
@@ -223,7 +223,7 @@ export function DuplicateDesignContent({
     });
   }, [leftRglLayout, leftGridWidgets]);
   const currentLayout = useMemo(() => {
-    const byId = new Map(rglLayout.map((l) => [l.i, l]));
+    const byId = new Map<string, LayoutItem>(rglLayout.map((l) => [l.i, l]));
     return rightGridWidgets.map((w): LayoutItem => {
       const item = byId.get(w.id);
       const h = item?.h ?? w.rowSpan;
@@ -231,9 +231,8 @@ export function DuplicateDesignContent({
       return { i: w.id, x: item?.x ?? 0, y: item?.y ?? 0, w: item?.w ?? w.colSpan, h, minH: isSankey ? 6 : 3 };
     });
   }, [rglLayout, rightGridWidgets]);
-
   return (
-    <div className={`flex-1 flex overflow-hidden min-h-0 w-full bg-[var(--background)] text-[var(--text-main)] ${isLeft ? 'flex-row' : 'flex-col'}`}>
+    <div className={`flex-1 flex overflow-hidden min-h-0 w-full bg-transparent text-[var(--text-main)] ${isLeft ? 'flex-row' : 'flex-col'}`}>
       {/* ORION bar: top (w-full px-6 py-4) or left sidebar — useAppHeader 시 미표시 */}
       {!useAppHeader && isLeft ? (
         <aside
@@ -340,30 +339,15 @@ export function DuplicateDesignContent({
         className={`flex-1 min-h-0 flex flex-col min-w-0 relative ${fitToScreen ? 'overflow-hidden h-full' : 'overflow-auto'}`}
         style={layout?.glassmorphism ? (() => {
           const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
-          const alpha = 0.005 + 0.995 * Math.pow(p, 0.45);
+          const alpha = Math.pow(p, 0.72);
+          const blurPx = Math.round(alpha * 12);
           return {
             ['--glass-opacity' as string]: String(alpha),
             ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
+            ['--glass-blur' as string]: `${blurPx}px`,
           };
         })() : undefined}
       >
-        {(() => {
-          const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
-            ? (layout.backgroundImageLight ?? layout.backgroundImage)
-            : (layout.backgroundImageDark ?? layout.backgroundImage));
-          return bgUrl ? (
-            <div
-              className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? 'bg-neon-flicker' : ''}`}
-              style={{
-                backgroundImage: `url(${bgUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-              }}
-              aria-hidden
-            />
-          ) : null;
-        })()}
         <div className="flex gap-8 w-full max-w-[1920px] mx-auto min-h-0 flex-1 relative z-10" style={{ padding: 'var(--dashboard-padding)' }}>
           {/* 왼쪽 컬럼: 2개 위젯 — edit 모드에서 리사이즈 가능 (1열 그리드) */}
           <div
@@ -414,58 +398,58 @@ export function DuplicateDesignContent({
           <div className={`relative flex-1 min-w-0 flex flex-col min-h-0 ${fitToScreen ? 'overflow-hidden' : ''}`}>
             {/* Timeline — 첫 페이지(대시보드)에서만 표시. 탭 추가 페이지(newpage2 등)에서는 미표시 */}
             {isFirstPage && (isEditMode || timelineLabel || timelineTitle || timeframeOptions.length > 0) && (
-            <div className="shrink-0 mb-6">
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={timelineLabel}
-                  onChange={(e) => setTimelineLabel(e.target.value)}
-                  className="block w-full max-w-xs bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-muted)] tracking-wider mb-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                  placeholder="예: TIMELINE"
-                />
-              ) : (
-                timelineLabel ? <div className="text-[var(--text-muted)] text-sm mb-2 tracking-wider">{timelineLabel}</div> : null
-              )}
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={timelineTitle}
-                  onChange={(e) => setTimelineTitle(e.target.value)}
-                  className="block w-full max-w-md bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-lg px-4 py-2 text-2xl md:text-3xl font-bold text-[var(--text-main)] mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                  placeholder="예: Data visualisation"
-                />
-              ) : (
-                timelineTitle ? <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-main)]">{timelineTitle}</h1> : null
-              )}
-              {(isEditMode || timeframeOptions.length > 0) && (
-              <div className="flex flex-wrap gap-2">
-                {timeframeOptions.map((label, idx) =>
-                  isEditMode ? (
-                    <input
-                      key={idx}
-                      type="text"
-                      value={label}
-                      onChange={(e) => {
-                        const next = [...timeframeOptions];
-                        next[idx] = e.target.value;
-                        setTimeframeOptions(next);
-                      }}
-                      className="min-w-[2.5rem] px-4 py-1 rounded-full text-sm bg-[var(--surface-muted)] border border-[var(--border-base)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] text-center"
-                    />
-                  ) : (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedTimeframeIndex(idx)}
-                      className={`px-4 py-1 rounded-full text-sm transition-colors ${selectedTimeframeIndex === idx ? 'bg-[var(--primary-color)] text-white font-medium' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-                    >
-                      {label}
-                    </button>
-                  )
+              <div className="shrink-0 mb-6">
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={timelineLabel}
+                    onChange={(e) => setTimelineLabel(e.target.value)}
+                    className="block w-full max-w-xs bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-lg px-3 py-1.5 text-sm text-[var(--text-muted)] tracking-wider mb-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+                    placeholder="예: TIMELINE"
+                  />
+                ) : (
+                  timelineLabel ? <div className="text-[var(--text-muted)] text-sm mb-2 tracking-wider">{timelineLabel}</div> : null
+                )}
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={timelineTitle}
+                    onChange={(e) => setTimelineTitle(e.target.value)}
+                    className="block w-full max-w-md bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-lg px-4 py-2 text-2xl md:text-3xl font-bold text-[var(--text-main)] mb-4 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
+                    placeholder="예: Data visualisation"
+                  />
+                ) : (
+                  timelineTitle ? <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-main)]">{timelineTitle}</h1> : null
+                )}
+                {(isEditMode || timeframeOptions.length > 0) && (
+                  <div className="flex flex-wrap gap-2">
+                    {timeframeOptions.map((label, idx) =>
+                      isEditMode ? (
+                        <input
+                          key={idx}
+                          type="text"
+                          value={label}
+                          onChange={(e) => {
+                            const next = [...timeframeOptions];
+                            next[idx] = e.target.value;
+                            setTimeframeOptions(next);
+                          }}
+                          className="min-w-[2.5rem] px-4 py-1 rounded-full text-sm bg-[var(--surface-muted)] border border-[var(--border-base)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] text-center"
+                        />
+                      ) : (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedTimeframeIndex(idx)}
+                          className={`px-4 py-1 rounded-full text-sm transition-colors ${selectedTimeframeIndex === idx ? 'bg-[var(--primary-color)] text-white font-medium' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+                        >
+                          {label}
+                        </button>
+                      )
+                    )}
+                  </div>
                 )}
               </div>
-              )}
-            </div>
             )}
 
             {/* 오른쪽 그리드: 콘텐츠 높이만 사용해 위젯 추가 버튼이 위젯 바로 아래에 붙도록 함 */}

@@ -132,6 +132,21 @@ export enum TextAlignment {
   RIGHT = "right",
 }
 
+export enum HeaderWidgetType {
+  CLOCK = "CLOCK",
+  MONITOR = "MONITOR",
+  THEME_TOGGLE = "THEME_TOGGLE",
+}
+
+export interface HeaderWidget {
+  id: string;
+  type: HeaderWidgetType;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface HeaderConfig {
   show: boolean;
   position: HeaderPosition;
@@ -145,6 +160,10 @@ export interface HeaderConfig {
   title: string;
   logo?: string;
   showDivider?: boolean;
+  /** 헤더 배경 이미지 URL 또는 data URI */
+  backgroundImage?: string;
+  /** 헤더 내부에 배치된 위젯들 */
+  widgets?: HeaderWidget[];
 }
 
 export interface TabConfig {
@@ -236,4 +255,6 @@ export interface LayoutConfig {
    * true면 화면 너비에 따라 컬럼 수·레이아웃이 전환됩니다.
    */
   useResponsive?: boolean;
+  /** 위젯을 중력(Gravity) 없이 자유롭게 배치할 수 있도록 설정 (verticalCompact=false) */
+  freePosition?: boolean;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { GridLayout, ResponsiveGridLayout, useContainerWidth } from "react-grid-layout";
+import { GridLayout, ResponsiveGridLayout, useContainerWidth, verticalCompactor, noCompactor } from "react-grid-layout";
 import type { LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import {
@@ -16,12 +16,15 @@ import {
   CheckCircle2,
   Sun,
   Moon,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
   INITIAL_PROJECT_LIST,
   MOCK_CHART_DATA,
   DEFAULT_PAGE,
   DEFAULT_THEME,
+  DEFAULT_HEADER,
   THEME_PRESETS,
   RESPONSIVE_BREAKPOINTS,
   RESPONSIVE_COLS,
@@ -39,10 +42,11 @@ import {
   HeaderConfig,
   HeaderPosition,
   TextAlignment,
+  HeaderWidget,
+  HeaderWidgetType,
 } from "./types";
 import WidgetCard from "./components/WidgetCard";
 import DesignSidebar from "./components/DesignSidebar";
-import { DuplicateDesignContent } from "./components/duplicate-design/DuplicateDesignContent";
 import Sidebar from "./components/Sidebar";
 import ExcelModal from "./components/ExcelModal";
 import ConfirmModal from "./components/ConfirmModal";
@@ -52,13 +56,15 @@ import WidgetPicker from "./components/WidgetPicker";
 import { TYPE_DEFAULT_DATA } from "./constants";
 import ModeToggle from "./components/ModeToggle";
 import GlobeBackground from "./components/GlobeBackground";
+import { dbSave, dbLoad } from "./lib/storage";
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
 
 type LayoutStore = Record<string, Record<string, LayoutItem[] | Record<string, LayoutItem[]>>>;
 
-function loadLayoutStore(): LayoutStore {
+/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 빠르게 불러옴 (legacy 호환) */
+function loadLayoutStoreSync(): LayoutStore {
   try {
     const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
     if (!raw) return {};
@@ -69,15 +75,20 @@ function loadLayoutStore(): LayoutStore {
   }
 }
 
-function saveLayoutStore(store: LayoutStore) {
+/** 비동기 저장 — IndexedDB + localStorage 백업 (새로고침 시 초기 로드에서 바로 복원) */
+async function saveLayoutStore(store: LayoutStore) {
+  await dbSave(LAYOUT_STORAGE_KEY, store);
   try {
     localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(store));
-  } catch (_) {}
+  } catch {
+    /* quota or size ok */
+  }
 }
 
 type ProjectsState = { projects: Project[]; activeProjectId: string };
 
-function loadProjectsState(initial: Project[]): ProjectsState {
+/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 빠르게 불러옴 (legacy 호환) */
+function loadProjectsStateSync(initial: Project[]): ProjectsState {
   try {
     const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
     if (!raw) return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
@@ -93,15 +104,18 @@ function loadProjectsState(initial: Project[]): ProjectsState {
   }
 }
 
-function saveProjectsState(projects: Project[], activeProjectId: string) {
-  try {
-    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify({ projects, activeProjectId }));
-  } catch (_) {}
+/** 비동기 저장 — IndexedDB (용량 제한 없음) */
+async function saveProjectsState(projects: Project[], activeProjectId: string): Promise<boolean> {
+  const ok = await dbSave(PROJECTS_STORAGE_KEY, { projects, activeProjectId });
+  if (!ok) console.error("[SIOT] Failed to save project state to IndexedDB");
+  // also try localStorage as fallback (may fail for large data, that's ok)
+  try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify({ projects, activeProjectId })); } catch { /* quota ok */ }
+  return ok;
 }
 
 let _cachedProjectsState: ProjectsState | null = null;
 function getInitialProjectsState(): ProjectsState {
-  if (!_cachedProjectsState) _cachedProjectsState = loadProjectsState(INITIAL_PROJECT_LIST);
+  if (!_cachedProjectsState) _cachedProjectsState = loadProjectsStateSync(INITIAL_PROJECT_LIST);
   return _cachedProjectsState;
 }
 
@@ -229,6 +243,7 @@ const DashboardGrid: React.FC<{
               margin={[theme.spacing, theme.spacing] as [number, number]}
               containerPadding={[0, 0] as [number, number]}
               maxRows={layout.fitToScreen ? layout.rows : Infinity}
+              compactor={layout.freePosition ? noCompactor : verticalCompactor}
               dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
               resizeConfig={{
                 enabled: isEditMode,
@@ -243,7 +258,7 @@ const DashboardGrid: React.FC<{
               {(widgets || []).map((widget) => (
                 <div
                   key={widget.id}
-                  className={`h-full transition-all duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
+                  className={`h-full transition-[background,border,box-shadow,transform] duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
                   style={selectedWidgetId === widget.id ? { zIndex: 50 } : {}}
                 >
                   <WidgetCard
@@ -270,6 +285,7 @@ const DashboardGrid: React.FC<{
                 containerPadding: [0, 0] as [number, number],
                 maxRows: layout.fitToScreen ? layout.rows : Infinity,
               }}
+              compactor={layout.freePosition ? noCompactor : verticalCompactor}
               dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
               resizeConfig={{
                 enabled: isEditMode,
@@ -284,7 +300,7 @@ const DashboardGrid: React.FC<{
               {(widgets || []).map((widget) => (
                 <div
                   key={widget.id}
-                  className={`h-full transition-all duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
+                  className={`h-full transition-[background,border,box-shadow,transform] duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
                   style={selectedWidgetId === widget.id ? { zIndex: 50 } : {}}
                 >
                   <WidgetCard
@@ -516,6 +532,182 @@ const getSmartColorForMode = (
   }
 };
 
+/** Header-specific Widget Components */
+const HeaderClock = () => {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const h = time.getHours().toString().padStart(2, "0");
+  const m = time.getMinutes().toString().padStart(2, "0");
+  const dateStr = time.toLocaleDateString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const [day, datePart] = dateStr.split(", ");
+  return (
+    <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 text-[var(--text-main)] font-mono whitespace-nowrap overflow-hidden">
+      <span className="text-lg font-bold tracking-tighter shrink-0">{h}:{m}</span>
+      <div className="flex flex-col leading-none shrink-0">
+        <span className="text-[8px] font-bold opacity-70 uppercase">{day}</span>
+        <span className="text-[9px] font-black">{datePart?.replace(/\//g, "-")}</span>
+      </div>
+    </div>
+  );
+};
+
+const HeaderMonitor = () => (
+  <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 bg-black/20 border border-white/5 rounded-full text-[var(--text-main)] whitespace-nowrap overflow-hidden">
+    <span className="text-[10px] font-bold tracking-tight uppercase">시스템 감시</span>
+    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
+  </div>
+);
+
+const HeaderThemeToggle = ({
+  mode,
+  onSwitch,
+}: {
+  mode: ThemeMode;
+  onSwitch: (m: ThemeMode) => void;
+}) => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <ModeToggle mode={mode} onChange={onSwitch} />
+    </div>
+  );
+};
+
+interface HeaderWidgetLayerProps {
+  header: HeaderConfig;
+  isEditMode: boolean;
+  onUpdate: (updates: Partial<HeaderConfig>) => void;
+  theme: DashboardTheme;
+  onModeSwitch: (m: ThemeMode) => void;
+}
+
+const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
+  header,
+  isEditMode,
+  onUpdate,
+  theme,
+  onModeSwitch,
+}) => {
+  const isCyber = theme.mode === ThemeMode.CYBER;
+  const widgets = header.widgets || [];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // 헤더 실제 컨테이너 너비 사용 (edit 모드에서 사이드바 열림 여부와 무관하게 동일 레이아웃 유지)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const { width } = entries[0]?.contentRect ?? {};
+      if (typeof width === "number" && width > 0) setContainerWidth(width);
+    });
+    ro.observe(el);
+    const w = el.getBoundingClientRect().width;
+    if (w > 0) setContainerWidth(w);
+    return () => ro.disconnect();
+  }, []);
+
+  const gridWidth =
+    header.position === HeaderPosition.TOP
+      ? (containerWidth > 0 ? containerWidth : window.innerWidth - (header.margin * 2) - (header.padding * 2))
+      : header.width - (header.padding * 2);
+
+  const onLayoutChange = (newLayout: any[]) => {
+    const updatedWidgets = widgets.map((w) => {
+      const l = newLayout.find((item: any) => item.i === w.id);
+      if (l) {
+        return { ...w, x: l.x, y: l.y, w: l.w, h: l.h };
+      }
+      return w;
+    });
+    onUpdate({ widgets: updatedWidgets });
+  };
+
+  const handleManualDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData("headerWidgetType") as HeaderWidgetType;
+    if (!type || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const xPx = e.clientX - rect.left;
+    const yPx = e.clientY - rect.top;
+
+    const colWidth = rect.width / 60;
+    const rowHeight = header.position === HeaderPosition.TOP ? (header.height / 12) : 40;
+
+    const x = Math.floor(xPx / colWidth);
+    const y = Math.floor(yPx / rowHeight);
+
+    const newWidget: HeaderWidget = {
+      id: `hw_${Date.now()}`,
+      type,
+      x: Math.max(0, Math.min(x, 54)),
+      y: Math.max(0, Math.min(y, 11)),
+      w: type === HeaderWidgetType.CLOCK ? 6 : (type === HeaderWidgetType.MONITOR ? 5 : 4),
+      h: 6,
+    };
+
+    onUpdate({ widgets: [...widgets, newWidget] });
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`absolute inset-0 z-20 ${isEditMode ? "pointer-events-auto" : "pointer-events-none"}`}
+      onDragOver={(e) => isEditMode && e.preventDefault()}
+      onDrop={(e) => isEditMode && handleManualDrop(e)}
+    >
+      <GridLayout
+        className="layout"
+        layout={widgets.map((w) => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h }))}
+        width={gridWidth}
+        gridConfig={{
+          cols: 60,
+          rowHeight: header.position === HeaderPosition.TOP ? (header.height / 12 - 2) : 40,
+          margin: [4, 2],
+          containerPadding: [0, 0],
+        }}
+        dragConfig={{ enabled: isEditMode }}
+        resizeConfig={{ enabled: isEditMode }}
+        compactor={noCompactor}
+        onLayoutChange={onLayoutChange}
+      >
+        {widgets.map((w) => (
+          <div key={w.id} className="relative group flex items-stretch">
+            {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
+            {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
+            {w.type === HeaderWidgetType.THEME_TOGGLE && (
+              <HeaderThemeToggle
+                mode={theme.mode}
+                onSwitch={onModeSwitch}
+                isCyber={isCyber}
+              />
+            )}
+            {isEditMode && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate({ widgets: widgets.filter(v => v.id !== w.id) });
+                }}
+                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        ))}
+      </GridLayout>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
@@ -537,18 +729,24 @@ const App: React.FC = () => {
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
 
-  // 레이아웃: projectId → pageId → LayoutItem[] (재시작 후에도 유지되도록 localStorage 저장)
-  const [layoutStore, setLayoutStore] = useState<LayoutStore>(loadLayoutStore);
+  // 레이아웃: projectId → pageId → LayoutItem[] (재시작 후에도 유지되도록 저장)
+  const [layoutStore, setLayoutStore] = useState<LayoutStore>(loadLayoutStoreSync);
   const rglLayouts = useMemo(
     () => layoutStore[activeProjectId] ?? {},
     [layoutStore, activeProjectId],
   );
+  const layoutStoreRef = useRef<LayoutStore>(layoutStore);
+  layoutStoreRef.current = layoutStore;
+  const projectsRef = useRef<Project[]>(projects);
+  projectsRef.current = projects;
+
   const applyLayoutUpdate = useCallback(
     (updater: (prev: Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => {
       setLayoutStore((prev) => {
         const byProject = prev[activeProjectId] ?? {};
         const nextByProject = updater(byProject);
         const next = { ...prev, [activeProjectId]: nextByProject };
+        layoutStoreRef.current = next;
         saveLayoutStore(next);
         return next;
       });
@@ -566,6 +764,9 @@ const App: React.FC = () => {
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
   const [isDesignDocsOpen, setIsDesignDocsOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectName, setEditingProjectName] = useState("");
 
   const [toast, setToast] = useState<{
     message: string;
@@ -573,7 +774,27 @@ const App: React.FC = () => {
   } | null>(null);
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
 
-  // 프로젝트·위젯 내용 변경 시 localStorage에 저장 (새로고침 후 1번처럼 유지)
+  // ── IndexedDB hydration (최초 마운트 시 비동기 로드) ──
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // 프로젝트 데이터
+      const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
+      if (!cancelled && saved?.projects?.length) {
+        setProjects(saved.projects);
+        if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
+      }
+      // 레이아웃 데이터
+      const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
+      if (!cancelled && savedLayout && typeof savedLayout === "object") {
+        setLayoutStore(savedLayout);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
   useEffect(() => {
     saveProjectsState(projects, activeProjectId);
   }, [projects, activeProjectId]);
@@ -588,7 +809,8 @@ const App: React.FC = () => {
 
   // Shortcuts to current state for components
   const { theme } = currentProject;
-  const { widgets, layout, header } = currentPage;
+  const { widgets, layout, header: pageHeader } = currentPage;
+  const header = pageHeader || DEFAULT_HEADER;
 
   const updateCurrentPage = (updates: Partial<DashboardPage>) => {
     setProjects((prev) =>
@@ -596,9 +818,10 @@ const App: React.FC = () => {
         if (p.id === activeProjectId) {
           return {
             ...p,
-            pages: p.pages.map((pg) =>
-              pg.id === p.activePageId ? { ...pg, ...updates } : pg,
-            ),
+            pages: p.pages.map((pg) => {
+              const effectiveActivePageId = p.activePageId || p.pages[0]?.id;
+              return pg.id === effectiveActivePageId ? { ...pg, ...updates } : pg;
+            }),
           };
         }
         return p;
@@ -661,20 +884,20 @@ const App: React.FC = () => {
       config: defaultData?.config
         ? JSON.parse(JSON.stringify(defaultData.config))
         : {
-            xAxisKey: "name",
-            yAxisKey: "value",
-            series: [
-              { key: "value", label: "Value", color: "var(--primary-color)" },
-            ],
-            showLegend: true,
-            showGrid: true,
-            showXAxis: true,
-            showYAxis: true,
-            showUnit: false,
-            showUnitInLegend: false,
-            showLabels: false,
-            unit: "",
-          },
+          xAxisKey: "name",
+          yAxisKey: "value",
+          series: [
+            { key: "value", label: "Value", color: "var(--primary-color)" },
+          ],
+          showLegend: true,
+          showGrid: true,
+          showXAxis: true,
+          showYAxis: true,
+          showUnit: false,
+          showUnitInLegend: false,
+          showLabels: false,
+          unit: "",
+        },
       data: defaultData?.data
         ? JSON.parse(JSON.stringify(defaultData.data))
         : JSON.parse(JSON.stringify(MOCK_CHART_DATA)),
@@ -925,9 +1148,52 @@ const App: React.FC = () => {
     setIsProjectDropdownOpen(false);
   };
 
-  const handleProjectSave = () => {
+  const confirmDeleteProject = () => {
+    if (!deleteProjectId) return;
+    if (projects.length <= 1) {
+      showToast("마지막 프로젝트는 삭제할 수 없습니다.", "error");
+      setDeleteProjectId(null);
+      return;
+    }
+    setProjects((prev) => prev.filter((p) => p.id !== deleteProjectId));
+    setLayoutStore((prev) => {
+      const next = { ...prev };
+      delete next[deleteProjectId];
+      layoutStoreRef.current = next;
+      saveLayoutStore(next);
+      return next;
+    });
+    if (activeProjectId === deleteProjectId) {
+      const remaining = projects.filter((p) => p.id !== deleteProjectId);
+      setActiveProjectId(remaining[0]?.id ?? "project_1");
+    }
+    setDeleteProjectId(null);
+    setIsProjectDropdownOpen(false);
+    showToast("프로젝트가 삭제되었습니다.");
+  };
+
+  const renameProject = (projectId: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    setProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, name: trimmed } : p)),
+    );
+    setEditingProjectId(null);
+    setEditingProjectName("");
+  };
+
+  const handleProjectSave = async () => {
     if (isEditMode) {
-      showToast("Project configuration saved successfully");
+      // 명시적으로 최신 상태(프로젝트 + 위젯 위치)를 IndexedDB에 저장
+      const latestProjects = projectsRef.current;
+      const latestLayoutStore = layoutStoreRef.current;
+      const savedProjects = await saveProjectsState(latestProjects, activeProjectId);
+      await saveLayoutStore(latestLayoutStore);
+      if (savedProjects) {
+        showToast("Project configuration saved successfully");
+      } else {
+        showToast("Failed to save — please check browser storage.", "error");
+      }
       setIsEditMode(false);
       setIsDesignSidebarOpen(false);
       setSelectedWidgetId(null);
@@ -1055,26 +1321,79 @@ const App: React.FC = () => {
                         </div>
                         <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
                           {projects.map((p) => (
-                            <button
+                            <div
                               key={p.id}
-                              onClick={() => {
-                                setActiveProjectId(p.id);
-                                setIsProjectDropdownOpen(false);
-                              }}
-                              className={`btn-base btn-ghost w-full justify-start px-4 py-2.5 mb-1 ${isCyber ? "rounded-md" : "rounded-xl"} ${activeProjectId === p.id ? "active" : ""}`}
+                              className={`flex items-center gap-2 w-full px-4 py-2.5 mb-1 rounded-xl border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
                             >
-                              <div className="flex-1 text-left">
-                                <p className="font-bold text-xs uppercase tracking-tight">
-                                  {p.name}
-                                </p>
-                                <p className="text-[8px] text-muted uppercase font-bold">
-                                  {p.pages.length} Pages
-                                </p>
-                              </div>
-                              {activeProjectId === p.id && (
-                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                              <button
+                                onClick={() => {
+                                  setActiveProjectId(p.id);
+                                  setIsProjectDropdownOpen(false);
+                                }}
+                                className="flex-1 min-w-0 text-left flex items-center gap-2"
+                              >
+                                {editingProjectId === p.id ? (
+                                  <input
+                                    type="text"
+                                    value={editingProjectName}
+                                    onChange={(e) => setEditingProjectName(e.target.value)}
+                                    onBlur={() => renameProject(p.id, editingProjectName)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") renameProject(p.id, editingProjectName);
+                                      if (e.key === "Escape") {
+                                        setEditingProjectId(null);
+                                        setEditingProjectName("");
+                                      }
+                                    }}
+                                    className="flex-1 min-w-0 px-2 py-1 text-xs font-bold bg-[var(--surface)] border border-[var(--border-base)] rounded focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                        {p.name}
+                                      </p>
+                                      <p className="text-[8px] text-muted uppercase font-bold">
+                                        {p.pages.length} Pages
+                                      </p>
+                                    </div>
+                                    {activeProjectId === p.id && (
+                                      <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
+                                    )}
+                                  </>
+                                )}
+                              </button>
+                              {editingProjectId !== p.id && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingProjectId(p.id);
+                                      setEditingProjectName(p.name);
+                                    }}
+                                    className="p-1.5 rounded hover:bg-[var(--border-muted)] text-muted hover:text-primary shrink-0"
+                                    title="프로젝트 이름 수정"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteProjectId(p.id);
+                                    }}
+                                    className="p-1.5 rounded hover:bg-red-500/10 text-muted hover:text-red-500 shrink-0"
+                                    title="프로젝트 삭제"
+                                    disabled={projects.length <= 1}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
                               )}
-                            </button>
+                            </div>
                           ))}
                         </div>
                         <div className="p-1 mt-1 border-t border-[var(--border-muted)]">
@@ -1144,11 +1463,10 @@ const App: React.FC = () => {
                           });
                           setIsLibraryDropdownOpen(false);
                         }}
-                        className={`w-full justify-between px-3 py-2.5 flex items-center transition-all ${
-                          isCyber
-                            ? `hover:bg-cyan-500/10 ${theme.chartLibrary === opt.value ? "bg-cyan-500/20 text-cyan-400" : "text-cyan-600"}`
-                            : `btn-base btn-ghost rounded-xl ${theme.chartLibrary === opt.value ? "active" : ""}`
-                        }`}
+                        className={`w-full justify-between px-3 py-2.5 flex items-center transition-all ${isCyber
+                          ? `hover:bg-cyan-500/10 ${theme.chartLibrary === opt.value ? "bg-cyan-500/20 text-cyan-400" : "text-cyan-600"}`
+                          : `btn-base btn-ghost rounded-xl ${theme.chartLibrary === opt.value ? "active" : ""}`
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
@@ -1184,13 +1502,6 @@ const App: React.FC = () => {
 
             <div className="h-6 w-px bg-[var(--border-base)] mx-1" />
 
-            {/* Dual Mode Support 켜져 있으면 전역 헤더 토글 숨김 (Design 패널·project2 ORION 바에서만 표시) */}
-            {!theme.dualModeSupport && (
-              <div className="flex items-center shrink-0">
-                <ModeToggle key={theme.mode} mode={theme.mode} onChange={handleModeSwitch} />
-              </div>
-            )}
-
             <button
               onClick={handleToggleDesignSidebar}
               className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isDesignSidebarOpen ? "active" : ""}`}
@@ -1215,21 +1526,55 @@ const App: React.FC = () => {
         </header>
       )}
 
-      {/* 2. Main Workspace (Flex-Row for Left Sidebar / Content / Right Sidebar) — same structure for all projects */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Side Header (if positioned LEFT). project_2 uses DuplicateDesignContent's own left bar. */}
-        {header.show && header.position === HeaderPosition.LEFT && activeProjectId !== 'project_2' && (
+      {/* Main Workspace (Flex-Row for Left Sidebar / Content / Right Sidebar) — same structure for all projects */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Unified Page Background (Image or Globe) — now placed here to cover both header and main content */}
+        {(() => {
+          const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
+            ? (layout.backgroundImageLight ?? layout.backgroundImage)
+            : (layout.backgroundImageDark ?? layout.backgroundImage));
+
+          if (!layout?.backgroundGlobe && !bgUrl) return null;
+
+          return (
+            <div className="absolute inset-0 z-0" aria-hidden>
+              {layout?.backgroundGlobe ? <GlobeBackground /> : null}
+              {bgUrl && (
+                <div
+                  className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
+                  style={{
+                    backgroundImage: `url(${bgUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                />
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Left Side Header (if positioned LEFT) */}
+        {header.show && header.position === HeaderPosition.LEFT && (
           <aside
             style={{
               width: `${header.width}px`,
-              backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
-              background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
+              backgroundColor: header.backgroundColor === 'transparent' ? 'transparent' : header.backgroundColor,
               color: header.textColor,
               padding: `${header.padding}px`,
               margin: `${header.margin}px`,
+              position: 'relative',
+              ...(header.backgroundImage ? { backgroundImage: `url(${header.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}),
             }}
-            className={`h-full flex flex-col z-20 transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-r border-[var(--border-base)]" : ""}`}
+            className={`flex flex-col transition-all h-full shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-r border-[var(--border-base)]" : ""}`}
           >
+            <HeaderWidgetLayer
+              header={header}
+              isEditMode={isEditMode}
+              onUpdate={updateHeader}
+              theme={theme}
+              onModeSwitch={handleModeSwitch}
+            />
             <div
               className={`mb-8 flex flex-col items-${header.textAlignment === TextAlignment.CENTER ? "center" : header.textAlignment === TextAlignment.RIGHT ? "end" : "start"} ${header.textAlignment === TextAlignment.CENTER ? "text-center" : header.textAlignment === TextAlignment.RIGHT ? "text-right" : "text-left"}`}
             >
@@ -1268,40 +1613,46 @@ const App: React.FC = () => {
           </aside>
         )}
 
-        {/* Central Area: project_2 = 디자인 시스템 헤더 + Duplicate Design 본문, else = Dashboard grid */}
-        {activeProjectId === "project_2" ? (
-          <div className="flex-1 flex flex-col relative overflow-hidden min-h-0 bg-[var(--background)]">
-            {/* MY DASHBOARD와 동일한 디자인 시스템 TOP 헤더 */}
+        {/* Central Area: Dashboard grid */}
+        <div className={`flex-1 flex flex-col relative overflow-hidden bg-transparent ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
+            {/* Top Header (if positioned TOP) */}
             {header.show && header.position === HeaderPosition.TOP && (
               <header
                 style={{
                   height: `${header.height}px`,
-                  backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
-                  background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
+                  backgroundColor: header.backgroundColor === 'transparent' ? 'transparent' : header.backgroundColor,
                   color: header.textColor,
                   padding: `0 ${header.padding}px`,
                   margin: `${header.margin}px`,
+                  position: 'relative',
+                  ...(header.backgroundImage ? { backgroundImage: `url(${header.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}),
                 }}
-                className={`flex items-center z-20 transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""}`}
+                className={`flex items-center transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
               >
+                <HeaderWidgetLayer
+                  header={header}
+                  isEditMode={isEditMode}
+                  onUpdate={updateHeader}
+                  theme={theme}
+                  onModeSwitch={handleModeSwitch}
+                />
                 <div
-                  className={`flex items-center gap-8 w-full relative ${
-                    header.textAlignment === TextAlignment.CENTER
-                      ? "justify-between"
-                      : header.textAlignment === TextAlignment.RIGHT
-                        ? "flex-row-reverse"
-                        : "justify-between"
-                  }`}
+                  className={`flex items-center gap-8 w-full relative ${header.textAlignment === TextAlignment.CENTER
+                    ? "justify-between"
+                    : header.textAlignment === TextAlignment.RIGHT
+                      ? "flex-row-reverse"
+                      : "justify-between"
+                    }`}
                 >
+                  {/* Title & Toggle Section */}
                   <div
                     className={`flex items-center gap-6 ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
                   >
                     <div
-                      className={`flex items-center gap-3 ${
-                        header.textAlignment === TextAlignment.CENTER
-                          ? "absolute left-1/2 -translate-x-1/2 px-4"
-                          : ""
-                      } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center gap-3 ${header.textAlignment === TextAlignment.CENTER
+                        ? "absolute left-1/2 -translate-x-1/2 px-4"
+                        : ""
+                        } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
                     >
                       {header.logo && (
                         <img
@@ -1315,6 +1666,8 @@ const App: React.FC = () => {
                       </h2>
                     </div>
                   </div>
+
+                  {/* Navigation Tabs */}
                   {theme.showPageTabs !== false && (
                     <nav
                       className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 z-10 ${isCyber ? "bg-transparent" : "rounded-xl bg-[var(--surface-muted)]"}`}
@@ -1341,156 +1694,43 @@ const App: React.FC = () => {
                 </div>
               </header>
             )}
-            <DuplicateDesignContent
-              theme={theme}
-              layout={layout}
-              headerPosition={header.position}
-              headerWidth={header.width}
-              isEditMode={isEditMode}
-              selectedWidgetId={selectedWidgetId}
-              kpiWidgets={currentPage.widgets}
-              onEditWidget={handleWidgetSelect}
-              onUpdateWidget={updateWidget}
-              onDeleteWidget={deleteWidget}
-              onOpenExcel={(id) => setExcelWidgetId(id)}
-              onOpenWidgetPicker={handleOpenWidgetPicker}
-              onModeSwitch={handleModeSwitch}
-              pages={currentProject.pages}
-              activePageId={currentPage.id}
-              onPageChange={handlePageChange}
-              onAddPage={addPage}
-              useAppHeader
-            />
-          </div>
-        ) : (
-        <div className="flex-1 flex flex-col relative overflow-hidden bg-[var(--background)]">
-          {/* Top Header (if positioned TOP) */}
-          {header.show && header.position === HeaderPosition.TOP && (
-            <header
-              style={{
-                height: `${header.height}px`,
-                backgroundColor: header.backgroundColor === 'transparent' ? 'rgba(0,0,0,0)' : header.backgroundColor,
-                background: header.backgroundColor === 'transparent' ? 'transparent' : undefined,
-                color: header.textColor,
-                padding: `0 ${header.padding}px`,
-                margin: `${header.margin}px`,
-              }}
-              className={`flex items-center z-20 transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""}`}
+
+            {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
+            <main
+              ref={mainAreaRef}
+              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
+              style={layout?.glassmorphism ? (() => {
+                const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
+                const alpha = Math.pow(p, 0.72);
+                const blurPx = Math.round(alpha * 12);
+                return {
+                  ['--glass-opacity' as string]: String(alpha),
+                  ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
+                  ['--glass-blur' as string]: `${blurPx}px`,
+                };
+              })() : undefined}
             >
-              <div
-                className={`flex items-center gap-8 w-full relative ${
-                  header.textAlignment === TextAlignment.CENTER
-                    ? "justify-between"
-                    : header.textAlignment === TextAlignment.RIGHT
-                      ? "flex-row-reverse"
-                      : "justify-between"
-                }`}
-              >
-                {/* Title & Toggle Section */}
-                <div
-                  className={`flex items-center gap-6 ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
-                >
-                  <div
-                    className={`flex items-center gap-3 ${
-                      header.textAlignment === TextAlignment.CENTER
-                        ? "absolute left-1/2 -translate-x-1/2 px-4"
-                        : ""
-                    } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
-                  >
-                    {header.logo && (
-                      <img
-                        src={header.logo}
-                        alt="Logo"
-                        className="h-6 w-auto object-contain"
-                      />
-                    )}
-                    <h2 className="text-lg font-black tracking-tighter uppercase whitespace-nowrap">
-                      {header.title}
-                    </h2>
-                  </div>
-                </div>
-
-                {/* Navigation Tabs */}
-                {theme.showPageTabs !== false && (
-                  <nav
-                    className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 z-10 ${isCyber ? "bg-transparent" : "rounded-xl bg-[var(--surface-muted)]"}`}
-                  >
-                    {currentProject.pages.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handlePageChange(p.id)}
-                        className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${currentPage.id === p.id ? "active" : ""}`}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                    {isEditMode && (
-                      <button
-                        onClick={addPage}
-                        className={`p-2 text-muted hover:text-primary transition-all ${isCyber ? "rounded-md" : "rounded-xl"}`}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    )}
-                  </nav>
-                )}
-              </div>
-            </header>
-          )}
-
-          {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
-          <main
-            ref={mainAreaRef}
-            className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active" : ""}`}
-            style={layout?.glassmorphism ? (() => {
-              const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
-              const alpha = 0.005 + 0.995 * Math.pow(p, 0.45);
-              return {
-                ['--glass-opacity' as string]: String(alpha),
-                ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
-              };
-            })() : undefined}
-          >
-            {layout?.backgroundGlobe ? <GlobeBackground /> : null}
-            {(() => {
-              const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
-                ? (layout.backgroundImageLight ?? layout.backgroundImage)
-                : (layout.backgroundImageDark ?? layout.backgroundImage));
-              return bgUrl ? (
-                <div
-                  className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
-                  style={{
-                    backgroundImage: `url(${bgUrl})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                  }}
-                  aria-hidden
+              <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
+                <DashboardGrid
+                  layout={layout}
+                  theme={theme}
+                  widgets={widgets}
+                  currentRglLayout={currentRglLayout}
+                  mainAreaHeight={mainAreaHeight}
+                  isEditMode={isEditMode}
+                  selectedWidgetId={selectedWidgetId}
+                  onLayoutChange={handleRglLayoutChange}
+                  responsiveLayouts={responsiveLayoutsForGrid}
+                  onResponsiveLayoutChange={handleResponsiveLayoutChange}
+                  onWidgetSelect={handleWidgetSelect}
+                  onUpdateWidget={updateWidget}
+                  onDeleteWidget={deleteWidget}
+                  onOpenExcel={(id) => setExcelWidgetId(id)}
+                  onOpenWidgetPicker={handleOpenWidgetPicker}
                 />
-              ) : null;
-            })()}
-            <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
-            <DashboardGrid
-              layout={layout}
-              theme={theme}
-              widgets={widgets}
-              currentRglLayout={currentRglLayout}
-              mainAreaHeight={mainAreaHeight}
-              isEditMode={isEditMode}
-              selectedWidgetId={selectedWidgetId}
-              onLayoutChange={handleRglLayoutChange}
-              responsiveLayouts={responsiveLayoutsForGrid}
-              onResponsiveLayoutChange={handleResponsiveLayoutChange}
-              onWidgetSelect={handleWidgetSelect}
-              onUpdateWidget={updateWidget}
-              onDeleteWidget={deleteWidget}
-              onOpenExcel={(id) => setExcelWidgetId(id)}
-              onOpenWidgetPicker={handleOpenWidgetPicker}
-            />
-            </div>
-          </main>
-        </div>
-        )}
+              </div>
+            </main>
+          </div>
 
         {/* 3. Right Sidebar (Design or Settings) */}
         {showSidebar && (
@@ -1564,6 +1804,16 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteWidget}
         onCancel={() => setDeleteConfirmId(null)}
+        isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
+      />
+      <ConfirmModal
+        isOpen={deleteProjectId !== null}
+        title="프로젝트 삭제"
+        message="이 프로젝트를 정말로 삭제하시겠습니까? 삭제된 프로젝트와 위젯은 복구할 수 없습니다."
+        confirmText="삭제하기"
+        cancelText="취소"
+        onConfirm={confirmDeleteProject}
+        onCancel={() => setDeleteProjectId(null)}
         isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
       />
       {toast && (

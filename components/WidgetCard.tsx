@@ -1085,14 +1085,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
       case WidgetType.WEATHER:
         return (
-          <div className="h-full flex flex-col justify-center items-center gap-4 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <span className="material-symbols-outlined text-primary" style={{ fontSize: 'calc(var(--content-size) * 6)' }}>
+          <div className="h-full flex flex-col justify-center items-center gap-2 text-center" style={{ contain: 'layout style' }}>
+            <div className="flex flex-col items-center gap-3">
+              <span className="material-symbols-outlined text-primary leading-none" style={{ fontSize: 'var(--text-hero)', opacity: 0.9 }}>
                 {widget.icon || 'partly_cloudy_day'}
               </span>
               <div className="space-y-1">
-                <h4 className="font-black text-main tracking-tighter" style={{ fontSize: 'calc(var(--content-size) * 4)' }}>{currentMainValue}</h4>
-                <p className="text-muted font-bold" style={{ fontSize: 'calc(var(--content-size) * 1.2)' }}>{currentSubValue}</p>
+                <h4 className="font-black text-main tracking-tighter leading-tight m-0" style={{ fontSize: 'var(--text-hero)' }}>{currentMainValue}</h4>
+                <p className="text-muted font-bold m-0" style={{ fontSize: 'var(--text-md)', opacity: 0.8 }}>{currentSubValue}</p>
               </div>
             </div>
           </div>
@@ -2185,34 +2185,40 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
   const cardStyle: React.CSSProperties | undefined = glassStyle
     ? undefined
     : (bgOpacity >= 100
-        ? { backgroundColor: 'var(--surface, #0f172a)' }
-        : { backgroundColor: `color-mix(in srgb, var(--surface, #0f172a) ${bgOpacity}%, transparent)` });
+      ? { backgroundColor: 'var(--surface, #0f172a)' }
+      : { backgroundColor: `color-mix(in srgb, var(--surface, #0f172a) ${bgOpacity}%, transparent)` });
   const glassStyleInline: React.CSSProperties | undefined = glassStyle
     ? {
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(var(--glass-blur, 12px))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur, 12px))',
-        border: 'var(--glass-border)',
-        boxShadow: 'var(--glass-shadow)',
-      }
+      background: bgOpacity >= 100
+        ? 'var(--glass-bg)'
+        : `rgba(var(--glass-bg-rgb), calc(var(--glass-opacity) * ${bgOpacity / 100}))`,
+      backdropFilter: `blur(var(--glass-blur, 12px))`,
+      WebkitBackdropFilter: `blur(var(--glass-blur, 12px))`,
+      border: bgOpacity > 0 ? 'var(--glass-border)' : 'none',
+      boxShadow: bgOpacity > 0 ? 'var(--glass-shadow)' : 'none',
+    }
     : undefined;
 
   return (
     <div className={`h-full flex flex-col group relative ${isCyber ? 'cyber-frame' : ''}`}>
+      {isEditMode && (
+        <div
+          className="drag-handle absolute left-0 top-0 z-20 h-14 w-2 rounded-r-md cursor-grab active:cursor-grabbing shrink-0"
+          style={{
+            background: `linear-gradient(180deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 75%, transparent) 100%)`,
+            boxShadow: `0 0 14px 3px color-mix(in srgb, var(--primary-color) 55%, transparent), 0 0 28px 6px color-mix(in srgb, var(--primary-color) 25%, transparent)`,
+          }}
+          title="드래그하여 이동"
+        />
+      )}
       {isCyber && <div className="cyber-frame-inner absolute inset-0 pointer-events-none z-10" />}
       <div
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${!widget.noBezel && !glassStyle ? `rounded-design shadow-base p-design ${theme.chartLibrary === ChartLibrary.APEXCHARTS && widget.type === WidgetType.CHART_SANKEY ? 'border-0' : 'border-main'} ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} ${glassStyle ? 'rounded-design p-design widget-glass' : ''} ${isEditMode ? 'edit-mode-indicator' : ''} ${widget.noBezel && !glassStyle && bgOpacity >= 100 ? 'bg-surface' : ''}`}
         style={glassStyleInline ?? cardStyle}
       >
         {(!widget.hideHeader || isEditMode) && (
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <div className="flex items-center gap-2 overflow-hidden flex-1">
-              {isEditMode && (
-                <div className="drag-handle cursor-grab opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-1">
-                  <GripVertical className="w-4 h-4 text-muted" />
-                </div>
-              )}
-              <div className="flex items-center gap-2 overflow-hidden flex-1">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
+            <div className="flex items-center gap-2 overflow-hidden flex-1 min-h-[36px] min-w-0">
                 {isEditMode ? (
                   <input
                     type="text"
@@ -2232,11 +2238,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     Hidden in View
                   </span>
                 )}
-              </div>
             </div>
 
             {isEditMode && (
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => onEdit(widget.id)}
                   className="widget-action-btn"

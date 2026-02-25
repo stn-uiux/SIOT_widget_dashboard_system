@@ -85,7 +85,8 @@ export const DEFAULT_HEADER: HeaderConfig = {
   textColor: 'var(--text-main)',
   textAlignment: TextAlignment.LEFT,
   title: 'My Custom Dashboard',
-  showDivider: true
+  showDivider: true,
+  widgets: [],
 };
 
 export const DEFAULT_PAGE: DashboardPage = {
@@ -95,7 +96,8 @@ export const DEFAULT_PAGE: DashboardPage = {
     columns: 24,
     rows: 12,
     defaultRowHeight: 20,
-    fitToScreen: false
+    fitToScreen: false,
+    freePosition: false
   },
   widgets: [], // Initial widgets can be populated later
   header: DEFAULT_HEADER,
@@ -114,7 +116,21 @@ export const RESPONSIVE_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480 } as
 /** breakpoint별 그리드 컬럼 수 (lg=데스크톱 24열, md=태블릿 12열, sm=모바일 가로 6열, xs=작은 모바일 2열) */
 export const RESPONSIVE_COLS = { lg: 24, md: 12, sm: 6, xs: 2 } as const;
 
-export const TYPE_DEFAULT_DATA: Record<string, { data: any[]; config: any; mainValue?: string; subValue?: string; icon?: string; progressValue?: number; title?: string }> = {
+export const TYPE_DEFAULT_DATA: Record<string, {
+  data: any[];
+  config: any;
+  mainValue?: string;
+  subValue?: string;
+  icon?: string;
+  progressValue?: number;
+  title?: string;
+  titleSize?: number;
+  titleWeight?: string;
+  trendPercent?: number;
+  trendUp?: boolean;
+  comparisonText?: string;
+  categoryItems?: { label: string; value: number; color?: string }[];
+}> = {
   [WidgetType.SUMMARY]: {
     mainValue: '1,234',
     subValue: '평균 활성 사용자',
@@ -1003,6 +1019,161 @@ const PROJECT3_PAGE_WIDGETS: Widget[] = (() => {
   ];
 })();
 
+/** New Project 4: Cyber HUD (Screenshot clone) */
+const PROJECT4_PAGE_WIDGETS: Widget[] = (() => {
+  const radarData = [
+    { name: 'Precision', value: 85, secondary: 90 },
+    { name: 'Strength', value: 120, secondary: 110 },
+    { name: 'Speed', value: 98, secondary: 130 },
+    { name: 'Stamina', value: 86, secondary: 130 },
+    { name: 'Range', value: 99, secondary: 100 },
+  ];
+
+  return [
+    // Left: Stability Radar
+    {
+      id: 'p4_radar',
+      type: WidgetType.CHART_RADAR,
+      title: 'System Stability Index',
+      colSpan: 8,
+      rowSpan: 10,
+      x: 0,
+      y: 0,
+      config: { ...TYPE_DEFAULT_DATA[WidgetType.CHART_RADAR].config, showLegend: true },
+      data: radarData,
+    },
+    // Mid: Top Row KPIs
+    {
+      id: 'p4_fac2',
+      type: WidgetType.DASH_FACILITY_2,
+      title: 'Facility Status (SVR/NET)',
+      colSpan: 5,
+      rowSpan: 6,
+      x: 8,
+      y: 0,
+      data: [
+        { name: '서버', value: 123, icon: 'database' },
+        { name: '네트워크', value: 23456, icon: 'wifi' }
+      ],
+      config: TYPE_DEFAULT_DATA[WidgetType.DASH_FACILITY_2].config,
+      hideHeader: true,
+    },
+    {
+      id: 'p4_fac1',
+      type: WidgetType.DASH_FACILITY_1,
+      title: 'Network Topology',
+      colSpan: 6,
+      rowSpan: 6,
+      x: 13,
+      y: 0,
+      data: [
+        { name: 'IP-MPLS', value: 6 },
+        { name: '미등록', value: 0 }
+      ],
+      config: TYPE_DEFAULT_DATA[WidgetType.DASH_FACILITY_1].config,
+      hideHeader: true,
+    },
+    {
+      id: 'p4_weather',
+      type: WidgetType.WEATHER,
+      title: 'Environment Status',
+      colSpan: 6,
+      rowSpan: 6,
+      x: 19,
+      y: 0,
+      mainValue: '24°C',
+      subValue: 'Seoul, Partly Cloudy',
+      data: [],
+      config: TYPE_DEFAULT_DATA[WidgetType.WEATHER].config,
+      hideHeader: true,
+    },
+    {
+      id: 'p4_earning',
+      type: WidgetType.EARNING_PROGRESS,
+      title: 'Revenue Allocation',
+      colSpan: 5,
+      rowSpan: 6,
+      x: 19,
+      y: 6,
+      mainValue: '$12,875',
+      subValue: '11%',
+      progressValue: 57,
+      data: [],
+      config: TYPE_DEFAULT_DATA[WidgetType.EARNING_PROGRESS].config,
+      hideHeader: true,
+    },
+    // Right: Security Status
+    {
+      id: 'p4_security',
+      type: WidgetType.DASH_SECURITY_STATUS,
+      title: 'Security Detection',
+      colSpan: 8,
+      rowSpan: 10,
+      x: 16,
+      y: 12,
+      mainValue: '545',
+      data: TYPE_DEFAULT_DATA[WidgetType.DASH_SECURITY_STATUS].data,
+      config: TYPE_DEFAULT_DATA[WidgetType.DASH_SECURITY_STATUS].config,
+    },
+    // Left: Traffic Area
+    {
+      id: 'p4_traffic',
+      type: WidgetType.CHART_AREA,
+      title: 'Real-time Traffic Flow',
+      colSpan: 8,
+      rowSpan: 10,
+      x: 0,
+      y: 10,
+      config: { ...TYPE_DEFAULT_DATA[WidgetType.CHART_AREA].config, useGradient: true },
+      data: TYPE_DEFAULT_DATA[WidgetType.CHART_AREA].data,
+    },
+    // Left: Floor Energy
+    {
+      id: 'p4_floor',
+      type: WidgetType.DASH_TRAFFIC_TOP5,
+      title: 'Energy Consumption by Floor',
+      colSpan: 8,
+      rowSpan: 10,
+      x: 0,
+      y: 20,
+      config: { ...TYPE_DEFAULT_DATA[WidgetType.DASH_TRAFFIC_TOP5].config, showLegend: false },
+      data: [
+        { name: 'Server1', value: 2138 },
+        { name: 'Server2', value: 1070 },
+        { name: 'Server3', value: 1700 },
+        { name: 'Server4', value: 1412 },
+        { name: 'Server5', value: 996 },
+      ],
+    },
+    // Right: VDI Status
+    {
+      id: 'p4_vdi',
+      type: WidgetType.DASH_VDI_STATUS,
+      title: 'VDI Connection Status',
+      colSpan: 8,
+      rowSpan: 8,
+      x: 16,
+      y: 22,
+      data: TYPE_DEFAULT_DATA[WidgetType.DASH_VDI_STATUS].data,
+      config: TYPE_DEFAULT_DATA[WidgetType.DASH_VDI_STATUS].config,
+    },
+    // Right: Failure Notifications (처리율 0, 대기율 4354)
+    {
+      id: 'p4_failure',
+      type: WidgetType.DASH_FAILURE_STATUS,
+      title: 'System Notification',
+      colSpan: 8,
+      rowSpan: 10,
+      x: 16,
+      y: 30,
+      mainValue: '0',
+      subValue: '4354',
+      data: TYPE_DEFAULT_DATA[WidgetType.DASH_FAILURE_STATUS].data,
+      config: TYPE_DEFAULT_DATA[WidgetType.DASH_FAILURE_STATUS].config,
+    },
+  ];
+})();
+
 export const INITIAL_PROJECT_LIST: Project[] = [
   {
     id: 'project_1',
@@ -1015,25 +1186,6 @@ export const INITIAL_PROJECT_LIST: Project[] = [
     }],
     activePageId: 'page_1',
     theme: DEFAULT_THEME
-  },
-  {
-    id: 'project_2',
-    name: 'new project2',
-    pages: [{
-      ...DEFAULT_PAGE,
-      id: 'page_1',
-      name: 'Dashboard',
-      widgets: PROJECT2_PAGE_WIDGETS,
-      header: DEFAULT_HEADER,
-      layout: {
-        ...DEFAULT_PAGE.layout,
-        backgroundImage: '/assets/bg-project2.png',
-        backgroundFlicker: true,
-        glassmorphism: true,
-      },
-    }],
-    activePageId: 'page_1',
-    theme: PROJECT2_CUSTOM_THEME,
   },
   {
     id: 'project_3',
@@ -1051,6 +1203,33 @@ export const INITIAL_PROJECT_LIST: Project[] = [
     }],
     activePageId: 'page_1',
     theme: DEFAULT_THEME,
+  },
+  {
+    id: 'project_4',
+    name: 'STN INFOTECH HUD',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Main HUD',
+      widgets: PROJECT4_PAGE_WIDGETS,
+      header: {
+        ...DEFAULT_HEADER,
+        title: 'MY CUSTOM DASHBOARD',
+        backgroundColor: 'transparent',
+        textAlignment: TextAlignment.CENTER,
+      },
+      layout: {
+        ...DEFAULT_PAGE.layout,
+        backgroundFlicker: true,
+        glassmorphism: true,
+        glassmorphismOpacity: 22,
+      },
+    }],
+    activePageId: 'page_1',
+    theme: {
+      ...DEFAULT_THEME,
+      mode: ThemeMode.CYBER,
+    },
   },
 ];
 
