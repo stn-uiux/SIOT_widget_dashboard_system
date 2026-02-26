@@ -1,25 +1,32 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SIOT Widget Dashboard (v1)
 
-# Run and deploy your AI Studio app
+대시보드 위젯 편집·디자인·내보내기/불러오기가 가능한 프로젝트입니다.
 
-This contains everything you need to run your app locally.
+## 실행
 
-View your app in AI Studio: https://ai.studio/apps/drive/1OG1vXXKE2bPWE_7oPNExrOSzEpZ2kVJY
+```bash
+npm install
+npm run dev
+```
 
-## Run Locally
+로컬 기본 주소: http://localhost:5173 (포트 지정 시 `npm run dev -- --port 3000`)
 
-**Prerequisites:**  Node.js
+## 빌드 / 배포
 
+```bash
+npm run build
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+정적 파일은 `dist/`에 생성됩니다. Vercel 등 정적 호스팅에 배포 가능합니다.
 
-## Figma / Cursor Plugin
+## 주요 기능
 
-- **Cursor ↔ Figma plugin channel ID:** `4y002t6r`  
-  자세한 내용은 [docs/FIGMA_CURSOR_CHANNEL.md](docs/FIGMA_CURSOR_CHANNEL.md) 참고.
+- 프로젝트·페이지 단위 대시보드, 위젯 그리드 편집
+- 디자인 패널(테마, 헤더, 배경, 글래스모피즘)
+- 차트 엔진 선택(Recharts / ApexCharts / AMCharts)
+- 프로젝트 내보내기/불러오기(ZIP: manifest + 이미지 + 미리보기)
+- IndexedDB 기반 레이아웃·프로젝트 저장
+
+## 디자인 토큰
+
+`design-tokens.json` + `design-tokens/themeFromTokens.ts` → `DesignSystem.tsx` 로 연결됩니다. 자세한 매핑은 `design-tokens/README.md` 참고.

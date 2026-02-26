@@ -18,6 +18,8 @@ import {
   Moon,
   Trash2,
   X,
+  Download,
+  Upload,
 } from "lucide-react";
 import {
   INITIAL_PROJECT_LIST,
@@ -28,6 +30,7 @@ import {
   THEME_PRESETS,
   RESPONSIVE_BREAKPOINTS,
   RESPONSIVE_COLS,
+  TYPE_DEFAULT_DATA,
 } from "./constants";
 import {
   Widget,
@@ -53,10 +56,10 @@ import ConfirmModal from "./components/ConfirmModal";
 import DesignDocs from "./components/DesignDocs";
 import DesignSystem from "./DesignSystem";
 import WidgetPicker from "./components/WidgetPicker";
-import { TYPE_DEFAULT_DATA } from "./constants";
 import ModeToggle from "./components/ModeToggle";
 import GlobeBackground from "./components/GlobeBackground";
 import { dbSave, dbLoad } from "./lib/storage";
+import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
@@ -773,6 +776,53 @@ const App: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
+  const [capturingForExport, setCapturingForExport] = useState(false);
+  const [exportPhase, setExportPhase] = useState<"waiting" | "capturing" | "packing" | null>(null);
+  const [hideBarForCapture, setHideBarForCapture] = useState(false);
+  const exportPreviewRef = useRef<HTMLDivElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  // ── 내보내기: Preview 전환 → 로딩 표시 → 렌더 대기 → (로딩바 숨김) → 전체 화면 캡처 → ZIP 다운로드 ──
+  useEffect(() => {
+    if (!capturingForExport || !isPreviewMode) return;
+    setExportPhase("waiting");
+    const waitTimer = setTimeout(() => {
+      const rootEl = appRootRef.current;
+      if (!rootEl) {
+        setExportPhase(null);
+        setCapturingForExport(false);
+        setIsPreviewMode(false);
+        return;
+      }
+      setExportPhase("capturing");
+      setHideBarForCapture(true);
+      const capture = () =>
+        import("html-to-image")
+          .then((mod) => mod.toBlob(rootEl, { pixelRatio: 1, cacheBust: true }))
+          .then((blob) => {
+            setExportPhase("packing");
+            const layoutPositions = (layoutStore[activeProjectId] ?? {}) as Record<string, Record<string, LayoutItem[]>>;
+            return exportProjectToZip(currentProject, layoutPositions, blob);
+          })
+          .then(() => showToast("내보내기 완료."))
+          .catch((err) => {
+            console.error(err);
+            showToast("미리보기 캡처 실패", "error");
+          })
+          .finally(() => {
+            setHideBarForCapture(false);
+            setExportPhase(null);
+            setCapturingForExport(false);
+            setIsPreviewMode(false);
+          });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          capture();
+        });
+      });
+    }, 2500);
+    return () => clearTimeout(waitTimer);
+  }, [capturingForExport, isPreviewMode, currentProject, layoutStore, activeProjectId]);
 
   // ── IndexedDB hydration (최초 마운트 시 비동기 로드) ──
   useEffect(() => {
@@ -1182,6 +1232,40 @@ const App: React.FC = () => {
     setEditingProjectName("");
   };
 
+  const handleExportClick = () => {
+    setIsProjectDropdownOpen(false);
+    setCapturingForExport(true);
+    setIsPreviewMode(true);
+  };
+
+  const handleImportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setIsProjectDropdownOpen(false);
+    try {
+      const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
+      const projectToApply = { ...importedProject, id: activeProjectId };
+      setProjects((prev) =>
+        prev.map((p) => (p.id === activeProjectId ? projectToApply : p)),
+      );
+      setLayoutStore((prev) => {
+        const next = { ...prev, [activeProjectId]: layoutPositions };
+        layoutStoreRef.current = next;
+        saveLayoutStore(next);
+        return next;
+      });
+      await saveProjectsState(
+        projects.map((p) => (p.id === activeProjectId ? projectToApply : p)),
+        activeProjectId,
+      );
+      showToast("불러오기 완료.");
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : "불러오기 실패", "error");
+    }
+  };
+
   const handleProjectSave = async () => {
     if (isEditMode) {
       // 명시적으로 최신 상태(프로젝트 + 위젯 위치)를 IndexedDB에 저장
@@ -1258,6 +1342,35 @@ const App: React.FC = () => {
     >
       <DesignSystem theme={theme} targetRef={appRootRef} />
       {isCyber && <div className="cyber-hud-line" />}
+
+      {/* 내보내기 중 로딩 바 (캡처 순간에는 숨겨서 스크린샷에 안 나오게) */}
+      {capturingForExport && !hideBarForCapture && (
+        <div className="fixed top-0 left-0 right-0 z-[100] flex flex-col bg-[var(--surface)] border-b border-[var(--border-base)] shadow-lg">
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-sm font-medium text-[var(--text-main)]">
+              {exportPhase === "waiting" && "내보내기 중… Preview 화면 렌더링 대기"}
+              {exportPhase === "capturing" && "내보내기 중… 미리보기 캡처"}
+              {exportPhase === "packing" && "내보내기 중… ZIP 파일 생성"}
+              {!exportPhase && "내보내기 중…"}
+            </span>
+          </div>
+          <div className="h-1 w-full bg-[var(--border-muted)] overflow-hidden">
+            <div
+              className="h-full bg-[var(--primary-color)] transition-all duration-500 ease-out"
+              style={{
+                width:
+                  exportPhase === "waiting"
+                    ? "33%"
+                    : exportPhase === "capturing"
+                      ? "66%"
+                      : exportPhase === "packing"
+                        ? "95%"
+                        : "10%",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {!isPreviewMode && (
         <header
@@ -1396,7 +1509,33 @@ const App: React.FC = () => {
                             </div>
                           ))}
                         </div>
-                        <div className="p-1 mt-1 border-t border-[var(--border-muted)]">
+                        <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-1">
+                          <button
+                            onClick={handleExportClick}
+                            disabled={capturingForExport}
+                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-xl"} flex items-center justify-center gap-2`}
+                          >
+                            <Download className="w-4 h-4 shrink-0" />
+                            <span className="text-[10px] font-bold uppercase">
+                              내보내기
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => importInputRef.current?.click()}
+                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-xl"} flex items-center justify-center gap-2`}
+                          >
+                            <Upload className="w-4 h-4 shrink-0" />
+                            <span className="text-[10px] font-bold uppercase">
+                              내려받기
+                            </span>
+                          </button>
+                          <input
+                            ref={importInputRef}
+                            type="file"
+                            accept=".zip"
+                            className="hidden"
+                            onChange={handleImportChange}
+                          />
                           <button
                             onClick={addProject}
                             className={`btn-base btn-ghost w-full px-4 py-2.5 text-primary ${isCyber ? "rounded-md" : "rounded-xl"}`}
@@ -1613,8 +1752,11 @@ const App: React.FC = () => {
           </aside>
         )}
 
-        {/* Central Area: Dashboard grid */}
-        <div className={`flex-1 flex flex-col relative overflow-hidden bg-transparent ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
+        {/* Central Area: Dashboard grid (ref for export preview capture) */}
+        <div
+          ref={exportPreviewRef}
+          className={`flex-1 flex flex-col relative overflow-hidden bg-transparent ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
+        >
             {/* Top Header (if positioned TOP) */}
             {header.show && header.position === HeaderPosition.TOP && (
               <header
