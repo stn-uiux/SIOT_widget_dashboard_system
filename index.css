@@ -746,6 +746,11 @@ body {
 
 /* 그리드 빈 공간 클릭이 아래 지구로 전달되도록 (Tailwind pointer-events-none은 App에서 wrapper에 적용) */
 
+/* 그리드 사용 ON일 때 배경 가이드 라인 — 흰색 5% 투명도 */
+.grid-neon-overlay {
+    box-shadow: inset 0 0 120px rgba(255, 255, 255, 0.05);
+}
+
 /* ─── react-grid-layout: grid item rounded corners ───────────────────── */
 .react-grid-item {
     border-radius: var(--border-radius);
@@ -770,7 +775,7 @@ body {
     width: 28px;
     height: 28px;
     opacity: 0.65;
-    transition: opacity var(--transition-speed), background-color var(--transition-speed);
+    transition: opacity var(--transition-speed), background-color var(--transition-speed), box-shadow var(--transition-speed);
     z-index: 10;
 }
 
@@ -780,8 +785,10 @@ body {
 }
 
 .react-resizable-handle:hover {
-    background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.12);
+    background: rgba(var(--primary-color-rgb, 59, 130, 246), 0.2);
     border-radius: 4px;
+    box-shadow: 0 0 12px rgba(var(--primary-color-rgb, 59, 130, 246), 0.5),
+                0 0 24px rgba(var(--primary-color-rgb, 59, 130, 246), 0.25);
 }
 
 .react-resizable-handle::after {
@@ -791,6 +798,10 @@ body {
     border-style: solid;
     border-radius: 2px;
     opacity: 0.9;
+}
+.react-resizable-handle:hover::after {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px var(--primary-color));
 }
 
 /* 코너: 클릭 영역 28px, 아이콘은 기존 비슷한 크기 */
@@ -910,17 +921,21 @@ body {
     bottom: 0;
     transform: translateX(-50%);
     cursor: s-resize;
-    width: 40px;
-    height: 20px;
+    width: 80px;
+    height: 24px;
 }
 
 .react-resizable-handle-s::after {
     height: 3px;
-    width: 28px;
-    bottom: 6px;
+    width: 48px;
+    bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
-    border-width: 0 0 2px 0;
+    border-width: 0 0 3px 0;
+    box-shadow: 0 0 10px var(--primary-color);
+}
+.react-resizable-handle-s:hover::after {
+    box-shadow: 0 0 14px var(--primary-color), 0 0 28px rgba(var(--primary-color-rgb, 59, 130, 246), 0.5);
 }
 
 .react-grid-item.react-grid-placeholder {
@@ -936,11 +951,28 @@ body {
     opacity: 0.85;
     z-index: 100;
     box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.3);
+    will-change: transform;
 }
 
 .react-grid-item.resizing {
     z-index: 100;
     opacity: 0.9;
+    will-change: transform;
+}
+
+/* Cyber 테마: 리사이즈 핸들만 시안 네온 */
+.cyber .react-resizable-handle:hover {
+    background: rgba(0, 229, 255, 0.15);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.6), 0 0 28px rgba(0, 229, 255, 0.3);
+}
+.cyber .react-resizable-handle::after {
+    border-color: #00e5ff;
+}
+.cyber .react-resizable-handle-s::after {
+    box-shadow: 0 0 12px #00e5ff;
+}
+.cyber .react-resizable-handle-s:hover::after {
+    box-shadow: 0 0 16px #00e5ff, 0 0 32px rgba(0, 229, 255, 0.5);
 }
 
 /* 선택된 위젯이 있으면 링이 잘리지 않도록 */

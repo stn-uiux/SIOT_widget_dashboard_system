@@ -4,6 +4,7 @@ import type { LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import {
   Layout,
+  LayoutGrid,
   Edit3,
   Eye,
   Plus,
@@ -191,8 +192,10 @@ const DashboardGrid: React.FC<{
 
   const rglRowHeight = useMemo(() => {
     if (layout.fitToScreen) {
+      const padding = theme.dashboardPadding ?? 24;
+      const availableH = Math.max(0, mainAreaHeight - padding * 2);
       const gap = (layout.rows - 1) * theme.spacing;
-      return Math.max(30, (mainAreaHeight - gap) / layout.rows);
+      return Math.max(30, (availableH - gap) / layout.rows);
     }
     return layout.defaultRowHeight;
   }, [
@@ -201,15 +204,75 @@ const DashboardGrid: React.FC<{
     layout.defaultRowHeight,
     mainAreaHeight,
     theme.spacing,
+    theme.dashboardPadding,
   ]);
 
+  const usePixelGrid = layout.useGrid === false;
+  // 픽셀 모드: 1px = 1단위가 되도록. RGL이 width를 절반으로 쓰는 경우가 있어 cols 2배로 보정
+  const pixelStep = 1;
+  const fineCols = useMemo(() => {
+    if (!usePixelGrid) return layout.columns;
+    return Math.max(1, Math.floor(gridWidth));
+  }, [usePixelGrid, gridWidth, layout.columns]);
+  const fineRowHeight = usePixelGrid ? pixelStep : rglRowHeight;
+  const rglCols = usePixelGrid ? fineCols * 2 : fineCols;
+  const rglRowH = usePixelGrid ? fineRowHeight * 2 : fineRowHeight;
+
+  const finite = (n: number, d: number) => (typeof n === "number" && Number.isFinite(n) ? n : d);
+  const displayLayout = useMemo(() => {
+    if (!usePixelGrid) return currentRglLayout;
+    const cols = Math.max(1, layout.columns);
+    return currentRglLayout.map((item) => {
+      const xPx = (finite(Number(item.x), 0) * rglCols) / cols;
+      const yPx = (finite(Number(item.y), 0) * rglRowHeight) / rglRowH;
+      const wPx = (finite(Number(item.w), 4) * rglCols) / cols;
+      const hPx = (finite(Number(item.h), 4) * rglRowHeight) / rglRowH;
+      return {
+        ...item,
+        x: finite(xPx, 0),
+        y: finite(yPx, 0),
+        w: Math.max(1, finite(wPx, 4)),
+        h: Math.max(1, finite(hPx, 4)),
+      };
+    });
+  }, [usePixelGrid, currentRglLayout, layout.columns, rglCols, rglRowH, rglRowHeight]);
+
+  const handleLayoutChange = useCallback(
+    (next: readonly LayoutItem[]) => {
+      if (!usePixelGrid) {
+        onLayoutChange(next);
+        return;
+      }
+      const gridLayout = next.map((item) => {
+        const xGrid = (finite(Number(item.x), 0) * layout.columns) / rglCols;
+        const yGrid = (finite(Number(item.y), 0) * rglRowH) / rglRowHeight;
+        const wGrid = (finite(Number(item.w), 4) * layout.columns) / rglCols;
+        const hGrid = (finite(Number(item.h), 4) * rglRowH) / rglRowHeight;
+        return {
+          ...item,
+          x: Math.max(0, finite(Math.round(xGrid * 1000) / 1000, 0)),
+          y: Math.max(0, finite(Math.round(yGrid * 1000) / 1000, 0)),
+          w: Math.max(0.5, finite(Math.round(wGrid * 1000) / 1000, 4)),
+          h: Math.max(0.5, finite(Math.round(hGrid * 1000) / 1000, 4)),
+        };
+      });
+      onLayoutChange(gridLayout);
+    },
+    [usePixelGrid, layout.columns, rglCols, rglRowH, rglRowHeight, onLayoutChange]
+  );
+
+  const hasLayoutBackground = !!(layout?.backgroundGlobe || layout?.backgroundImage || layout?.backgroundImageLight || layout?.backgroundImageDark);
   return (
     <div
-      ref={gridContainerRef as React.RefObject<HTMLDivElement>}
-      className={`${layout.fitToScreen ? "h-full" : "h-auto"} ${layout.backgroundGlobe ? "pointer-events-none" : ""}`}
-      style={{ padding: "var(--dashboard-padding)" }}
+      className="h-full min-h-0"
+      style={{ padding: "var(--dashboard-padding)", background: hasLayoutBackground ? "transparent" : "var(--background)" }}
     >
-      {widgets.length === 0 && isEditMode ? (
+      <div
+        ref={gridContainerRef as React.RefObject<HTMLDivElement>}
+        className={`relative ${layout.fitToScreen ? "h-full" : "h-auto"} ${layout.backgroundGlobe ? "pointer-events-none" : ""}`}
+        style={{ width: "100%" }}
+      >
+        {widgets.length === 0 && isEditMode ? (
         <div className="w-full flex justify-center py-10">
           <button
             onClick={onOpenWidgetPicker}
@@ -236,6 +299,61 @@ const DashboardGrid: React.FC<{
         </div>
       ) : (
         <>
+          {(() => {
+            // 그리드 가이드라인: Edit 모드 + 그리드 사용 ON일 때, 일반/반응형 둘 다 표시
+            if (usePixelGrid || !isEditMode) return null;
+            const margin = theme.spacing;
+            const cols = layout.columns;
+            if (!cols || gridWidth <= 0) return null;
+            const colWidth = (gridWidth - (cols - 1) * margin) / cols;
+            const rowH = rglRowHeight;
+            const hPeriod = rowH + margin;
+            const totalH = 3000;
+            const colAlpha = 0.05; // 5% 투명도
+            const rowAlpha = 0.05;
+            const columns = Array.from({ length: cols }, (_, i) => ({
+              x: i * (colWidth + margin),
+              width: colWidth,
+            }));
+            const rowCount = Math.ceil(totalH / hPeriod);
+            const rows = Array.from({ length: rowCount }, (_, j) => ({
+              y: j * hPeriod,
+              height: rowH,
+            }));
+            const svg = [
+              "<svg xmlns='http://www.w3.org/2000/svg' width='",
+              gridWidth,
+              "' height='",
+              totalH,
+              "'>",
+              columns
+                .map(
+                  (c) =>
+                    `<rect x='${c.x}' y='0' width='${c.width}' height='${totalH}' fill='rgba(255,255,255,${colAlpha})'/>`,
+                )
+                .join(""),
+              rows
+                .map(
+                  (r) =>
+                    `<rect x='0' y='${r.y}' width='${gridWidth}' height='${r.height}' fill='rgba(255,255,255,${rowAlpha})'/>`,
+                )
+                .join(""),
+              "</svg>",
+            ].join("");
+            const dataUri = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+            return (
+              <div
+                aria-hidden
+                className="grid-neon-overlay pointer-events-none absolute inset-0 z-0"
+                style={{
+                  backgroundImage: dataUri,
+                  backgroundSize: `${gridWidth}px ${totalH}px`,
+                  backgroundPosition: "0 0",
+                  backgroundRepeat: "repeat-y",
+                }}
+              />
+            );
+          })()}
           {layout.useResponsive && responsiveLayouts && onResponsiveLayoutChange ? (
             <ResponsiveGridLayout
               width={gridWidth}
@@ -255,6 +373,8 @@ const DashboardGrid: React.FC<{
               autoSize={!layout.fitToScreen}
               onLayoutChange={(_layout, layouts) => onResponsiveLayoutChange(layouts)}
               style={{
+                position: "relative",
+                zIndex: 1,
                 minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
               }}
             >
@@ -278,29 +398,32 @@ const DashboardGrid: React.FC<{
               ))}
             </ResponsiveGridLayout>
           ) : (
-            <GridLayout
-              layout={currentRglLayout}
-              width={gridWidth}
-              gridConfig={{
-                cols: layout.columns,
-                rowHeight: rglRowHeight,
-                margin: [theme.spacing, theme.spacing] as [number, number],
-                containerPadding: [0, 0] as [number, number],
-                maxRows: layout.fitToScreen ? layout.rows : Infinity,
-              }}
-              compactor={layout.freePosition ? noCompactor : verticalCompactor}
-              dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
-              resizeConfig={{
-                enabled: isEditMode,
-                handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
-              }}
-              autoSize={!layout.fitToScreen}
-              onLayoutChange={onLayoutChange}
-              style={{
-                minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
-              }}
-            >
-              {(widgets || []).map((widget) => (
+            <>
+              <GridLayout
+                layout={displayLayout}
+                width={gridWidth}
+                gridConfig={{
+                  cols: rglCols,
+                  rowHeight: rglRowH,
+                  margin: (usePixelGrid ? [0, 0] : [theme.spacing, theme.spacing]) as [number, number],
+                  containerPadding: [0, 0] as [number, number],
+                  maxRows: usePixelGrid ? Infinity : layout.fitToScreen ? layout.rows : Infinity,
+                }}
+                compactor={layout.freePosition ? noCompactor : verticalCompactor}
+                dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
+                resizeConfig={{
+                  enabled: isEditMode,
+                  handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
+                }}
+                autoSize={!layout.fitToScreen}
+                onLayoutChange={handleLayoutChange}
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
+                }}
+              >
+                {(widgets || []).map((widget) => (
                 <div
                   key={widget.id}
                   className={`h-full transition-[background,border,box-shadow,transform] duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
@@ -318,7 +441,8 @@ const DashboardGrid: React.FC<{
                   />
                 </div>
               ))}
-            </GridLayout>
+              </GridLayout>
+            </>
           )}
 
           {isEditMode && (
@@ -342,6 +466,7 @@ const DashboardGrid: React.FC<{
           )}
         </>
       )}
+      </div>
     </div>
   );
 };
@@ -727,6 +852,7 @@ const App: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDesignSidebarOpen, setIsDesignSidebarOpen] = useState(false);
+  const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
 
   // Excel Modal State
@@ -762,6 +888,20 @@ const App: React.FC = () => {
   // App root ref so DesignSystem applies theme only to this subtree (per-project scope)
   const appRootRef = useRef<HTMLDivElement>(null);
   const [mainAreaHeight, setMainAreaHeight] = useState(600);
+
+  // Fit to Screen 시 행 높이 계산에 쓰일 실제 메인 영역 높이 측정
+  useEffect(() => {
+    const el = mainAreaRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const { height } = entries[0]?.contentRect ?? {};
+      if (typeof height === "number" && height > 0) setMainAreaHeight(height);
+    });
+    ro.observe(el);
+    const h = el.getBoundingClientRect().height;
+    if (h > 0) setMainAreaHeight(h);
+    return () => ro.disconnect();
+  }, []);
 
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [isLibraryDropdownOpen, setIsLibraryDropdownOpen] = useState(false);
@@ -1125,19 +1265,28 @@ const App: React.FC = () => {
   };
 
   // ── react-grid-layout helpers ─────────────────────────────────────────
+  const sane = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
   const currentRglLayout = useMemo<LayoutItem[]>(() => {
     const raw = rglLayouts[currentPage.id];
     const saved: LayoutItem[] = !raw ? [] : Array.isArray(raw) ? raw : (raw as Record<string, LayoutItem[]>).lg ?? [];
     const savedMap = new Map<string, LayoutItem>(saved.map((l) => [l.i, l]));
+    const usePixelGrid = layout.useGrid === false;
+    const roundSize = (v: number) => (usePixelGrid ? v : Math.round(v));
+    const cols = Math.max(1, layout.columns);
     if (saved.length === 0)
-      return computeInitialLayout(widgets, layout.columns);
+      return computeInitialLayout(widgets, cols);
     return widgets.map((w): LayoutItem => {
       const s = savedMap.get(w.id);
-      if (s) return { i: s.i, x: s.x, y: s.y, w: w.colSpan, h: w.rowSpan };
-      return { i: w.id, x: 0, y: 0, w: w.colSpan, h: w.rowSpan };
+      const wVal = sane(roundSize(Number(w.colSpan)), 4);
+      const hVal = sane(roundSize(Number(w.rowSpan)), 4);
+      const xVal = s ? sane(Number(s.x), 0) : 0;
+      const yVal = s ? sane(Number(s.y), 0) : 0;
+      if (s) return { i: s.i, x: xVal, y: yVal, w: wVal, h: hVal };
+      return { i: w.id, x: 0, y: 0, w: wVal, h: hVal };
     });
-  }, [rglLayouts, currentPage.id, widgets, layout.columns]);
+  }, [rglLayouts, currentPage.id, widgets, layout.columns, layout.useGrid]);
 
+  const saneNum = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
   const handleRglLayoutChange = useCallback(
     (newLayout: readonly LayoutItem[]) => {
       const widgetIds = new Set(widgets.map((w) => w.id));
@@ -1147,7 +1296,7 @@ const App: React.FC = () => {
         widgets: widgets.map((w) => {
           const item = filtered.find((l) => l.i === w.id);
           if (!item) return w;
-          return { ...w, colSpan: item.w, rowSpan: item.h };
+          return { ...w, colSpan: saneNum(Number(item.w), w.colSpan ?? 4), rowSpan: saneNum(Number(item.h), w.rowSpan ?? 4) };
         }),
       });
     },
@@ -1167,7 +1316,7 @@ const App: React.FC = () => {
         widgets: widgets.map((w) => {
           const item = lg.find((l) => l.i === w.id);
           if (!item) return w;
-          return { ...w, colSpan: item.w, rowSpan: item.h };
+          return { ...w, colSpan: saneNum(Number(item.w), w.colSpan ?? 4), rowSpan: saneNum(Number(item.h), w.rowSpan ?? 4) };
         }),
       });
     },
@@ -1280,6 +1429,7 @@ const App: React.FC = () => {
       }
       setIsEditMode(false);
       setIsDesignSidebarOpen(false);
+      setIsLayoutSidebarOpen(false);
       setSelectedWidgetId(null);
     } else {
       setIsEditMode(true);
@@ -1306,7 +1456,7 @@ const App: React.FC = () => {
 
   const showSidebar =
     !isPreviewMode &&
-    (isEditMode || isDesignSidebarOpen || selectedWidgetId !== null);
+    (isLayoutSidebarOpen || isDesignSidebarOpen || selectedWidgetId !== null);
 
   const libraryOptions = [
     {
@@ -1648,6 +1798,16 @@ const App: React.FC = () => {
               <Palette className="w-4 h-4" /> <span>Design</span>
             </button>
             <button
+              onClick={() => {
+                setIsLayoutSidebarOpen(true);
+                setSelectedWidgetId(null);
+                setIsDesignSidebarOpen(false);
+              }}
+              className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isLayoutSidebarOpen ? "active" : ""}`}
+            >
+              <LayoutGrid className="w-4 h-4" /> <span>Layout</span>
+            </button>
+            <button
               onClick={handleProjectSave}
               className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isEditMode ? "active" : ""}`}
             >
@@ -1895,22 +2055,24 @@ const App: React.FC = () => {
             ) : selectedWidgetId ? (
               <Sidebar
                 theme={theme}
-                selectedWidget={
-                  widgets.find((w) => w.id === selectedWidgetId) || null
-                }
+                selectedWidget={(() => {
+                  const w = widgets.find((w) => w.id === selectedWidgetId) || null;
+                  if (!w) return null;
+                  return { ...w, colSpan: saneNum(Number(w.colSpan), 4), rowSpan: saneNum(Number(w.rowSpan), 4) };
+                })()}
                 layout={layout}
                 onUpdateWidget={updateWidget}
                 onUpdateLayout={handleUpdateLayout}
                 onClose={() => setSelectedWidgetId(null)}
               />
-            ) : isEditMode ? (
+            ) : isLayoutSidebarOpen ? (
               <Sidebar
                 theme={theme}
                 selectedWidget={null}
                 layout={layout}
                 onUpdateWidget={updateWidget}
                 onUpdateLayout={handleUpdateLayout}
-                onClose={() => setIsEditMode(false)}
+                onClose={() => setIsLayoutSidebarOpen(false)}
               />
             ) : null}
           </div>

@@ -257,4 +257,8 @@ export interface LayoutConfig {
   useResponsive?: boolean;
   /** 위젯을 중력(Gravity) 없이 자유롭게 배치할 수 있도록 설정 (verticalCompact=false) */
   freePosition?: boolean;
+  /** false면 그리드 칸 단위 대신 픽셀 단위(리사이즈 단계)로 위젯 크기 조절 */
+  useGrid?: boolean;
+  /** 그리드 미사용 시 리사이즈 단위(px). 예: 5면 5px 간격으로 늘었다 줄었다 */
+  resizeStepPx?: number;
 }

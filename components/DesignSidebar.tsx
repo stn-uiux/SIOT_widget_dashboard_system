@@ -717,22 +717,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <p className="text-[9px] text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
                 </div>
               )}
-              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
-                <span className="text-[10px] font-bold uppercase text-muted">해상도별 레이아웃 (Breakpoints)</span>
-                <Switch
-                  checked={currentPage.layout?.useResponsive ?? false}
-                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, useResponsive: checked } })}
-                />
-              </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">lg(1200px) / md(996px) / sm(768px) / xs(480px) 구간별로 컬럼·레이아웃 전환</p>
-              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
-                <span className="text-[10px] font-bold uppercase text-muted">자유 배치 (Free Position)</span>
-                <Switch
-                  checked={currentPage.layout?.freePosition ?? false}
-                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, freePosition: checked } })}
-                />
-              </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">위젯이 위로 쏠리지 않고 원하는 위치(정중앙 등)에 고정되도록 합니다.</p>
+              <p className="text-[9px] text-muted uppercase tracking-tight mt-2">해상도별 레이아웃·자유 배치는 <strong>Layout Settings</strong> 패널에서 설정할 수 있습니다.</p>
             </section>
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">

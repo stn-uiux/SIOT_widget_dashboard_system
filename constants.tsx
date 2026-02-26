@@ -109,6 +109,8 @@ export const DEFAULT_LAYOUT: LayoutConfig = {
   rows: 12,
   fitToScreen: false,
   defaultRowHeight: 20,
+  useGrid: true,
+  resizeStepPx: 5,
 };
 
 /** breakpoint 이름 → 최소 너비(px). 화면 너비가 이 값 미만이면 다음 breakpoint로 전환 */

@@ -1147,7 +1147,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     }
 
     switch (currentType) {
-      case WidgetType.SUMMARY:
+      case WidgetType.SUMMARY: {
+        const heroFontSize = widget.titleSize != null ? `${widget.titleSize}px` : 'var(--text-hero)';
         return (
           <div className="h-full flex flex-col justify-center px-2">
             <div className="flex justify-between items-start mb-2">
@@ -1158,10 +1159,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     value={currentMainValue || '0'}
                     onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
                     className={`bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full ${isCyber ? 'font-mono text-[var(--cyber-text)]' : 'text-main'}`}
-                    style={{ fontSize: 'var(--text-hero)' }}
+                    style={{ fontSize: heroFontSize }}
                   />
                 ) : (
-                  <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-[var(--cyber-text)] neon-glow' : 'text-main'}`} style={{ fontSize: 'var(--text-hero)' }}>
+                  <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-[var(--cyber-text)] neon-glow' : 'text-main'}`} style={{ fontSize: heroFontSize }}>
                     {currentMainValue}
                   </span>
                 )}
@@ -1188,8 +1189,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             )}
           </div>
         );
+      }
 
-      case WidgetType.SUMMARY_CHART:
+      case WidgetType.SUMMARY_CHART: {
+        const summaryHeroFontSize = widget.titleSize != null ? `${widget.titleSize}px` : 'var(--text-hero)';
         const summaryColor = isCyber ? 'var(--cyber-text)' : theme.primaryColor;
         return (
           <div className="relative h-full w-full flex flex-col justify-start pt-2">
@@ -1202,10 +1205,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                       value={currentMainValue || '0'}
                       onChange={(e) => onUpdate?.(widget.id, { mainValue: e.target.value })}
                       className={`bg-transparent border-none p-0 font-black tracking-tighter focus:ring-0 outline-none w-full ${isCyber ? 'font-mono text-[var(--cyber-text)]' : (isDark ? 'text-white' : 'text-[var(--text-main)]')}`}
-                      style={{ fontSize: `${contentSize * 3.8}px` }}
+                      style={{ fontSize: summaryHeroFontSize }}
                     />
                   ) : (
-                    <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-[var(--cyber-text)] neon-glow' : (isDark ? 'text-white' : 'text-[var(--text-main)]')}`} style={{ fontSize: 'var(--text-hero)' }}>
+                    <span className={`font-black tracking-tighter leading-tight ${isCyber ? 'font-mono text-[var(--cyber-text)] neon-glow' : (isDark ? 'text-white' : 'text-[var(--text-main)]')}`} style={{ fontSize: summaryHeroFontSize }}>
                       {currentMainValue}
                     </span>
                   )}
@@ -1245,6 +1248,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             </div>
           </div>
         );
+      }
 
       case WidgetType.WEATHER:
         return (
@@ -1390,9 +1394,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         const endColor = series?.endColor ? resolveColor(series.endColor, theme.primaryColor, theme.primaryColor) : strokeColor;
         const gradId = `earning-trend-grad-${widget.id}-${isSec ? 'sec' : 'main'}`;
         const heroWeight = theme.titleWeight;
+        const trendHeroVar = widget.titleSize != null ? `${widget.titleSize}px` : undefined;
         return (
           <div className="h-full flex flex-col min-h-0" style={{ padding: 'var(--spacing)', gap: 'var(--spacing)' }}>
-            <div className="shrink-0 trend-summary-hero-wrapper" style={{ ['--trend-hero-weight' as string]: heroWeight }}>
+            <div
+              className="shrink-0 trend-summary-hero-wrapper"
+              style={{
+                ...(trendHeroVar ? { ['--text-hero' as string]: trendHeroVar } : {}),
+                ['--trend-hero-weight' as string]: heroWeight,
+              }}
+            >
               {isEditMode && !isSec ? (
                 <input
                   type="text"
