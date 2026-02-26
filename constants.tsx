@@ -527,22 +527,6 @@ export const TYPE_DEFAULT_DATA: Record<string, {
       series: [{ key: 'value', label: '사용률', color: 'var(--primary-color)' }]
     }
   },
-  [WidgetType.DASH_TRAFFIC_STATUS]: {
-    data: Array.from({ length: 24 }, (_, i) => ({ name: `${i}:00`, value: 100 + Math.random() * 100 })),
-    config: {
-      xAxisKey: 'name',
-      yAxisKey: 'value',
-      unit: 'bps',
-      showLegend: false,
-      showGrid: true,
-      showXAxis: true,
-      showYAxis: true,
-      showUnit: true,
-      showUnitInLegend: false,
-      showLabels: false,
-      series: [{ key: 'value', label: '트래픽', color: '#06b6d4' }]
-    }
-  },
   [WidgetType.DASH_NET_TRAFFIC]: {
     data: Array.from({ length: 10 }, (_, i) => ({
       name: `Time ${i}`,
@@ -730,7 +714,6 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },
   [WidgetType.DASH_FACILITY_2]: { label: '시설 현황 (Type 2)', icon: Monitor, category: 'premium' },
   [WidgetType.DASH_RANK_LIST]: { label: '순위 리스트', icon: BarChartHorizontal, category: 'premium' },
-  [WidgetType.DASH_TRAFFIC_STATUS]: { label: '실시간 트래픽', icon: TrendingUp, category: 'premium' },
   [WidgetType.DASH_TRAFFIC_TOP5]: { label: '업무망 트래픽 TOP5', icon: Activity, category: 'premium' },
   [WidgetType.DASH_VDI_STATUS]: { label: 'VDI 접속 현황', icon: Table, category: 'premium' },
 
@@ -789,7 +772,6 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.DASH_FACILITY_2,
   WidgetType.DASH_RANK_LIST,
   WidgetType.DASH_RESOURCE_USAGE,
-  WidgetType.DASH_TRAFFIC_STATUS,
   WidgetType.DASH_TRAFFIC_TOP5,
   WidgetType.DASH_SECURITY_STATUS,
   WidgetType.DASH_VDI_STATUS,

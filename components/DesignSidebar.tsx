@@ -248,7 +248,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                 </div>
-              </div>
+                </div>
             </section>
           </div>
         )}

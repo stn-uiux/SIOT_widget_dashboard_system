@@ -58,7 +58,7 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         root.style.setProperty('--text-base', `${theme.contentSize}px`);
         root.style.setProperty('--text-md', `${theme.textMd}px`);
         root.style.setProperty('--text-lg', `${theme.textLg}px`);
-        root.style.setProperty('--text-hero', `${theme.textHero}px`);
+        root.style.setProperty('--text-hero', `${theme.textHero ?? 48}px`);
 
         // Glassmorphism (from design-tokens.json by theme mode)
         type GlassVariant = { background?: TokenObj; border?: TokenObj; shadow?: TokenObj };
