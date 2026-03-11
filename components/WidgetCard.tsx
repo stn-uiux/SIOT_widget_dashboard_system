@@ -397,7 +397,7 @@ const AmChartComponent: React.FC<{
         layout: root.verticalLayout,
         paddingLeft: 0,
         paddingRight: showYAxis ? 40 : 12,
-        paddingTop: showYAxis ? 12 : 0,
+        paddingTop: 12,
         paddingBottom: 0
       }));
       chart.leftAxesContainer.setAll({ paddingLeft: 0, paddingRight: 0 });
@@ -467,7 +467,8 @@ const AmChartComponent: React.FC<{
           cornerRadiusBR: isHorizontal ? theme.chartRadius : 0,
           cornerRadiusBL: 0,
           strokeOpacity: 0,
-          fill: am5.color(resolveColor(s.color, theme.primaryColor, theme.primaryColor))
+          fill: am5.color(resolveColor(s.color, theme.primaryColor, theme.primaryColor)),
+          width: am5.percent(widget.config.barWidth ?? 60)
         });
 
         series.data.setAll(widget.data);
@@ -482,13 +483,13 @@ const AmChartComponent: React.FC<{
         layout: root.verticalLayout,
         paddingLeft: 0,
         paddingRight: showYAxis ? 40 : 12,
-        paddingTop: showYAxis ? 12 : 0,
+        paddingTop: 12,
         paddingBottom: 0
       }));
       chart.leftAxesContainer.setAll({ paddingLeft: 0, paddingRight: 0 });
       chart.rightAxesContainer.setAll({ paddingLeft: 0, paddingRight: 0 });
       chart.bottomAxesContainer.setAll({ paddingTop: 0, paddingBottom: 0 });
-      chart.topAxesContainer.setAll({ paddingTop: showYAxis ? 12 : 0, paddingBottom: 0 });
+      chart.topAxesContainer.setAll({ paddingTop: 0, paddingBottom: 0 });
 
       const xRenderer = am5xy.AxisRendererX.new(root, {
         strokeOpacity: showXAxis ? 0.1 : 0,
@@ -566,13 +567,13 @@ const AmChartComponent: React.FC<{
         layout: root.verticalLayout,
         paddingLeft: 0,
         paddingRight: showYAxis ? 40 : 12,
-        paddingTop: showYAxis ? 12 : 0,
+        paddingTop: 12,
         paddingBottom: 0
       }));
       chart.leftAxesContainer.setAll({ paddingLeft: 0, paddingRight: 0 });
       chart.rightAxesContainer.setAll({ paddingLeft: 0, paddingRight: 0 });
       chart.bottomAxesContainer.setAll({ paddingTop: 0, paddingBottom: 0 });
-      chart.topAxesContainer.setAll({ paddingTop: showYAxis ? 12 : 0, paddingBottom: 0 });
+      chart.topAxesContainer.setAll({ paddingTop: 0, paddingBottom: 0 });
 
       const xRenderer = am5xy.AxisRendererX.new(root, {
         strokeOpacity: showXAxis ? 0.1 : 0,
@@ -796,6 +797,19 @@ interface WidgetCardProps {
 const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEdit, onUpdate, onDelete, onOpenExcel, glassStyle }) => {
   const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
   const isCyber = theme.mode === ThemeMode.CYBER;
+  const hideExcelBtn = [
+    WidgetType.TEXT_BLOCK,
+    WidgetType.IMAGE,
+    WidgetType.WEATHER,
+    WidgetType.MAP,
+    WidgetType.GENERAL_KPI,
+    WidgetType.EARNING_PROGRESS,
+    WidgetType.EARNING_TREND,
+    WidgetType.SUMMARY,
+    WidgetType.DASH_FACILITY_2,
+    WidgetType.DASH_RANK_LIST,
+    WidgetType.DASH_RESOURCE_USAGE
+  ].includes(widget.type);
 
   const contentSize = theme.contentSize;
   const titleSize = widget.titleSize ?? theme.titleSize;
@@ -814,7 +828,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     const icon = iconName || widget.icon;
     if (!icon) return null;
     return (
-      <div className={`p-3 rounded-2xl flex items-center justify-center transition-all ${isCyber ? 'bg-[var(--cyber-bg-alpha)] text-[var(--cyber-text)] border border-[var(--cyber-border-alpha)]' : 'bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]'}`}>
+      <div className={`p-3 rounded flex items-center justify-center transition-all ${isCyber ? 'bg-[var(--cyber-bg-alpha)] text-[var(--cyber-text)] border border-[var(--cyber-border-alpha)]' : 'bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]'}`}>
         <span className={`material-symbols-outlined ${isCyber ? 'neon-glow' : ''}`} style={{ fontSize: `calc(var(--content-size) * 2.5)` }}>
           {icon}
         </span>
@@ -822,15 +836,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
     );
   };
 
-  const renderChart = (overrides?: { type?: WidgetType, config?: ChartConfig, data?: any[], mainValue?: string, subValue?: string, icon?: string, noBezel?: boolean, isSecondary?: boolean }) => {
-    const currentType = overrides?.type || widget.type;
-    const currentConfig = overrides?.config || widget.config;
-    const currentData = overrides?.data || widget.data || [];
-    const currentMainValue = overrides?.mainValue || widget.mainValue;
-    const currentSubValue = overrides?.subValue || widget.subValue;
-    const currentIcon = overrides?.icon || (overrides?.isSecondary ? widget.secondaryIcon : widget.icon);
-    const currentNoBezel = overrides?.noBezel ?? (overrides?.isSecondary ? widget.secondaryNoBezel : widget.noBezel);
-    const isSec = overrides?.isSecondary || false;
+  const renderChart = () => {
+    const currentType = widget.type;
+    const currentConfig = widget.config;
+    const currentData = widget.data || [];
+    const currentMainValue = widget.mainValue;
+    const currentSubValue = widget.subValue;
+    const currentIcon = widget.icon;
+    const currentNoBezel = widget.noBezel;
+    const isSec = false;
 
     const { xAxisKey, xAxisLabel, showLegend, showGrid, showXAxis, showYAxis, showLabels, unit, showUnitInLegend } = currentConfig;
 
@@ -963,7 +977,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           show: showGrid,
           borderColor: resolvedStrokeColor,
           strokeDashArray: 4,
-          padding: { top: 0, right: 0, bottom: 0, left: 0 }
+          padding: { top: -15, right: 0, bottom: -10, left: 0 }
         },
         xaxis: {
           categories: categories,
@@ -1000,7 +1014,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         plotOptions: {
           bar: {
             borderRadius: theme.chartRadius,
-            columnWidth: '60%',
+            columnWidth: `${currentConfig.barWidth ?? 60}%`,
           }
         }
       };
@@ -1111,7 +1125,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
       const isAmXY = [WidgetType.CHART_LINE, WidgetType.CHART_AREA, WidgetType.CHART_BAR, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED].includes(currentType);
       return (
         <div className="h-full flex flex-col">
-          <div className={`flex-1 min-h-0 overflow-hidden ${isAmXY ? 'pt-2' : ''}`}>
+          <div className="flex-1 min-h-0 overflow-hidden">
             <AmChartComponent
               widget={{ ...widget, type: currentType, config: currentConfig, data: currentData }}
               theme={theme}
@@ -1266,13 +1280,25 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         );
 
       case WidgetType.GENERAL_KPI: {
-        const iconKey = (widget.icon || 'User') as string;
+        const iconKey = ((isSec ? widget.secondaryIcon : widget.icon) || 'User') as string;
         const GeneralIcon = GENERAL_KPI_ICON_MAP[iconKey] || User;
         const colorVar = GENERAL_KPI_ICON_OPTIONS.find((o) => o.value === iconKey)?.colorVar || '--primary-color';
+        const customSize = isSec ? widget.secondaryIconSize : widget.iconSize;
+        const containerStyle = { 
+          width: customSize ? `${customSize}px` : 'var(--content-size)', 
+          height: customSize ? `${customSize}px` : 'var(--content-size)', 
+          minWidth: customSize ? 'auto' : 48, 
+          minHeight: customSize ? 'auto' : 48 
+        };
+        const iconStyle = { 
+          color: `var(${colorVar})`, 
+          width: customSize ? `${customSize * 0.5}px` : 'var(--text-md)', 
+          height: customSize ? `${customSize * 0.5}px` : 'var(--text-md)' 
+        };
         return (
           <div className="h-full flex flex-col items-center justify-center text-center px-4 py-6" style={{ gap: 'var(--spacing)' }}>
-            <div className="rounded-full bg-[var(--surface-muted)] flex items-center justify-center shrink-0" style={{ width: 'var(--content-size)', height: 'var(--content-size)', minWidth: 48, minHeight: 48 }}>
-              <GeneralIcon className="shrink-0" style={{ color: `var(${colorVar})`, width: 'var(--text-md)', height: 'var(--text-md)' }} />
+            <div className="rounded-full bg-[var(--surface-muted)] flex items-center justify-center shrink-0" style={containerStyle}>
+              <GeneralIcon className="shrink-0" style={iconStyle} />
             </div>
             {isEditMode && !isSec ? (
               <input
@@ -1385,6 +1411,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         const trendPct = widget.trendPercent ?? 21;
         const trendUp = widget.trendUp !== false;
         const comparison = widget.comparisonText ?? 'Compared of $11,750 last year';
+        const barHeight = (currentConfig.barWidth ?? 60) * 0.133; // Default 60 -> 8px (h-2)
         const items = (widget.categoryItems && widget.categoryItems.length > 0)
           ? widget.categoryItems
           : [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: '#f97316' }, { label: 'Marketing', value: 12 }];
@@ -1460,7 +1487,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 return (
                   <div key={idx} className="flex items-center gap-2" style={{ gap: 'var(--spacing-sm)' }}>
                     <span className="text-[var(--text-muted)] shrink-0 w-20 truncate" style={{ fontSize: 'var(--text-small)' }}>{item.label}</span>
-                    <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden" style={{ borderRadius: 'var(--border-radius)' }}>
+                    <div className="flex-1 rounded-full bg-[var(--surface-muted)] overflow-hidden" style={{ borderRadius: 'var(--border-radius)', height: `${barHeight}px` }}>
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{ width: `${pct}%`, backgroundColor: barColor, borderRadius: 'var(--border-radius)' }}
@@ -1489,7 +1516,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             )}
             {isEditMode && (
               <div className="absolute inset-0 flex items-center justify-center bg-[var(--black-alpha-40)] opacity-0 group-hover:opacity-100 transition-opacity">
-                <label className="btn-base btn-surface p-2.5 rounded-xl cursor-pointer">
+                <label className="btn-base btn-surface p-2.5 rounded-sm cursor-pointer">
                   <Image className="w-5 h-5" />
                   <input
                     type="file"
@@ -1575,6 +1602,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     stackId={localSeries.length > 1 ? 'stack1' : undefined}
                     fill={currentConfig.useGradient ? `url(#grad-bar-${s.key}-${idx})` : resolveColor(s.color, isCyber ? 'var(--cyber-text)' : theme.primaryColor, theme.primaryColor)}
                     radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
+                    barSize={currentConfig.barWidth != null ? `${currentConfig.barWidth}%` : undefined}
                   />
                 ))}
               </BarChart>
@@ -1630,6 +1658,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                         dataKey={s.key}
                         fill={currentConfig.useGradient ? `url(#grad-hbar-${s.key}-${idx})` : resolveColor(s.color, isCyber ? 'var(--cyber-text)' : theme.primaryColor, theme.primaryColor)}
                         radius={[0, theme.chartRadius, theme.chartRadius, 0]}
+                        barSize={currentConfig.barWidth != null ? `${currentConfig.barWidth}%` : undefined}
                       />
                     ))}
                   </BarChart>
@@ -2075,28 +2104,41 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
-      case WidgetType.DASH_FACILITY_2:
+      case WidgetType.DASH_FACILITY_2: {
+        const customSize = isSec ? widget.secondaryIconSize : widget.iconSize;
         return (
           <div className="h-full flex flex-col justify-center gap-6 px-4">
-            {currentData.map((d: any, idx: number) => (
-              <div key={idx} className="flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 bg-gradient-to-br transition-all group-hover:scale-110 shadow-lg ${isCyber ? (idx === 0 ? 'from-[var(--primary-color)] to-[var(--secondary-color)] shadow-[var(--primary-subtle)] neon-glow' : 'from-[var(--secondary-color)] to-[var(--premium-end)] shadow-[var(--secondary-color-alpha-40)] neon-glow') : (idx === 0 ? 'from-[var(--surface-elevated)] to-[var(--surface-muted)] shadow-[var(--black-alpha-10)]' : 'from-[var(--primary-color)] to-[var(--secondary-color)] shadow-[var(--primary-subtle)]')}`} style={{ borderRadius: 'var(--border-radius)' }}>
-                    <span className="material-symbols-outlined text-white text-2xl">{d.icon}</span>
+            {currentData.map((d: any, idx: number) => {
+              const iconBoxSize = customSize ? `${customSize}px` : undefined;
+              const iconFontSize = customSize ? `${customSize * 0.5}px` : undefined;
+              return (
+                <div key={idx} className="flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <div className={`flex items-center justify-center shrink-0 bg-gradient-to-br transition-all group-hover:scale-110 shadow-lg ${isCyber ? (idx === 0 ? 'from-[var(--primary-color)] to-[var(--secondary-color)] shadow-[var(--primary-subtle)] neon-glow' : 'from-[var(--secondary-color)] to-[var(--premium-end)] shadow-[var(--secondary-color-alpha-40)] neon-glow') : (idx === 0 ? 'from-[var(--surface-elevated)] to-[var(--surface-muted)] shadow-[var(--black-alpha-10)]' : 'from-[var(--primary-color)] to-[var(--secondary-color)] shadow-[var(--primary-subtle)]')}`} 
+                         style={{ 
+                           borderRadius: 'var(--border-radius)',
+                           width: iconBoxSize || '48px',
+                           height: iconBoxSize || '48px'
+                         }}>
+                      <span className="material-symbols-outlined text-white" style={{ fontSize: iconFontSize || '1.5rem' }}>{d.icon}</span>
+                    </div>
+                    <span className="font-bold text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-md)' }}>{d.name}</span>
                   </div>
-                  <span className="font-bold text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-md)' }}>{d.name}</span>
+                  <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-hero)' }}>{d.value.toLocaleString()}</span>
                 </div>
-                <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-hero)' }}>{d.value.toLocaleString()}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         );
+      }
 
-      case WidgetType.DASH_RANK_LIST:
+      case WidgetType.DASH_RANK_LIST: {
+        const customIconSize = isSec ? widget.secondaryIconSize : widget.iconSize;
+        const barHeight = (currentConfig.barWidth ?? 60) * 0.533; // Default 60 -> 32px (h-8)
         return (
           <div className="h-full flex items-center gap-8 px-4 overflow-hidden">
             <div className="flex-shrink-0 flex items-center justify-center">
-              <span className="material-symbols-outlined text-muted opacity-40 select-none" style={{ fontSize: 'min(90px, 10vh)' }}>
+              <span className="material-symbols-outlined text-muted opacity-40 select-none" style={{ fontSize: customIconSize ? `${customIconSize}px` : 'min(90px, 10vh)' }}>
                 {currentIcon || 'schema'}
               </span>
             </div>
@@ -2108,7 +2150,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
                 return (
                   <div key={idx} className="flex flex-col gap-1 group cursor-pointer">
-                    <div className="h-8 bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: '999px' }}>
+                    <div className="bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: '999px', height: `${barHeight}px` }}>
                       <div
                         className="h-full transition-all duration-1000 group-hover:brightness-110 shadow-lg relative"
                         style={{
@@ -2118,7 +2160,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                         }}
                       >
                         <div className="absolute inset-0 flex items-center px-4 whitespace-nowrap">
-                          <span className="text-white font-black tracking-tight drop-shadow-md" style={{ fontSize: 'var(--text-small)' }}>
+                          <span className="text-white font-black tracking-tight drop-shadow-md" style={{ fontSize: barHeight < 20 ? '8px' : `${Math.min(14, barHeight * 0.4)}px` }}>
                             {d.name} : {d.value.toLocaleString()}{unit}
                           </span>
                         </div>
@@ -2130,8 +2172,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             </div>
           </div>
         );
+      }
 
-      case WidgetType.DASH_TRAFFIC_TOP5:
+      case WidgetType.DASH_TRAFFIC_TOP5: {
+        const barHeight = (currentConfig.barWidth ?? 60) * 0.266; // Default 60 -> 16px (h-4)
         return (
           <div className="h-full flex flex-col gap-1.5 min-h-0 overflow-y-auto py-1">
             {currentData.map((d: any, idx: number) => {
@@ -2142,7 +2186,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                   <div className="flex-shrink-0 text-left font-bold text-main whitespace-nowrap" style={{ fontSize: 'var(--text-small)', minWidth: 0 }}>
                     {d.name}
                   </div>
-                  <div className="flex-1 h-4 bg-[var(--surface-muted)] rounded overflow-hidden min-w-0">
+                   <div className="flex-1 bg-[var(--surface-muted)] rounded overflow-hidden min-w-0" style={{ height: `${barHeight}px` }}>
                     <div
                       className="h-full rounded transition-all duration-500"
                       style={{
@@ -2159,6 +2203,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             })}
           </div>
         );
+      }
 
       case WidgetType.DASH_FAILURE_STATS:
         return (
@@ -2196,7 +2241,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           </div>
         );
 
-      case WidgetType.DASH_RESOURCE_USAGE:
+      case WidgetType.DASH_RESOURCE_USAGE: {
+        const barHeight = (currentConfig.barWidth ?? 60) * 0.166; // Default 60 -> 10px (h-2.5)
         return (
           <div className="h-full flex items-center gap-6 px-2">
             {currentIcon && (
@@ -2211,7 +2257,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                     <div className="font-black text-muted uppercase tracking-tight group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-tiny)' }}>{d.name}</div>
                     <div className="font-mono font-black text-main" style={{ fontSize: 'var(--text-tiny)' }}>{d.value}%</div>
                   </div>
-                  <div className="h-2.5 bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: theme.chartRadius }}>
+                  <div className="bg-[var(--surface-muted)] overflow-hidden relative shadow-inner" style={{ borderRadius: theme.chartRadius, height: `${barHeight}px` }}>
                     <div
                       className="h-full transition-all duration-1000 group-hover:brightness-110"
                       style={{
@@ -2225,6 +2271,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
             </div>
           </div>
         );
+      }
 
 
       case WidgetType.DASH_TRAFFIC_STATUS:
@@ -2386,13 +2433,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
         : `rgba(var(--glass-bg-rgb), calc(var(--glass-opacity) * ${bgOpacity / 100}))`,
       backdropFilter: `blur(var(--glass-blur, 12px))`,
       WebkitBackdropFilter: `blur(var(--glass-blur, 12px))`,
-      border: bgOpacity > 0 ? 'var(--glass-border)' : 'none',
+      border: (bgOpacity > 0 && !widget.hideBorder) ? 'var(--glass-border)' : 'none',
       boxShadow: bgOpacity > 0 ? 'var(--glass-shadow)' : 'none',
     }
     : undefined;
 
   return (
-    <div className={`h-full flex flex-col group relative ${isCyber ? 'cyber-frame' : ''}`}>
+    <div className={`h-full flex flex-col group relative ${isCyber && !widget.hideBorder ? 'cyber-frame' : ''}`}>
       {isEditMode && (
         <div
           className="drag-handle absolute left-0 top-0 z-20 h-14 w-2 rounded-r-md cursor-grab active:cursor-grabbing shrink-0"
@@ -2403,9 +2450,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
           title="드래그하여 이동"
         />
       )}
-      {isCyber && <div className="cyber-frame-inner absolute inset-0 pointer-events-none z-10" />}
+      {isCyber && !widget.hideBorder && <div className="cyber-frame-inner absolute inset-0 pointer-events-none z-10" />}
       <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${!widget.noBezel && !glassStyle ? `rounded-design shadow-base p-design ${theme.chartLibrary === ChartLibrary.APEXCHARTS && widget.type === WidgetType.CHART_SANKEY ? 'border-0' : 'border-main'} ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} ${glassStyle ? 'rounded-design p-design widget-glass' : ''} ${isEditMode ? 'edit-mode-indicator' : ''} ${widget.noBezel && !glassStyle && bgOpacity >= 100 ? 'bg-surface' : ''}`}
+        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${!widget.noBezel && !glassStyle ? `rounded-design shadow-base ${widget.hideBorder ? 'p-0' : 'p-design'} ${ (widget.hideBorder || (theme.chartLibrary === ChartLibrary.APEXCHARTS && widget.type === WidgetType.CHART_SANKEY)) ? 'border-0' : 'border-main'} ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} ${glassStyle ? `rounded-design ${widget.hideBorder ? 'p-0' : 'p-design'} widget-glass` : ''} ${isEditMode ? 'edit-mode-indicator' : ''} ${widget.noBezel && !glassStyle && bgOpacity >= 100 ? 'bg-surface' : ''}`}
         style={glassStyleInline ?? cardStyle}
       >
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ paddingLeft: CHART_LEFT_INSET, paddingRight: CHART_LEFT_INSET }}>
@@ -2442,13 +2489,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
                 >
                   <Settings className="w-4 h-4" />
                 </button>
-                <button
-                  onClick={() => onOpenExcel(widget.id)}
-                  className="widget-action-btn"
-                  title="Open Data"
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                </button>
+                {!hideExcelBtn && (
+                  <button
+                    onClick={() => onOpenExcel(widget.id)}
+                    className="widget-action-btn"
+                    title="Open Data"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => onDelete(widget.id)}
                   className="widget-action-btn widget-action-btn-danger"
@@ -2463,39 +2512,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({ widget, theme, isEditMode, onEd
 
         <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden mt-0.5" style={{ paddingLeft: 'var(--spacing)', paddingRight: 'var(--spacing)' }}>
           {isCyber && <div className="widget-scan" />}
-          {widget.isDual ? (
-            <div
-              className="w-full h-full flex flex-col md:flex-row"
-              style={{
-                flexDirection: widget.dualLayout === 'vertical' ? 'column' : 'row',
-                gap: `${widget.dualGap || 16}px`
-              }}
-            >
-              <div className="flex-1 min-h-0 overflow-hidden">
-                {widget.showSubTitles && widget.subTitle1 && (
-                  <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle1}</div>
-                )}
-                {renderChart()}
-              </div>
-              <div className="flex-1 min-h-0 overflow-hidden">
-                {widget.showSubTitles && widget.subTitle2 && (
-                  <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle2}</div>
-                )}
-                {renderChart({
-                  type: widget.secondaryType,
-                  config: widget.secondaryConfig,
-                  data: widget.secondaryData,
-                  mainValue: widget.secondaryMainValue,
-                  subValue: widget.secondarySubValue,
-                  icon: widget.secondaryIcon,
-                  noBezel: widget.secondaryNoBezel,
-                  isSecondary: true
-                })}
-              </div>
-            </div>
-          ) : (
-            renderChart()
-          )}
+          {renderChart()}
         </div>
         </div>
       </div>

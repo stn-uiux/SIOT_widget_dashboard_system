@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { GridLayout, ResponsiveGridLayout, useContainerWidth, verticalCompactor, noCompactor } from "react-grid-layout";
+import { GridLayout, ResponsiveGridLayout, useContainerWidth, getCompactor } from "react-grid-layout";
 import type { LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import {
@@ -102,7 +102,21 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
     const id = parsed.activeProjectId && parsed.projects.some((p: Project) => p.id === parsed.activeProjectId)
       ? parsed.activeProjectId
       : parsed.projects[0].id;
-    return { projects: parsed.projects, activeProjectId: id };
+
+    // ── 스키마 마이그레이션: 저장된 데이터에 없는 새 필드를 기본값으로 채움 ──
+    // 이렇게 하면 새 테마 필드 추가 시 저장된 데이터가 undefined로 남아 리셋되는 현상을 방지
+    const migratedProjects: Project[] = parsed.projects.map((p) => ({
+      ...p,
+      // 테마: DEFAULT_THEME를 base로 하고, 저장된 값을 덮어씀 (새 필드는 DEFAULT_THEME 기본값 사용)
+      theme: { ...DEFAULT_THEME, ...p.theme },
+      pages: (p.pages || []).map((pg) => ({
+        ...pg,
+        // 헤더: DEFAULT_HEADER를 base로 하고, 저장된 값을 덮어씀
+        header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
+      })),
+    }));
+
+    return { projects: migratedProjects, activeProjectId: id };
   } catch {
     return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
   }
@@ -119,9 +133,17 @@ async function saveProjectsState(projects: Project[], activeProjectId: string): 
 
 let _cachedProjectsState: ProjectsState | null = null;
 function getInitialProjectsState(): ProjectsState {
-  if (!_cachedProjectsState) _cachedProjectsState = loadProjectsStateSync(INITIAL_PROJECT_LIST);
+  // 항상 최신 localStorage에서 읽음 (HMR 시 캐시로 인한 오래된 값 사용 방지)
+  if (!_cachedProjectsState) {
+    _cachedProjectsState = loadProjectsStateSync(INITIAL_PROJECT_LIST);
+  }
   return _cachedProjectsState;
 }
+
+// HMR(핫 리로드) 또는 재시작 시 캐시 초기화 (항상 최신 localStorage 반영)
+(import.meta as any).hot?.on?.('vite:beforeUpdate', () => {
+  _cachedProjectsState = null;
+});
 
 /** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
 const computeInitialLayout = (
@@ -222,20 +244,30 @@ const DashboardGrid: React.FC<{
   const displayLayout = useMemo(() => {
     if (!usePixelGrid) return currentRglLayout;
     const cols = Math.max(1, layout.columns);
+    const spacing = theme.spacing;
+    const colWidth = (gridWidth - (cols - 1) * spacing) / cols;
+    const rowH = rglRowHeight;
+    const unitX = gridWidth / rglCols;
+    const unitY = rglRowH / rglRowH; // 1 unit in RGL units
+
     return currentRglLayout.map((item) => {
-      const xPx = (finite(Number(item.x), 0) * rglCols) / cols;
-      const yPx = (finite(Number(item.y), 0) * rglRowHeight) / rglRowH;
-      const wPx = (finite(Number(item.w), 4) * rglCols) / cols;
-      const hPx = (finite(Number(item.h), 4) * rglRowHeight) / rglRowH;
+      // In Grid mode, pos = x * (colWidth + spacing)
+      // In Pixel mode, pos = xPx * unitX
+      // So xPx = (x * (colWidth + spacing)) / unitX
+      const left = finite(Number(item.x), 0) * (colWidth + spacing);
+      const top = finite(Number(item.y), 0) * (rowH + spacing);
+      const width = finite(Number(item.w), 4) * (colWidth + spacing) - spacing;
+      const height = finite(Number(item.h), 4) * (rowH + spacing) - spacing;
+
       return {
         ...item,
-        x: finite(xPx, 0),
-        y: finite(yPx, 0),
-        w: Math.max(1, finite(wPx, 4)),
-        h: Math.max(1, finite(hPx, 4)),
+        x: finite(left / unitX, 0),
+        y: finite(top / rglRowH, 0),
+        w: Math.max(2, finite(width / unitX, 4)),
+        h: Math.max(2, finite(height / rglRowH, 4)),
       };
     });
-  }, [usePixelGrid, currentRglLayout, layout.columns, rglCols, rglRowH, rglRowHeight]);
+  }, [usePixelGrid, currentRglLayout, layout.columns, rglCols, rglRowH, rglRowHeight, gridWidth, theme.spacing]);
 
   const handleLayoutChange = useCallback(
     (next: readonly LayoutItem[]) => {
@@ -243,22 +275,36 @@ const DashboardGrid: React.FC<{
         onLayoutChange(next);
         return;
       }
+      const cols = Math.max(1, layout.columns);
+      const spacing = theme.spacing;
+      const colWidth = (gridWidth - (cols - 1) * spacing) / cols;
+      const unitX = gridWidth / rglCols;
+
       const gridLayout = next.map((item) => {
-        const xGrid = (finite(Number(item.x), 0) * layout.columns) / rglCols;
-        const yGrid = (finite(Number(item.y), 0) * rglRowH) / rglRowHeight;
-        const wGrid = (finite(Number(item.w), 4) * layout.columns) / rglCols;
-        const hGrid = (finite(Number(item.h), 4) * rglRowH) / rglRowHeight;
+        // In Pixel mode, left = x * unitX
+        // In Grid mode, left = xGrid * (colWidth + spacing)
+        // so xGrid = (x * unitX) / (colWidth + spacing)
+        const left = finite(Number(item.x), 0) * unitX;
+        const top = finite(Number(item.y), 0) * rglRowH;
+        const width = finite(Number(item.w), 4) * unitX;
+        const height = finite(Number(item.h), 4) * rglRowH;
+
+        const xGrid = left / (colWidth + spacing);
+        const yGrid = top / (rglRowHeight + spacing);
+        const wGrid = (width + spacing) / (colWidth + spacing);
+        const hGrid = (height + spacing) / (rglRowHeight + spacing);
+
         return {
           ...item,
-          x: Math.max(0, finite(Math.round(xGrid * 1000) / 1000, 0)),
-          y: Math.max(0, finite(Math.round(yGrid * 1000) / 1000, 0)),
-          w: Math.max(0.5, finite(Math.round(wGrid * 1000) / 1000, 4)),
-          h: Math.max(0.5, finite(Math.round(hGrid * 1000) / 1000, 4)),
+          x: Math.max(0, finite(Math.round(xGrid * 100) / 100, 0)),
+          y: Math.max(0, finite(Math.round(yGrid * 100) / 100, 0)),
+          w: Math.max(0.5, finite(Math.round(wGrid * 100) / 100, 4)),
+          h: Math.max(0.5, finite(Math.round(hGrid * 100) / 100, 4)),
         };
       });
       onLayoutChange(gridLayout);
     },
-    [usePixelGrid, layout.columns, rglCols, rglRowH, rglRowHeight, onLayoutChange]
+    [usePixelGrid, layout.columns, rglCols, rglRowH, rglRowHeight, gridWidth, theme.spacing, onLayoutChange]
   );
 
   const hasLayoutBackground = !!(layout?.backgroundGlobe || layout?.backgroundImage || layout?.backgroundImageLight || layout?.backgroundImageDark);
@@ -282,7 +328,7 @@ const DashboardGrid: React.FC<{
               maxWidth: "800px",
               minHeight: "320px",
             }}
-            className="flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group"
+            className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
           >
             <div className="w-16 h-16 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Plus className="w-8 h-8 text-primary" />
@@ -364,7 +410,7 @@ const DashboardGrid: React.FC<{
               margin={[theme.spacing, theme.spacing] as [number, number]}
               containerPadding={[0, 0] as [number, number]}
               maxRows={layout.fitToScreen ? layout.rows : Infinity}
-              compactor={layout.freePosition ? noCompactor : verticalCompactor}
+              compactor={getCompactor((layout.useGrid === false || layout.freePosition) ? null : "vertical", (layout.useGrid === false || layout.freePosition))}
               dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
               resizeConfig={{
                 enabled: isEditMode,
@@ -409,7 +455,7 @@ const DashboardGrid: React.FC<{
                   containerPadding: [0, 0] as [number, number],
                   maxRows: usePixelGrid ? Infinity : layout.fitToScreen ? layout.rows : Infinity,
                 }}
-                compactor={layout.freePosition ? noCompactor : verticalCompactor}
+                compactor={getCompactor((usePixelGrid || layout.freePosition) ? null : "vertical", (usePixelGrid || layout.freePosition))}
                 dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
                 resizeConfig={{
                   enabled: isEditMode,
@@ -446,23 +492,56 @@ const DashboardGrid: React.FC<{
           )}
 
           {isEditMode && (
-            <button
-              onClick={onOpenWidgetPicker}
-              style={{
-                borderRadius: "var(--border-radius)",
-                marginTop: "var(--spacing)",
-                width: "100%",
-                minHeight: "150px",
-              }}
-              className="flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group"
+            <div 
+              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-auto pointer-events-none flex flex-col items-center"
             >
-              <div className="w-12 h-12 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <Plus className="w-6 h-6 text-primary" />
+              {/* Dynamic Island Style Pill Button */}
+              <div className="group pointer-events-auto relative">
+                <button
+                  onClick={onOpenWidgetPicker}
+                  className={`
+                    relative flex items-center gap-3 px-6 h-[52px]
+                    bg-white/10 dark:bg-black/40 backdrop-blur-2xl
+                    border border-white/20 dark:border-white/10
+                    rounded-full overflow-hidden transition-all duration-500
+                    hover:scale-105 hover:px-8 active:scale-95
+                    shadow-[0_20px_50px_rgba(0,0,0,0.3)]
+                    before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity
+                  `}
+                >
+                  {/* Glowing Animated Ring */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                    <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent,var(--primary-color),transparent)] animate-[spin_4s_linear_infinite] opacity-40" />
+                  </div>
+
+                  {/* Icon with hover rotation */}
+                  <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700">
+                    <Plus className="w-5 h-5 text-white stroke-[3px]" />
+                  </div>
+
+                  {/* Text with letter spacing animation */}
+                  <span className="relative z-10 font-black text-[13px] uppercase tracking-[0.2em] text-white group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md">
+                    Add Widget
+                  </span>
+
+                  {/* Cyber Sparkle (if cyber mode) */}
+                  {theme.mode === ThemeMode.CYBER && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+                      <div className="absolute bottom-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Subtle outer glow */}
+                <div className="absolute -inset-1 bg-primary/20 blur-2xl rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-              <span className="font-semibold text-xs uppercase tracking-tighter">
-                Add Widget
-              </span>
-            </button>
+              
+              {/* Hint under the button */}
+              <div className="mt-3 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm border border-white/5 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
+                <span className="text-[9px] text-white/70 uppercase tracking-widest font-bold">Pick analysis component</span>
+              </div>
+            </div>
           )}
         </>
       )}
@@ -688,9 +767,29 @@ const HeaderClock = () => {
 };
 
 const HeaderMonitor = () => (
-  <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 bg-black/20 border border-white/5 rounded-full text-[var(--text-main)] whitespace-nowrap overflow-hidden">
+  <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 bg-white dark:bg-[var(--surface-elevated)] border border-[var(--border-base)] dark:border-white/5 shadow-sm rounded-full text-[var(--text-main)] whitespace-nowrap overflow-hidden">
     <span className="text-[10px] font-bold tracking-tight uppercase">시스템 감시</span>
     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
+  </div>
+);
+
+const HeaderImage = ({ url }: { url?: string }) => (
+  <div className="w-full h-full flex items-center justify-center overflow-hidden">
+    {url ? (
+      <img src={url} alt="Header Widget" className="max-w-full max-h-full object-contain" />
+    ) : (
+      <div className="text-[10px] font-bold text-muted uppercase">No Image</div>
+    )}
+  </div>
+);
+
+const HeaderLogo = ({ url }: { url?: string }) => (
+  <div className="w-full h-full flex items-center justify-center overflow-hidden">
+    {url ? (
+      <img src={url} alt="Logo" className="max-w-full max-h-full object-contain" />
+    ) : (
+      <div className="text-[10px] font-bold text-muted uppercase">No Logo</div>
+    )}
   </div>
 );
 
@@ -778,8 +877,17 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
       type,
       x: Math.max(0, Math.min(x, 54)),
       y: Math.max(0, Math.min(y, 11)),
-      w: type === HeaderWidgetType.CLOCK ? 6 : (type === HeaderWidgetType.MONITOR ? 5 : 4),
+      w: type === HeaderWidgetType.CLOCK 
+        ? 4 
+        : (type === HeaderWidgetType.MONITOR 
+          ? 5 
+          : type === HeaderWidgetType.THEME_TOGGLE 
+            ? 3 
+            : type === HeaderWidgetType.IMAGE || type === HeaderWidgetType.LOGO
+              ? 6
+              : 4),
       h: 6,
+      url: (type === HeaderWidgetType.IMAGE || type === HeaderWidgetType.LOGO) ? 'https://via.placeholder.com/150' : undefined,
     };
 
     onUpdate({ widgets: [...widgets, newWidget] });
@@ -794,7 +902,13 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
     >
       <GridLayout
         className="layout"
-        layout={widgets.map((w) => ({ i: w.id, x: w.x, y: w.y, w: w.w, h: w.h }))}
+        layout={widgets.map((w) => ({ 
+          i: w.id, 
+          x: w.x, 
+          y: w.y, 
+          w: w.type === HeaderWidgetType.CLOCK ? Math.min(w.w, 4) : w.type === HeaderWidgetType.THEME_TOGGLE ? Math.min(w.w, 3) : w.w, 
+          h: w.h 
+        }))}
         width={gridWidth}
         gridConfig={{
           cols: 60,
@@ -804,7 +918,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
         }}
         dragConfig={{ enabled: isEditMode }}
         resizeConfig={{ enabled: isEditMode }}
-        compactor={noCompactor}
+        compactor={getCompactor(null, true)}
         onLayoutChange={onLayoutChange}
       >
         {widgets.map((w) => (
@@ -815,16 +929,17 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
               <HeaderThemeToggle
                 mode={theme.mode}
                 onSwitch={onModeSwitch}
-                isCyber={isCyber}
               />
             )}
+            {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
+            {w.type === HeaderWidgetType.LOGO && <HeaderLogo url={w.url} />}
             {isEditMode && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onUpdate({ widgets: widgets.filter(v => v.id !== w.id) });
                 }}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-lg"
+                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded flex items-center justify-center hover:bg-red-600 shadow-lg transition-colors z-30"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -911,6 +1026,38 @@ const App: React.FC = () => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
 
+  const [panelPos, setPanelPos] = useState({ x: 20, y: 100 });
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+  const dragStartOffset = useRef({ x: 0, y: 0 });
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    setIsDraggingPanel(true);
+    dragStartOffset.current = {
+      x: e.clientX + panelPos.x, // right position
+      y: e.clientY - panelPos.y
+    };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingPanel) return;
+      setPanelPos({
+        x: dragStartOffset.current.x - e.clientX,
+        y: e.clientY - dragStartOffset.current.y
+      });
+    };
+    const handleMouseUp = () => setIsDraggingPanel(false);
+
+    if (isDraggingPanel) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingPanel]);
+
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
@@ -971,7 +1118,16 @@ const App: React.FC = () => {
       // 프로젝트 데이터
       const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
       if (!cancelled && saved?.projects?.length) {
-        setProjects(saved.projects);
+        // 스키마 마이그레이션: IndexedDB 데이터도 새 필드 누락 방지
+        const migratedProjects: Project[] = saved.projects.map((p) => ({
+          ...p,
+          theme: { ...DEFAULT_THEME, ...p.theme },
+          pages: (p.pages || []).map((pg) => ({
+            ...pg,
+            header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
+          })),
+        }));
+        setProjects(migratedProjects);
         if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
       }
       // 레이아웃 데이터
@@ -1023,26 +1179,11 @@ const App: React.FC = () => {
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id === activeProjectId) {
-          const theme = p.theme;
-          const currentMode = theme.mode;
-
-          // If dualModeSupport is ON, we sync changes to the current mode's persistent storage
-          let updatedModeStyles = { ...(theme.modeStyles || {}) };
-
-          // We sync if we are NOT performing a mode switch (i.e., newTheme doesn't contain 'mode')
-          if (theme.dualModeSupport && !("mode" in newTheme)) {
-            updatedModeStyles[currentMode] = {
-              ...(updatedModeStyles[currentMode] || {}),
-              ...newTheme,
-            };
-          }
-
           return {
             ...p,
             theme: {
-              ...theme,
+              ...p.theme,
               ...newTheme,
-              modeStyles: "mode" in newTheme && newTheme.modeStyles != null ? newTheme.modeStyles : updatedModeStyles,
             },
           };
         }
@@ -1181,57 +1322,8 @@ const App: React.FC = () => {
     updateProjectTheme(newTheme);
   };
 
-  const handleModeSwitch = (newMode: ThemeMode) => {
-    const prevMode = theme.mode;
-    if (prevMode === newMode) return;
-
-    // 1. Save critical style properties for the previous mode
-    const currentStyles = {
-      backgroundColor: theme.backgroundColor,
-      surfaceColor: theme.surfaceColor,
-      titleColor: theme.titleColor,
-      textColor: theme.textColor,
-      cardShadow: theme.cardShadow,
-      borderColor: theme.borderColor,
-      widgetHeaderColor: theme.widgetHeaderColor,
-    };
-
-    const updatedModeStyles = {
-      ...(theme.modeStyles || {}),
-      [prevMode]: currentStyles,
-    };
-
-    // 2. Load colors for the new mode if they exist
-    // FIX: Must use updatedModeStyles which contains the most recent save of prevMode
-    const savedNewModeStyles = updatedModeStyles[newMode];
-
-    if (savedNewModeStyles) {
-      handleThemeChange({
-        mode: newMode,
-        modeStyles: updatedModeStyles,
-        ...savedNewModeStyles,
-      });
-    } else {
-      // Default fallback using smart shift
-      handleThemeChange({
-        mode: newMode,
-        modeStyles: updatedModeStyles,
-        backgroundColor: getSmartColorForMode(
-          theme.primaryColor,
-          newMode,
-          "bg",
-        ),
-        surfaceColor: getSmartColorForMode(
-          theme.primaryColor,
-          newMode,
-          "surface",
-        ),
-        titleColor: getSmartColorForMode(theme.primaryColor, newMode, "text"),
-        textColor: getSmartColorForMode(theme.primaryColor, newMode, "text"),
-        borderColor: newMode === ThemeMode.DARK ? "#1e293b" : "#e2e8f0",
-        widgetHeaderColor: "transparent",
-      });
-    }
+  const handleModeSwitch = (mode: ThemeMode) => {
+    updateProjectTheme({ mode });
   };
 
   const handleUpdateLayout = (updates: Partial<LayoutConfig>) => {
@@ -1415,18 +1507,24 @@ const App: React.FC = () => {
     }
   };
 
-  const handleProjectSave = async () => {
-    if (isEditMode) {
-      // 명시적으로 최신 상태(프로젝트 + 위젯 위치)를 IndexedDB에 저장
-      const latestProjects = projectsRef.current;
-      const latestLayoutStore = layoutStoreRef.current;
-      const savedProjects = await saveProjectsState(latestProjects, activeProjectId);
-      await saveLayoutStore(latestLayoutStore);
+  const persistActiveProject = async (showNotification = true) => {
+    const latestProjects = projectsRef.current;
+    const latestLayoutStore = layoutStoreRef.current;
+    const savedProjects = await saveProjectsState(latestProjects, activeProjectId);
+    await saveLayoutStore(latestLayoutStore);
+    if (showNotification) {
       if (savedProjects) {
         showToast("Project configuration saved successfully");
       } else {
         showToast("Failed to save — please check browser storage.", "error");
       }
+    }
+    return savedProjects;
+  };
+
+  const handleProjectSave = async () => {
+    if (isEditMode) {
+      await persistActiveProject();
       setIsEditMode(false);
       setIsDesignSidebarOpen(false);
       setIsLayoutSidebarOpen(false);
@@ -1438,10 +1536,14 @@ const App: React.FC = () => {
 
   /** 헤더(포지션 등)는 프로젝트 단위: 변경 시 해당 프로젝트의 모든 탭(페이지)에 동일 적용 */
   const updateHeader = (newHeader: Partial<HeaderConfig>) => {
-    const mergedHeader = { ...header, ...newHeader };
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id !== activeProjectId) return p;
+        // 현재 활성 페이지의 헤더를 기준으로 병합 (없으면 DEFAULT_HEADER fallback)
+        const effectivePageId = p.activePageId || p.pages[0]?.id;
+        const activePage = p.pages.find(pg => pg.id === effectivePageId) || p.pages[0];
+        const baseHeader = activePage?.header || DEFAULT_HEADER;
+        const mergedHeader = { ...baseHeader, ...newHeader };
         return {
           ...p,
           pages: p.pages.map((pg) => ({ ...pg, header: mergedHeader })),
@@ -1575,7 +1677,7 @@ const App: React.FC = () => {
                         onClick={() => setIsProjectDropdownOpen(false)}
                       />
                       <div
-                        className={`absolute top-full left-0 mt-2 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] ${isCyber ? "rounded-md" : "rounded-2xl"}`}
+                        className={`absolute top-full left-0 mt-2 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] ${isCyber ? "rounded-md" : "rounded"}`}
                       >
                         <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
                           <p className="text-[10px] uppercase font-bold text-muted tracking-widest">
@@ -1586,7 +1688,7 @@ const App: React.FC = () => {
                           {projects.map((p) => (
                             <div
                               key={p.id}
-                              className={`flex items-center gap-2 w-full px-4 py-2.5 mb-1 rounded-xl border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                              className={`flex items-center gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
                             >
                               <button
                                 onClick={() => {
@@ -1663,18 +1765,18 @@ const App: React.FC = () => {
                           <button
                             onClick={handleExportClick}
                             disabled={capturingForExport}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-xl"} flex items-center justify-center gap-2`}
+                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-sm"} flex items-center justify-center gap-2`}
                           >
-                            <Download className="w-4 h-4 shrink-0" />
+                            <Upload className="w-4 h-4 shrink-0" />
                             <span className="text-[10px] font-bold uppercase">
                               내보내기
                             </span>
                           </button>
                           <button
                             onClick={() => importInputRef.current?.click()}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-xl"} flex items-center justify-center gap-2`}
+                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-sm"} flex items-center justify-center gap-2`}
                           >
-                            <Upload className="w-4 h-4 shrink-0" />
+                            <Download className="w-4 h-4 shrink-0" />
                             <span className="text-[10px] font-bold uppercase">
                               내려받기
                             </span>
@@ -1688,7 +1790,7 @@ const App: React.FC = () => {
                           />
                           <button
                             onClick={addProject}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 text-primary ${isCyber ? "rounded-md" : "rounded-xl"}`}
+                            className={`btn-base btn-ghost w-full px-4 py-2.5 text-primary ${isCyber ? "rounded-md" : "rounded-sm"}`}
                           >
                             <Plus className="w-4 h-4" />{" "}
                             <span className="text-[10px] font-bold uppercase">
@@ -1732,7 +1834,7 @@ const App: React.FC = () => {
                     onClick={() => setIsLibraryDropdownOpen(false)}
                   />
                   <div
-                    className={`absolute top-full right-0 mt-2 w-52 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${isCyber ? "bg-black/90 border border-cyan-500/50 shadow-[0_0_30px_rgba(0,229,255,0.2)] rounded-md" : "bg-[var(--surface)] border border-[var(--border-base)] rounded-2xl shadow-premium"}`}
+                    className={`absolute top-full right-0 mt-2 w-52 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${isCyber ? "bg-black/90 border border-cyan-500/50 shadow-[0_0_30px_rgba(0,229,255,0.2)] rounded-md" : "bg-[var(--surface)] border border-[var(--border-base)] rounded shadow-premium"}`}
                   >
                     <div className="px-3 py-2 mb-1">
                       <p
@@ -1754,7 +1856,7 @@ const App: React.FC = () => {
                         }}
                         className={`w-full justify-between px-3 py-2.5 flex items-center transition-all ${isCyber
                           ? `hover:bg-cyan-500/10 ${theme.chartLibrary === opt.value ? "bg-cyan-500/20 text-cyan-400" : "text-cyan-600"}`
-                          : `btn-base btn-ghost rounded-xl ${theme.chartLibrary === opt.value ? "active" : ""}`
+                          : `btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -1812,7 +1914,7 @@ const App: React.FC = () => {
               className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isEditMode ? "active" : ""}`}
             >
               <Edit3 className="w-4 h-4" />{" "}
-              <span>{isEditMode ? "Save Project" : "Edit Project"}</span>
+              <span>Edit Project</span>
             </button>
             <button
               disabled={isEditMode}
@@ -1836,8 +1938,8 @@ const App: React.FC = () => {
           if (!layout?.backgroundGlobe && !bgUrl) return null;
 
           return (
-            <div className="absolute inset-0 z-0" aria-hidden>
-              {layout?.backgroundGlobe ? <GlobeBackground /> : null}
+            <div className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto" aria-hidden>
+              {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
               {bgUrl && (
                 <div
                   className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
@@ -1889,26 +1991,7 @@ const App: React.FC = () => {
               </h2>
             </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
-              {currentProject.pages.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => handlePageChange(p.id)}
-                  className={`btn-base w-full justify-start py-3 px-4 ${isCyber ? "btn-premium" : "btn-surface"} ${currentPage.id === p.id ? "active" : ""}`}
-                >
-                  <Layout className="w-4 h-4" />
-                  <span>{p.name}</span>
-                </button>
-              ))}
-              {isEditMode && (
-                <button
-                  onClick={addPage}
-                  className="w-full mt-4 p-3 border-2 border-dashed border-[var(--border-base)] rounded-xl text-muted hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-                >
-                  <Plus className="w-4 h-4" /> New Page
-                </button>
-              )}
-            </nav>
+
           </aside>
         )}
 
@@ -1963,36 +2046,13 @@ const App: React.FC = () => {
                           className="h-6 w-auto object-contain"
                         />
                       )}
-                      <h2 className="text-lg font-black tracking-tighter uppercase whitespace-nowrap">
+                      <h2 className="text-lg font-black tracking-tighter whitespace-nowrap">
                         {header.title}
                       </h2>
                     </div>
                   </div>
 
-                  {/* Navigation Tabs */}
-                  {theme.showPageTabs !== false && (
-                    <nav
-                      className={`flex items-center gap-2 overflow-x-auto no-scrollbar p-1 z-10 ${isCyber ? "bg-transparent" : "rounded-xl bg-[var(--surface-muted)]"}`}
-                    >
-                      {currentProject.pages.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => handlePageChange(p.id)}
-                          className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${currentPage.id === p.id ? "active" : ""}`}
-                        >
-                          {p.name}
-                        </button>
-                      ))}
-                      {isEditMode && (
-                        <button
-                          onClick={addPage}
-                          className={`p-2 text-muted hover:text-primary transition-all ${isCyber ? "rounded-md" : "rounded-xl"}`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      )}
-                    </nav>
-                  )}
+
                 </div>
               </header>
             )}
@@ -2000,7 +2060,7 @@ const App: React.FC = () => {
             {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
             <main
               ref={mainAreaRef}
-              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
+              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active" : ""}`}
               style={layout?.glassmorphism ? (() => {
                 const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
                 const alpha = Math.pow(p, 0.72);
@@ -2012,7 +2072,7 @@ const App: React.FC = () => {
                 };
               })() : undefined}
             >
-              <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
+              <div className="relative z-10 h-full min-h-0">
                 <DashboardGrid
                   layout={layout}
                   theme={theme}
@@ -2034,47 +2094,63 @@ const App: React.FC = () => {
             </main>
           </div>
 
-        {/* 3. Right Sidebar (Design or Settings) */}
+        {/* 3. Floating Panel (Design or Settings) */}
         {showSidebar && (
-          <div className="h-full shadow-2xl transition-all duration-300 z-30 shrink-0 border-l border-[var(--border-base)] bg-[var(--surface)]">
-            {isDesignSidebarOpen ? (
-              <DesignSidebar
-                theme={theme}
-                header={header}
-                currentPage={currentPage}
-                updateTheme={handleThemeChange}
-                updateHeader={updateHeader}
-                onUpdatePage={updateCurrentPage}
-                presets={presets}
-                onSavePreset={handleSavePreset}
-                onApplyPreset={handleApplyPreset}
-                onOpenDocs={() => setIsDesignDocsOpen(true)}
-                onClose={() => setIsDesignSidebarOpen(false)}
-                onModeSwitch={handleModeSwitch}
-              />
-            ) : selectedWidgetId ? (
-              <Sidebar
-                theme={theme}
-                selectedWidget={(() => {
-                  const w = widgets.find((w) => w.id === selectedWidgetId) || null;
-                  if (!w) return null;
-                  return { ...w, colSpan: saneNum(Number(w.colSpan), 4), rowSpan: saneNum(Number(w.rowSpan), 4) };
-                })()}
-                layout={layout}
-                onUpdateWidget={updateWidget}
-                onUpdateLayout={handleUpdateLayout}
-                onClose={() => setSelectedWidgetId(null)}
-              />
-            ) : isLayoutSidebarOpen ? (
-              <Sidebar
-                theme={theme}
-                selectedWidget={null}
-                layout={layout}
-                onUpdateWidget={updateWidget}
-                onUpdateLayout={handleUpdateLayout}
-                onClose={() => setIsLayoutSidebarOpen(false)}
-              />
-            ) : null}
+          <div 
+            className={`fixed z-50 transition-[transform,opacity,shadow] duration-300 ${isDraggingPanel ? 'transition-none scale-[1.02] shadow-premium-lg' : ''}`}
+            style={{ 
+              top: `${panelPos.y}px`, 
+              right: `${panelPos.x}px`,
+              width: '320px',
+              pointerEvents: 'none'
+            }}
+          >
+            <div className="pointer-events-auto overflow-hidden rounded">
+              {isDesignSidebarOpen ? (
+                <DesignSidebar
+                  theme={theme}
+                  header={header}
+                  currentPage={currentPage}
+                  updateTheme={handleThemeChange}
+                  updateHeader={updateHeader}
+                  onUpdatePage={updateCurrentPage}
+                  presets={presets}
+                  onSavePreset={handleSavePreset}
+                  onApplyPreset={handleApplyPreset}
+                  onOpenDocs={() => setIsDesignDocsOpen(true)}
+                  onClose={() => setIsDesignSidebarOpen(false)}
+                  onModeSwitch={handleModeSwitch}
+                  onDragStart={handleDragStart}
+                  onSave={() => persistActiveProject()}
+                />
+              ) : selectedWidgetId ? (
+                <Sidebar
+                  theme={theme}
+                  selectedWidget={(() => {
+                    const w = widgets.find((w) => w.id === selectedWidgetId) || null;
+                    if (!w) return null;
+                    return { ...w, colSpan: saneNum(Number(w.colSpan), 4), rowSpan: saneNum(Number(w.rowSpan), 4) };
+                  })()}
+                  layout={layout}
+                  onUpdateWidget={updateWidget}
+                  onUpdateLayout={handleUpdateLayout}
+                  onClose={() => setSelectedWidgetId(null)}
+                  onDragStart={handleDragStart}
+                  onSave={() => persistActiveProject()}
+                />
+              ) : isLayoutSidebarOpen ? (
+                <Sidebar
+                  theme={theme}
+                  selectedWidget={null}
+                  layout={layout}
+                  onUpdateWidget={updateWidget}
+                   onUpdateLayout={handleUpdateLayout}
+                  onClose={() => setIsLayoutSidebarOpen(false)}
+                  onDragStart={handleDragStart}
+                  onSave={() => persistActiveProject()}
+                />
+              ) : null}
+            </div>
           </div>
         )}
       </div>
@@ -2083,8 +2159,7 @@ const App: React.FC = () => {
       {isPreviewMode && (
         <button
           onClick={() => setIsPreviewMode(false)}
-          className="fixed bottom-8 right-8 z-50 btn-base btn-surface active px-8 py-4 rounded-full shadow-premium hover:scale-105 transition-transform"
-          style={{ borderRadius: "999px" }}
+          className="fixed bottom-8 right-8 z-50 btn-base btn-surface active px-8 py-4 rounded shadow-premium hover:scale-105 transition-transform"
         >
           <EyeOff className="w-5 h-5" /> Exit Preview
         </button>
@@ -2122,9 +2197,9 @@ const App: React.FC = () => {
       />
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded-2xl min-w-[320px]">
+          <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded min-w-[320px]">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${toast.type === "success" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}
+              className={`w-10 h-10 rounded-sm flex items-center justify-center ${toast.type === "success" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}
             >
               {toast.type === "success" ? (
                 <CheckCircle2 className="w-5 h-5" />

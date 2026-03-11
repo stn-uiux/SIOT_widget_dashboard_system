@@ -239,11 +239,6 @@ export function DuplicateDesignContent({
           className="shrink-0 h-full flex flex-col border-r border-[var(--border-base)] bg-[var(--surface)] px-4 py-4"
           style={{ width: headerWidth }}
         >
-          {theme.dualModeSupport && onModeSwitch && (
-            <div className="mb-4 flex items-center justify-center">
-              <ModeToggle key={theme.mode} mode={theme.mode} onChange={onModeSwitch} />
-            </div>
-          )}
           {/* Page tabs (mydashboard와 동일) — LEFT 레이아웃일 때 */}
           {pages != null && onPageChange && (
             <nav className="flex flex-col gap-1 mb-4">
@@ -261,7 +256,7 @@ export function DuplicateDesignContent({
                 <button
                   type="button"
                   onClick={onAddPage}
-                  className="w-full mt-2 p-3 border-2 border-dashed border-[var(--border-base)] rounded-xl text-[var(--text-muted)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                  className="w-full mt-2 p-3 border-2 border-dashed border-[var(--border-base)] rounded text-[var(--text-muted)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
                 >
                   <Plus className="w-4 h-4" /> New Page
                 </button>
@@ -291,7 +286,7 @@ export function DuplicateDesignContent({
                 </div>
                 {/* Page tabs + 새 페이지 (mydashboard와 동일) */}
                 {pages != null && onPageChange && (
-                  <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded-xl bg-[var(--surface-muted)]">
+                  <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar p-1 rounded bg-[var(--surface-muted)]">
                     {(pages as DashboardPage[]).map((p) => (
                       <button
                         key={p.id}
@@ -322,9 +317,6 @@ export function DuplicateDesignContent({
                 <a href="#" className="text-[var(--text-muted)] hover:text-[var(--text-main)] text-sm transition-colors">Analytics</a>
               </nav>
               <div className="flex items-center gap-4">
-                {theme.dualModeSupport && onModeSwitch && (
-                  <ModeToggle key={theme.mode} mode={theme.mode} onChange={onModeSwitch} />
-                )}
                 <button type="button" className="text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
                   <Bell className="w-5 h-5" />
                 </button>
@@ -434,14 +426,14 @@ export function DuplicateDesignContent({
                             next[idx] = e.target.value;
                             setTimeframeOptions(next);
                           }}
-                          className="min-w-[2.5rem] px-4 py-1 rounded-full text-sm bg-[var(--surface-muted)] border border-[var(--border-base)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] text-center"
+                          className="min-w-[2.5rem] px-4 py-1 rounded text-sm bg-[var(--surface-muted)] border border-[var(--border-base)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] text-center"
                         />
                       ) : (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setSelectedTimeframeIndex(idx)}
-                          className={`px-4 py-1 rounded-full text-sm transition-colors ${selectedTimeframeIndex === idx ? 'bg-[var(--primary-color)] text-white font-medium' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+                          className={`px-4 py-1 rounded text-sm transition-colors ${selectedTimeframeIndex === idx ? 'bg-[var(--primary-color)] text-white font-medium' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
                         >
                           {label}
                         </button>
@@ -505,7 +497,7 @@ export function DuplicateDesignContent({
               <button
                 type="button"
                 onClick={onOpenWidgetPicker}
-                className="mt-4 w-full min-h-[120px] flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--border-base)] bg-[var(--surface-muted)]/50 text-[var(--text-muted)] hover:bg-[var(--primary-subtle)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-colors"
+                className="mt-4 w-full min-h-[120px] flex flex-col items-center justify-center gap-2 rounded border-2 border-dashed border-[var(--border-base)] bg-[var(--surface-muted)]/50 text-[var(--text-muted)] hover:bg-[var(--primary-subtle)] hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-colors"
               >
                 <Plus className="w-8 h-8" />
                 <span className="text-sm font-semibold uppercase tracking-tight">위젯 추가</span>

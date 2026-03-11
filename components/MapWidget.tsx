@@ -1,7 +1,7 @@
 
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -76,7 +76,7 @@ function MapControls({ onLocationFound }: { onLocationFound: (pos: [number, numb
             <button
                 onClick={handleMyLocation}
                 disabled={loading}
-                className="btn-base btn-surface p-0 rounded-xl shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
+                className="btn-base btn-surface p-0 rounded shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
                 style={{ height: 'calc(var(--spacing) * 2)', width: 'calc(var(--spacing) * 2)' }}
                 title="My Location"
             >
@@ -90,7 +90,7 @@ function MapControls({ onLocationFound }: { onLocationFound: (pos: [number, numb
                         e.stopPropagation();
                         map.zoomIn();
                     }}
-                    className="btn-base btn-surface p-0 rounded-xl shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                    className="btn-base btn-surface p-0 rounded shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
                     style={{ height: 'calc(var(--spacing) * 2)', width: 'calc(var(--spacing) * 2)' }}
                     title="Zoom In"
                 >
@@ -101,7 +101,7 @@ function MapControls({ onLocationFound }: { onLocationFound: (pos: [number, numb
                         e.stopPropagation();
                         map.zoomOut();
                     }}
-                    className="btn-base btn-surface p-0 rounded-xl shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                    className="btn-base btn-surface p-0 rounded shadow-premium !min-w-0 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
                     style={{ height: 'calc(var(--spacing) * 2)', width: 'calc(var(--spacing) * 2)' }}
                     title="Zoom Out"
                 >
@@ -114,6 +114,8 @@ function MapControls({ onLocationFound }: { onLocationFound: (pos: [number, numb
 
 const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = 'osm' }) => {
     const [currentPos, setCurrentPos] = useState<[number, number] | null>(null);
+    const [isHovered, setIsHovered] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Add pulse animation for current location
     useEffect(() => {
@@ -129,6 +131,17 @@ const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = '
         return () => { document.head.removeChild(style); };
     }, []);
 
+    // 스크롤 이벤트가 부모(위젯 그리드)로 전파되지 않도록 막음
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const stopScroll = (e: WheelEvent) => {
+            if (isHovered) e.stopPropagation();
+        };
+        el.addEventListener('wheel', stopScroll, { passive: true });
+        return () => el.removeEventListener('wheel', stopScroll);
+    }, [isHovered]);
+
     // Future implementation for Google/Naver maps switching
     if (provider === 'google') {
         return <div className="flex items-center justify-center h-full bg-gray-100 text-gray-500 font-bold">Google Maps Placeholder (API Key Required)</div>;
@@ -138,11 +151,24 @@ const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = '
     }
 
     return (
-        <div className="h-full w-full relative z-0 group/map">
+        <div
+            ref={containerRef}
+            className="h-full w-full relative z-0 group/map"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* 지도 미호버 시 안내 오버레이 */}
+            {!isHovered && (
+                <div className="absolute inset-0 z-[1001] flex items-center justify-center pointer-events-none">
+                    <div className="bg-black/40 text-white text-[10px] font-bold px-3 py-1.5 rounded backdrop-blur-sm opacity-0 group-hover/map:opacity-100 transition-opacity duration-200">
+                        스크롤로 확대/축소
+                    </div>
+                </div>
+            )}
             <MapContainer
                 center={[lat, lng]}
                 zoom={zoom}
-                scrollWheelZoom={true}
+                scrollWheelZoom={isHovered}
                 doubleClickZoom={true}
                 style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
                 zoomControl={false}
@@ -161,7 +187,7 @@ const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = '
                     <>
                         <Circle
                             center={currentPos}
-                            radius={300} // radius in meters
+                            radius={300}
                             pathOptions={{
                                 fillColor: 'var(--primary-color)',
                                 fillOpacity: 0.25,
@@ -184,6 +210,5 @@ const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = '
 };
 
 export default MapWidget;
-
 
 

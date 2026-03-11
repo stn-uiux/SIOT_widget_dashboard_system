@@ -52,13 +52,13 @@ export const DEFAULT_THEME: DashboardTheme = getDefaultTheme();
 export const THEME_PRESETS: ThemePreset[] = (() => {
   let lightTheme: DashboardTheme;
   try {
-    lightTheme = getLightThemeFromTokens({ name: 'Light Mode', dualModeSupport: true, widgetHeaderColor: undefined });
+    lightTheme = getLightThemeFromTokens({ name: 'Light Mode', widgetHeaderColor: undefined });
   } catch {
-    lightTheme = { ...DEFAULT_THEME, name: 'Light Mode', mode: ThemeMode.LIGHT, backgroundColor: '#f8fafc', surfaceColor: '#ffffff', primaryColor: '#3b82f6', titleColor: '#0f172a', textColor: '#334155', cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderColor: '#e2e8f0', dualModeSupport: true };
+    lightTheme = { ...DEFAULT_THEME, name: 'Light Mode', mode: ThemeMode.LIGHT, backgroundColor: '#f8fafc', surfaceColor: '#ffffff', primaryColor: '#3b82f6', titleColor: '#0f172a', textColor: '#334155', cardShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderColor: '#e2e8f0' };
   }
   return [
     { id: 'preset_light', name: 'Light Mode', theme: lightTheme },
-    { id: 'preset_dark', name: 'Dark Mode', theme: { ...DEFAULT_THEME, name: 'Dark Mode', dualModeSupport: true } },
+    { id: 'preset_dark', name: 'Dark Mode', theme: { ...DEFAULT_THEME, name: 'Dark Mode' } },
   ];
 })();
 
@@ -70,7 +70,6 @@ export const PROJECT2_CUSTOM_THEME: DashboardTheme = (() => {
     name: 'Custom (Data visualisation)',
     primaryColor: '#3b82f6',
     chartPalette: ['#4f46e5', '#0d9488', '#c2410c', '#ec4899', '#a855f7', '#f97316'],
-    dualModeSupport: true,
   };
 })();
 

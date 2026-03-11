@@ -4,8 +4,11 @@ import * as d3 from 'd3';
 /** Natural Earth 110m — GeoJSON (topojson-client 불필요) */
 const WORLD_GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson';
 
+import { ThemeMode } from '../types';
+
 /** 지구 배경 — 마우스 드래그로 회전, 관성 지원. project 3 등 배경용 */
-const GlobeBackground: React.FC = () => {
+const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
+  const isLight = mode === ThemeMode.LIGHT;
   const svgRef = useRef<SVGSVGElement>(null);
   const [rotation, setRotation] = useState<[number, number, number]>([0, 0, 0]);
   const [zoom] = useState(0.85);
@@ -60,9 +63,9 @@ const GlobeBackground: React.FC = () => {
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.35)
-      .attr('fill', '#0ea5e9')
+      .attr('fill', isLight ? '#bae6fd' : '#0ea5e9')
       .style('filter', `blur(${80}px)`)
-      .style('opacity', 0.12);
+      .style('opacity', isLight ? 0.3 : 0.12);
 
     mainGroup
       .append('circle')
@@ -70,7 +73,7 @@ const GlobeBackground: React.FC = () => {
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.08)
       .attr('fill', 'none')
-      .attr('stroke', 'rgba(56, 189, 248, 0.35)')
+      .attr('stroke', isLight ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.35)')
       .attr('stroke-width', 2)
       .style('filter', 'blur(4px)');
 
@@ -79,8 +82,8 @@ const GlobeBackground: React.FC = () => {
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 0.98)
-      .attr('fill', '#020617')
-      .attr('stroke', '#0f172a');
+      .attr('fill', isLight ? '#ffffff' : '#020617')
+      .attr('stroke', isLight ? '#e2e8f0' : '#0f172a');
 
     const graticule = d3.geoGraticule();
     mainGroup
@@ -88,18 +91,18 @@ const GlobeBackground: React.FC = () => {
       .datum(graticule())
       .attr('d', path as unknown as string)
       .attr('fill', 'none')
-      .attr('stroke', 'rgba(14, 165, 233, 0.14)')
+      .attr('stroke', isLight ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.14)')
       .attr('stroke-width', 0.5);
 
     mainGroup
       .append('path')
       .datum(worldData)
       .attr('d', path as unknown as string)
-      .attr('fill', 'rgba(14, 165, 233, 0.28)')
-      .attr('stroke', 'rgba(56, 189, 248, 0.45)')
+      .attr('fill', isLight ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.28)')
+      .attr('stroke', isLight ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.45)')
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
-  }, [rotation, zoom, dimensions, worldData]);
+  }, [rotation, zoom, dimensions, worldData, isLight]);
 
   const applyInertia = () => {
     const friction = 0.95;

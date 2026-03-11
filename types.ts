@@ -75,6 +75,7 @@ export interface ChartConfig {
   showLabels: boolean;
   unit: string;
   useGradient?: boolean;
+  barWidth?: number;
 }
 
 export interface Widget {
@@ -91,8 +92,10 @@ export interface Widget {
   mainValue?: string;
   subValue?: string;
   icon?: string;
+  iconSize?: number;
   noBezel?: boolean;
   hideHeader?: boolean;
+  hideBorder?: boolean;
   /** Background opacity 0–100 (default 100 = opaque). */
   backgroundOpacity?: number;
   /** Progress 0–100 for EARNING_PROGRESS (circular gauge). */
@@ -105,20 +108,6 @@ export interface Widget {
   comparisonText?: string;
   /** Category items for EARNING_TREND: label + progress 0–100, optional color. */
   categoryItems?: { label: string; value: number; color?: string }[];
-  // Dual Chart Support
-  isDual?: boolean;
-  dualLayout?: "horizontal" | "vertical";
-  dualGap?: number;
-  secondaryType?: WidgetType;
-  secondaryConfig?: ChartConfig;
-  secondaryData?: any[];
-  showSubTitles?: boolean;
-  subTitle1?: string;
-  subTitle2?: string;
-  secondaryMainValue?: string;
-  secondarySubValue?: string;
-  secondaryIcon?: string;
-  secondaryNoBezel?: boolean;
 }
 
 export enum HeaderPosition {
@@ -136,6 +125,8 @@ export enum HeaderWidgetType {
   CLOCK = "CLOCK",
   MONITOR = "MONITOR",
   THEME_TOGGLE = "THEME_TOGGLE",
+  IMAGE = "IMAGE",
+  LOGO = "LOGO",
 }
 
 export interface HeaderWidget {
@@ -145,6 +136,7 @@ export interface HeaderWidget {
   y: number;
   w: number;
   h: number;
+  url?: string;
 }
 
 export interface HeaderConfig {
@@ -215,7 +207,6 @@ export interface DashboardTheme {
   titleColor: string;
   textColor: string;
   // Multi-Mode Support
-  dualModeSupport?: boolean;
   modeStyles?: {
     light?: Partial<DashboardTheme>;
     dark?: Partial<DashboardTheme>;

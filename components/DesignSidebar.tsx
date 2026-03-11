@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download, Clock, Activity, ToggleLeft } from 'lucide-react';
+import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
 import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, HeaderWidgetType, HeaderWidget } from '../types';
 import { BRAND_COLORS } from '../constants';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 
-/** 배경 이미지: 화질 유지 위해 리사이즈만 하고 JPEG 품질 최대(0.98). 원본에 가깝게 저장 */
+/** 배경 ?��?지: ?�질 ?��? ?�해 리사?�즈�??�고 JPEG ?�질 최�?(0.98). ?�본??가깝게 ?�??*/
 const MAX_BG_DIMENSION = 3840;
 const JPEG_QUALITY = 0.98;
 function compressImageToDataUrl(file: File): Promise<string> {
@@ -30,7 +30,11 @@ function compressImageToDataUrl(file: File): Promise<string> {
       }
       ctx.drawImage(img, 0, 0, cw, ch);
       try {
-        const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+        // PNG??WEBP처럼 ?�명?��? 지?�하???�맷?� ?�당 ?�맷 ?��? (배경 블랙 방�?)
+        const isTransparentFormat = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/gif';
+        const outputType = isTransparentFormat ? file.type : 'image/jpeg';
+        
+        // toDataURL????번째 ?�자??jpeg/webp?�서�??�작??        const dataUrl = canvas.toDataURL(outputType, isTransparentFormat ? undefined : JPEG_QUALITY);
         resolve(dataUrl);
       } catch (e) {
         reject(e);
@@ -57,6 +61,8 @@ interface DesignSidebarProps {
   onOpenDocs: () => void;
   onClose: () => void;
   onModeSwitch: (mode: ThemeMode) => void;
+  onDragStart?: (e: React.MouseEvent) => void;
+  onSave?: () => void;
 }
 
 type TabType = 'mode' | 'global' | 'header' | 'advanced';
@@ -64,7 +70,7 @@ type TabType = 'mode' | 'global' | 'header' | 'advanced';
 const DesignSidebar: React.FC<DesignSidebarProps> = ({
   theme, header, currentPage, presets,
   updateTheme, updateHeader, onUpdatePage,
-  onSavePreset, onApplyPreset, onOpenDocs, onClose, onModeSwitch
+  onSavePreset, onApplyPreset, onOpenDocs, onClose, onModeSwitch, onDragStart, onSave
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('mode');
   const [newPresetName, setNewPresetName] = useState('');
@@ -86,24 +92,30 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
   ];
 
   return (
-    <div className={`w-80 h-full flex flex-col overflow-hidden transition-all duration-500 ${isCyber ? 'bg-black/90 border-l border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.15)]' : 'bg-[var(--surface)] border-l border-[var(--border-base)] shadow-2xl'}`}>
-      <div className={`flex items-center justify-between p-6 border-b ${isCyber ? 'border-cyan-500/30 bg-cyan-950/20' : 'border-[var(--border-base)]'}`}>
+    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 rounded ${isCyber ? 'bg-black/95 border border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.25)]' : 'bg-[var(--surface)] border border-[var(--border-base)] shadow-2xl'}`}>
+      <div className={`flex items-center justify-between p-6 border-b cursor-grab active:cursor-grabbing ${isCyber ? 'border-cyan-500/30 bg-cyan-950/20' : 'border-[var(--border-base)]'}`} onMouseDown={onDragStart}>
         <div className="flex items-center gap-2">
+          <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
           <Palette className={`w-5 h-5 ${isCyber ? 'text-cyan-400 animate-pulse' : 'text-primary'}`} />
           <h2 className={`text-lg font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
             {isCyber ? <span className="glitch-text" data-text="DESIGN_ENGINE_v4">DESIGN_ENGINE_v4</span> : 'Design System'}
           </h2>
+        </div>
+        <div className="flex items-center gap-1">
           <button
             onClick={onOpenDocs}
-            className={`p-1.5 rounded-lg transition-colors ml-1 ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-500/60 hover:text-cyan-400' : 'hover:bg-[var(--border-muted)] text-muted hover:text-primary'}`}
+            className={`p-1.5 rounded transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-500/60 hover:text-cyan-400' : 'hover:bg-[var(--border-muted)] text-muted hover:text-primary'}`}
             title="Open Documentation"
           >
             <BookOpen className="w-4 h-4" />
           </button>
+          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="?�?�하�?>
+            <Check className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className={`p-1 rounded-full opacity-60 transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'btn-ghost'}`}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button onClick={onClose} className={`p-1 rounded-full opacity-60 transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'btn-ghost'}`}>
-          <X className="w-5 h-5" />
-        </button>
       </div>
 
       {/* Tab Navigation */}
@@ -126,25 +138,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
         {activeTab === 'mode' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <section className="space-y-4 pb-4 border-b border-[var(--border-base)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-bold uppercase text-muted tracking-wider leading-none mb-1">Dual Mode Support</h3>
-                  <p className="text-[9px] text-muted font-medium uppercase tracking-tight">Support system light/dark switching</p>
-                </div>
-                <Switch
-                  checked={theme.dualModeSupport}
-                  onChange={(checked) => updateTheme({ dualModeSupport: checked })}
-                />
-              </div>
 
-              {theme.dualModeSupport && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-[var(--border-base)] animate-in slide-in-from-top-2 duration-300">
-                  <span className="text-[10px] font-bold uppercase text-muted">Current Mode</span>
-                  <ModeToggle key={theme.mode} mode={theme.mode} onChange={onModeSwitch} />
-                </div>
-              )}
-            </section>
 
             <section className="space-y-3">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Select Mode</h3>
@@ -153,7 +147,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <button
                     key={preset.id}
                     onClick={() => onApplyPreset(preset)}
-                    className="group relative p-4 rounded-2xl border border-[var(--border-base)] hover:border-primary bg-gray-50 dark:bg-gray-800/50 transition-all text-left overflow-hidden"
+                    className="group relative p-4 rounded border border-[var(--border-base)] hover:border-primary bg-gray-50 dark:bg-gray-800/50 transition-all text-left overflow-hidden"
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
                     <div className="relative flex items-center gap-4">
@@ -163,7 +157,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm text-main truncate">{preset.name}</p>
-                        <p className="text-[10px] text-muted uppercase font-bold">{preset.theme.mode.toUpperCase()} • {preset.theme.borderRadius}px Radius</p>
+                        <p className="text-[10px] text-muted uppercase font-bold">{preset.theme.mode.toUpperCase()} ??{preset.theme.borderRadius}px Radius</p>
                       </div>
                       {theme.name === preset.name && <CheckCircle2 className="w-5 h-5 text-primary" />}
                     </div>
@@ -209,7 +203,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     type="range" min="0" max="40" step="4"
                     value={theme.borderRadius}
                     onChange={(e) => updateTheme({ borderRadius: parseInt(e.target.value) })}
-                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                   />
                 </div>
                 <div className="space-y-2">
@@ -221,7 +215,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     type="range" min="0" max="20" step="2"
                     value={theme.chartRadius}
                     onChange={(e) => updateTheme({ chartRadius: parseInt(e.target.value) })}
-                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                   />
                 </div>
                 <div className="space-y-2">
@@ -233,7 +227,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     type="range" min="0" max="32" step="2"
                     value={theme.spacing}
                     onChange={(e) => updateTheme({ spacing: parseInt(e.target.value) })}
-                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                   />
                 </div>
                 <div className="space-y-2">
@@ -245,7 +239,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     type="range" min="0" max="80" step="4"
                     value={theme.dashboardPadding}
                     onChange={(e) => updateTheme({ dashboardPadding: parseInt(e.target.value) })}
-                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                   />
                 </div>
                 </div>
@@ -272,13 +266,13 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => updateHeader({ position: HeaderPosition.TOP })}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all ${header.position === HeaderPosition.TOP ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
+                          className={`p-2 rounded border text-xs font-bold transition-all ${header.position === HeaderPosition.TOP ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
                         >
                           Top
                         </button>
                         <button
                           onClick={() => updateHeader({ position: HeaderPosition.LEFT })}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all ${header.position === HeaderPosition.LEFT ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
+                          className={`p-2 rounded border text-xs font-bold transition-all ${header.position === HeaderPosition.LEFT ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
                         >
                           Left
                         </button>
@@ -298,7 +292,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         type="range" min="40" max={header.position === HeaderPosition.TOP ? 120 : 400} step="4"
                         value={header.position === HeaderPosition.TOP ? header.height : header.width}
                         onChange={(e) => updateHeader(header.position === HeaderPosition.TOP ? { height: parseInt(e.target.value) } : { width: parseInt(e.target.value) })}
-                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                       />
                     </div>
                   </div>
@@ -323,12 +317,12 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         type="text"
                         value={header.title}
                         onChange={(e) => updateHeader({ title: e.target.value })}
-                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       />
                     </div>
                     <div className="space-y-2">
                       <span className="text-[10px] uppercase font-bold text-gray-400">Alignment</span>
-                      <div className="flex bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-[var(--border-base)]">
+                      <div className="flex bg-gray-50 dark:bg-gray-800 rounded p-1 border border-[var(--border-base)]">
                         {[TextAlignment.LEFT, TextAlignment.CENTER, TextAlignment.RIGHT].map((align) => (
                           <button
                             key={align}
@@ -357,14 +351,14 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     </div>
                     <div className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] ${header.backgroundColor === 'transparent' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.backgroundColor }} />
+                        <div className="w-6 h-6 rounded shadow-sm border border-white/20" style={{ backgroundColor: header.backgroundColor }} />
                         <span className="text-[10px] font-bold uppercase text-muted">Pick Color</span>
                       </div>
                       <input
                         type="color"
                         value={header.backgroundColor !== 'transparent' && header.backgroundColor.startsWith('#') ? header.backgroundColor : '#ffffff'}
                         onChange={(e) => updateHeader({ backgroundColor: e.target.value })}
-                        className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                        className="w-8 h-8 rounded cursor-pointer bg-transparent border-none appearance-none"
                       />
                     </div>
                   </div>
@@ -379,7 +373,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         <button
                           type="button"
                           onClick={() => updateHeader({ backgroundImage: undefined })}
-                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[9px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                          className="px-2 py-1 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[9px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
                         >
                           리셋
                         </button>
@@ -413,14 +407,14 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                           e.target.value = '';
                         }}
                       />
-                      <label htmlFor="header-bg-image-file" className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">파일 선택</label>
+                      <label htmlFor="header-bg-image-file" className="shrink-0 px-4 py-2 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">?�일 ?�택</label>
                       <span className={`text-xs truncate ${header.backgroundImage ? 'text-[var(--success)]' : 'text-muted'}`}>
-                        {header.backgroundImage ? '이미지 적용됨' : '선택된 파일 없음'}
+                        {header.backgroundImage ? '?��?지 ?�용?? : '?�택???�일 ?�음'}
                       </span>
                     </div>
                     <input
                       type="text"
-                      placeholder="URL (예: /assets/header-bg.png)"
+                      placeholder="URL (?? /assets/header-bg.png)"
                       value={header.backgroundImage?.startsWith('data:') ? '' : (header.backgroundImage ?? '')}
                       onChange={(e) => updateHeader({ backgroundImage: e.target.value.trim() || undefined })}
                       className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
@@ -431,33 +425,19 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     <span className="text-[10px] uppercase font-bold text-gray-400">Text Color</span>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColor }} />
+                        <div className="w-6 h-6 rounded shadow-sm border border-white/20" style={{ backgroundColor: header.textColor }} />
                         <span className="text-[10px] font-bold uppercase text-muted">Pick Color</span>
                       </div>
                       <input
                         type="color"
                         value={header.textColor}
                         onChange={(e) => updateHeader({ textColor: e.target.value })}
-                        className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                        className="w-8 h-8 rounded cursor-pointer bg-transparent border-none appearance-none"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
-                    <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Page Tabs</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase text-main">Show Page Tabs</p>
-                          <p className="text-[9px] text-muted">Hide for single page dashboards</p>
-                        </div>
-                        <Switch
-                          checked={theme.showPageTabs !== false}
-                          onChange={(checked) => updateTheme({ showPageTabs: checked })}
-                        />
-                      </div>
-                    </div>
-                  </div>
+
 
                   <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
                     <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
@@ -468,6 +448,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         { type: HeaderWidgetType.CLOCK, icon: Clock, label: 'Clock' },
                         { type: HeaderWidgetType.MONITOR, icon: Activity, label: 'Monitor' },
                         { type: HeaderWidgetType.THEME_TOGGLE, icon: ToggleLeft, label: 'Toggle' },
+                        { type: HeaderWidgetType.IMAGE, icon: Image, label: 'Image' },
+                        { type: HeaderWidgetType.LOGO, icon: Box, label: 'Logo' },
                       ].map((item) => (
                         <div
                           key={item.type}
@@ -479,7 +461,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                             const currentWidgets = header.widgets || [];
                             const widgetWidth = item.type === HeaderWidgetType.CLOCK ? 6 : (item.type === HeaderWidgetType.MONITOR ? 5 : 4);
 
-                            // 겹치지 않는 X 위치 찾기 (60칸 기준)
+                            // 겹치지 ?�는 X ?�치 찾기 (60�?기�?)
                             let nextX = 0;
                             const isOccupied = (x: number) => currentWidgets.some(w =>
                               w.y === 0 && (
@@ -511,6 +493,73 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         </div>
                       ))}
                     </div>
+
+                    {/* Header Widget URL Editor (simple for now) */}
+                    {(header.widgets || []).some(w => w.type === HeaderWidgetType.IMAGE || w.type === HeaderWidgetType.LOGO) && (
+                      <div className="space-y-3 pt-4 border-t border-[var(--border-base)]">
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Component URLs</span>
+                        {(header.widgets || []).filter(w => w.type === HeaderWidgetType.IMAGE || w.type === HeaderWidgetType.LOGO).map(w => (
+                          <div key={w.id} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-[var(--border-base)]">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-bold text-muted uppercase tracking-tight">{w.type} Content</span>
+                              <button
+                                onClick={() => {
+                                  const updated = header.widgets?.filter(v => v.id !== w.id);
+                                  updateHeader({ widgets: updated });
+                                }}
+                                className="text-[8px] font-bold text-red-500 hover:text-red-600 uppercase"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                              {/* File Upload for Header Widget */}
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  id={`hw-file-${w.id}`}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    compressImageToDataUrl(file).then((dataUrl) => {
+                                      const updated = header.widgets?.map(v => v.id === w.id ? { ...v, url: dataUrl } : v);
+                                      updateHeader({ widgets: updated });
+                                    });
+                                    e.target.value = '';
+                                  }}
+                                />
+                                <label 
+                                  htmlFor={`hw-file-${w.id}`}
+                                  className="flex-1 px-3 py-1.5 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[10px] font-bold text-center cursor-pointer hover:bg-[var(--border-muted)] transition-colors"
+                                >
+                                  ?�일 ?�택
+                                </label>
+                              </div>
+
+                              <input
+                                type="text"
+                                placeholder="?��?지 URL"
+                                value={w.url || ''}
+                                onChange={(e) => {
+                                  const updated = header.widgets?.map(v => v.id === w.id ? { ...v, url: e.target.value } : v);
+                                  updateHeader({ widgets: updated });
+                                }}
+                                className="w-full p-2 bg-white dark:bg-gray-900 border border-[var(--border-base)] rounded text-[10px] outline-none"
+                              />
+                            </div>
+                            
+                            {w.url && (
+                              <div className="relative aspect-video rounded overflow-hidden border border-[var(--border-base)] mt-1 bg-white">
+                                <img src={w.url} alt="Preview" className="w-full h-full object-contain" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-[9px] text-muted italic text-center">Drag or click to add to header</p>
                   </div>
                 </div>
@@ -539,39 +588,39 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.backgroundColor }} />
+                      <div className="w-6 h-6 rounded shadow-sm border border-white/20" style={{ backgroundColor: theme.backgroundColor }} />
                       <span className="text-[10px] font-bold uppercase text-muted">Background</span>
                     </div>
                     <input
                       type="color"
                       value={theme.backgroundColor.startsWith('#') ? theme.backgroundColor : '#f8fafc'}
                       onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
-                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-none appearance-none"
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.surfaceColor }} />
+                    <div className="w-6 h-6 rounded shadow-sm border border-white/20" style={{ backgroundColor: theme.surfaceColor }} />
                     <span className="text-[10px] font-bold uppercase text-muted">Surface (Card)</span>
                   </div>
                   <input
                     type="color"
                     value={theme.surfaceColor.startsWith('#') ? theme.surfaceColor : '#ffffff'}
                     onChange={(e) => updateTheme({ surfaceColor: e.target.value })}
-                    className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                    className="w-8 h-8 rounded cursor-pointer bg-transparent border-none appearance-none"
                   />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
+                    <div className="w-6 h-6 rounded shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
                     <span className="text-[10px] font-bold uppercase text-muted">Main Text</span>
                   </div>
                   <input
                     type="color"
                     value={theme.titleColor.startsWith('#') ? theme.titleColor : '#0f172a'}
                     onChange={(e) => updateTheme({ titleColor: e.target.value })}
-                    className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                    className="w-8 h-8 rounded cursor-pointer bg-transparent border-none appearance-none"
                   />
                 </div>
               </div>
@@ -594,16 +643,16 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         backgroundFlicker: false,
                       },
                     })}
-                    className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                    className="shrink-0 px-3 py-1.5 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
                   >
                     리셋
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-muted uppercase tracking-tight">라이트/다크 모드별로 다른 배경을 넣으면 테마 전환 시 자연스럽게 바뀝니다. (미설정 시 공통 배경 사용)</p>
+              <p className="text-[10px] text-muted uppercase tracking-tight">?�이???�크 모드별로 ?�른 배경???�으�??�마 ?�환 ???�연?�럽�?바뀝니?? (미설????공통 배경 ?�용)</p>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
+                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> ?�이??모드 배경</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
                   <input
                     type="file"
@@ -615,18 +664,18 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       if (!file) return;
                       compressImageToDataUrl(file).then((dataUrl) => {
                         onUpdatePage({ layout: { ...currentPage.layout, backgroundImageLight: dataUrl } });
-                      }).catch(() => { /* 이미지 로드 실패 시 무시 */ });
+                      }).catch(() => { /* ?��?지 로드 ?�패 ??무시 */ });
                       e.target.value = '';
                     }}
                   />
-                  <label htmlFor="bg-image-file-light" className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">파일 선택</label>
+                  <label htmlFor="bg-image-file-light" className="shrink-0 px-4 py-2 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">?�일 ?�택</label>
                   <span className={`text-xs ${currentPage.layout?.backgroundImageLight ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
-                    {currentPage.layout?.backgroundImageLight ? '이미지 적용됨' : '선택된 파일 없음'}
+                    {currentPage.layout?.backgroundImageLight ? '?��?지 ?�용?? : '?�택???�일 ?�음'}
                   </span>
                 </div>
                 <input
                   type="text"
-                  placeholder="라이트 모드 URL (예: /assets/bg-light.png)"
+                  placeholder="?�이??모드 URL (?? /assets/bg-light.png)"
                   value={currentPage.layout?.backgroundImageLight?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageLight ?? '')}
                   onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageLight: e.target.value.trim() || undefined } })}
                   className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
@@ -634,7 +683,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> 다크 모드 배경</p>
+                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> ?�크 모드 배경</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
                   <input
                     type="file"
@@ -646,28 +695,28 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       if (!file) return;
                       compressImageToDataUrl(file).then((dataUrl) => {
                         onUpdatePage({ layout: { ...currentPage.layout, backgroundImageDark: dataUrl } });
-                      }).catch(() => { /* 이미지 로드 실패 시 무시 */ });
+                      }).catch(() => { /* ?��?지 로드 ?�패 ??무시 */ });
                       e.target.value = '';
                     }}
                   />
-                  <label htmlFor="bg-image-file-dark" className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">파일 선택</label>
+                  <label htmlFor="bg-image-file-dark" className="shrink-0 px-4 py-2 rounded border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">?�일 ?�택</label>
                   <span className={`text-xs ${currentPage.layout?.backgroundImageDark ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
-                    {currentPage.layout?.backgroundImageDark ? '이미지 적용됨' : '선택된 파일 없음'}
+                    {currentPage.layout?.backgroundImageDark ? '?��?지 ?�용?? : '?�택???�일 ?�음'}
                   </span>
                 </div>
                 <input
                   type="text"
-                  placeholder="다크 모드 URL (예: /assets/bg-dark.png)"
+                  placeholder="?�크 모드 URL (?? /assets/bg-dark.png)"
                   value={currentPage.layout?.backgroundImageDark?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageDark ?? '')}
                   onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageDark: e.target.value.trim() || undefined } })}
                   className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
                 />
               </div>
 
-              <p className="text-[10px] text-muted uppercase tracking-tight">공통 배경 (라이트/다크 미설정 시 사용)</p>
+              <p className="text-[10px] text-muted uppercase tracking-tight">공통 배경 (?�이???�크 미설?????�용)</p>
               <input
                 type="text"
-                placeholder="/assets/bg-project2.png 또는 URL"
+                placeholder="/assets/bg-project2.png ?�는 URL"
                 value={currentPage.layout?.backgroundImage?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImage ?? '')}
                 onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImage: e.target.value.trim() || undefined } })}
                 className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
@@ -683,13 +732,13 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
               )}
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
-                <span className="text-[10px] font-bold uppercase text-muted">지구 배경 (Globe)</span>
+                <span className="text-[10px] font-bold uppercase text-muted">지�?배경 (Globe)</span>
                 <Switch
                   checked={currentPage.layout?.backgroundGlobe ?? false}
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundGlobe: checked } })}
                 />
               </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">대시보드 배경에 회전하는 지구 표시. 빈 곳 드래그하면 지구가 돌아갑니다 (project3 등)</p>
+              <p className="text-[9px] text-muted uppercase tracking-tight">?�?�보??배경???�전?�는 지�??�시. �?�??�래그하�?지구�? ?�아갑니??(project3 ??</p>
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
                 <span className="text-[10px] font-bold uppercase text-muted">Glassmorphism</span>
                 <Switch
@@ -697,11 +746,11 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphism: checked } })}
                 />
               </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">위젯 카드를 반투명·블러·테두리 스타일로 (project2 등)</p>
+              <p className="text-[9px] text-muted uppercase tracking-tight">?�젯 카드�?반투명·블??�테?�리 ?��??�로 (project2 ??</p>
               {currentPage.layout?.glassmorphism && (
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase text-muted">글래스 투명도</span>
+                    <span className="text-[10px] font-bold uppercase text-muted">글?�스 ?�명??/span>
                     <span className="text-xs font-mono text-[var(--primary-color)] font-bold">
                       {currentPage.layout?.glassmorphismOpacity ?? (theme.mode === ThemeMode.LIGHT ? 55 : 35)}%
                     </span>
@@ -712,26 +761,26 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     max={100}
                     value={currentPage.layout?.glassmorphismOpacity ?? (theme.mode === ThemeMode.LIGHT ? 55 : 35)}
                     onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphismOpacity: Number(e.target.value) } })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[var(--surface-muted)] accent-[var(--primary-color)]"
+                    className="w-full h-2 rounded appearance-none cursor-pointer bg-[var(--surface-muted)] accent-[var(--primary-color)]"
                   />
-                  <p className="text-[9px] text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
+                  <p className="text-[9px] text-muted uppercase tracking-tight">?�쪽(0)=?�전 ?�명, ?�른�?100)=불투�? ?�라?�더�??�쪽?�로 ??���??�씬 ???�명?�집?�다</p>
                 </div>
               )}
-              <p className="text-[9px] text-muted uppercase tracking-tight mt-2">해상도별 레이아웃·자유 배치는 <strong>Layout Settings</strong> 패널에서 설정할 수 있습니다.</p>
+              <p className="text-[9px] text-muted uppercase tracking-tight mt-2">?�상?�별 ?�이?�웃·?�유 배치??<strong>Layout Settings</strong> ?�널?�서 ?�정?????�습?�다.</p>
             </section>
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
-                <Download className="w-3.5 h-3.5" /> Figma 연동
+                <Download className="w-3.5 h-3.5" /> Figma ?�동
               </h3>
-              <p className="text-[10px] text-muted uppercase tracking-tight">design-tokens를 Figma 변수(Variables)용 JSON으로 내보냅니다.</p>
+              <p className="text-[10px] text-muted uppercase tracking-tight">design-tokens�?Figma 변??Variables)??JSON?�로 ?�보?�니??</p>
               <button
                 type="button"
                 onClick={() => downloadFigmaVariablesJson('design-tokens-figma.json')}
                 className="w-full py-2.5 px-4 rounded-xl border border-[var(--border-base)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold hover:bg-[var(--border-muted)] transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                Figma 변수로 내보내기
+                Figma 변?�로 ?�보?�기
               </button>
             </section>
 
@@ -756,7 +805,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       type="range" min={item.min} max={item.max} step="1"
                       value={(theme as any)[item.key]}
                       onChange={(e) => updateTheme({ [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-primary"
                     />
                   </div>
                 ))}
@@ -777,3 +826,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 };
 
 export default DesignSidebar;
+
+
+
+
+
+

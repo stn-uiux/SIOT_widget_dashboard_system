@@ -5,7 +5,7 @@ import {
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
   Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
-  RotateCcw
+  RotateCcw, GripVertical
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
@@ -18,48 +18,32 @@ interface SidebarProps {
   onUpdateWidget: (id: string, updates: Partial<Widget>) => void;
   onUpdateLayout: (updates: Partial<LayoutConfig>) => void;
   onClose: () => void;
+  onDragStart?: (e: React.MouseEvent) => void;
+  onSave?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpdateWidget, onUpdateLayout, onClose }) => {
-  const [activeDualTab, setActiveDualTab] = React.useState<0 | 1>(0);
+const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpdateWidget, onUpdateLayout, onClose, onDragStart, onSave }) => {
   const isCyber = theme.mode === ThemeMode.CYBER;
 
   if (!selectedWidget) return (
-    <div className={`w-80 h-full flex flex-col p-6 space-y-8 overflow-hidden transition-all duration-500 ${isCyber ? 'bg-black/95 border-l border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.15)]' : 'bg-[var(--surface)] border-l border-[var(--border-base)] shadow-2xl'}`}>
-      <div className={`flex items-center justify-between mb-4 border-b ${isCyber ? 'border-cyan-500/30 pb-4' : 'border-transparent'}`}>
-        <h2 className={`text-xl font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
-          {isCyber ? <span className="glitch-text" data-text="LAYOUT_CTRL">LAYOUT_CTRL</span> : 'Layout Settings'}
-        </h2>
-        <button onClick={onClose} className={`p-1 rounded-full transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-          <X className="w-5 h-5" />
-        </button>
+    <div className={`w-80 max-h-[85vh] flex flex-col p-6 space-y-6 overflow-hidden transition-all duration-500 rounded ${isCyber ? 'bg-black/95 border border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.25)]' : 'bg-[var(--surface)] border border-[var(--border-base)] shadow-2xl'}`}>
+      <div className={`flex items-center justify-between border-b cursor-grab active:cursor-grabbing ${isCyber ? 'border-cyan-500/30 pb-4' : 'border-transparent'}`} onMouseDown={onDragStart}>
+        <div className="flex items-center gap-2">
+          <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
+          <h2 className={`text-xl font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
+            {isCyber ? <span className="glitch-text" data-text="LAYOUT_CTRL">LAYOUT_CTRL</span> : 'Layout Settings'}
+          </h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="저장하기">
+            <Check className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className={`p-1 rounded transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
       <div className="space-y-6 overflow-y-auto custom-scrollbar pr-1">
-        {/* 시나리오 카드: 어떤 레이아웃으로 할까? */}
-        <div className="space-y-2">
-          <span className="text-[10px] uppercase font-bold text-muted tracking-wider">어떤 레이아웃으로 할까?</span>
-          <div className="grid grid-cols-1 gap-2">
-            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--surface-muted)] border border-[var(--border-base)]">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title="픽셀 단위로 세밀하게">
-                <svg viewBox="0 0 24 24" className="w-full h-full text-primary/70"><rect x="2" y="2" width="6" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="9" y="2" width="6" height="8" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="16" y="2" width="6" height="4" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="2" y="8" width="5" height="6" fill="currentColor" opacity="0.45" rx="0.5"/><rect x="8" y="11" width="7" height="5" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold text-[var(--text-main)]">픽셀 단위로 세밀하게</p>
-                <p className="text-[9px] text-muted">그리드 OFF. 위젯 크기를 마우스까지 자유롭게</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--surface-muted)] border border-[var(--border-base)]">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title="고정 높이 + 스크롤">
-                <svg viewBox="0 0 24 24" className="w-full h-full text-primary/70"><rect x="1" y="1" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.2" rx="1"/><rect x="3" y="3" width="18" height="4" fill="currentColor" opacity="0.25" rx="0.5"/><rect x="3" y="8" width="18" height="4" fill="currentColor" opacity="0.2" rx="0.5"/><rect x="3" y="13" width="18" height="4" fill="currentColor" opacity="0.15" rx="0.5"/><line x1="20" y1="4" x2="20" y2="20" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/><circle cx="20" cy="18" r="1.2" fill="currentColor" opacity="0.5"/></svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold text-[var(--text-main)]">고정 높이 + 스크롤</p>
-                <p className="text-[9px] text-muted">Fit OFF. Row Height(px) 고정, 내용 많으면 스크롤</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4">
           <label className="text-sm font-semibold text-muted uppercase flex items-center gap-2">
             <LayoutGrid className="w-4 h-4" /> Layout Config
@@ -77,10 +61,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 className={`w-full p-2 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)]`}
               />
             </div>
-            <div className={`space-y-1 ${!layout.fitToScreen ? 'opacity-50 pointer-events-none' : ''}`} title={!layout.fitToScreen ? 'Fit to Screen ON일 때만 적용됩니다' : undefined}>
+            <div className="space-y-1">
               <span className="text-xs text-muted font-medium flex items-center gap-1.5">
                 <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="6" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="11" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
-                Rows {!layout.fitToScreen && <span className="text-[9px]">(Fit ON일 때)</span>}
+                Rows
               </span>
               <input
                 type="number" min="1" max="200"
@@ -91,32 +75,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
           </div>
 
-          {/* Fit to Screen — 그리드 사용과 둘 중 하나만 ON */}
-          <div
-            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-xl)] transition-all ${layout.useGrid !== false ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer hover:bg-[var(--border-muted)]'}`}
-            title={layout.useGrid !== false ? '그리드 사용을 OFF로 하면 선택할 수 있습니다' : undefined}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.fitToScreen ? '화면에 꽉 참' : '스크롤 가능'}>
-                {layout.fitToScreen ? (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-blue-500"><rect x="0.5" y="0.5" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1" rx="1"/><line x1="0.5" y1="6" x2="19.5" y2="6" stroke="currentColor" strokeWidth="0.6" opacity="0.8"/><line x1="0.5" y1="13" x2="19.5" y2="13" stroke="currentColor" strokeWidth="0.6" opacity="0.8"/><line x1="6" y1="0.5" x2="6" y2="19.5" stroke="currentColor" strokeWidth="0.6" opacity="0.8"/><line x1="13" y1="0.5" x2="13" y2="19.5" stroke="currentColor" strokeWidth="0.6" opacity="0.8"/></svg>
-                ) : (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-muted"><rect x="0.5" y="0.5" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1" rx="1"/><rect x="2" y="2" width="16" height="5" fill="currentColor" opacity="0.2" rx="0.5"/><rect x="2" y="8" width="16" height="5" fill="currentColor" opacity="0.15" rx="0.5"/><line x1="18" y1="2" x2="18" y2="18" stroke="currentColor" strokeWidth="0.6" opacity="0.6"/><circle cx="18" cy="16" r="1" fill="currentColor" opacity="0.5"/></svg>
-                )}
-              </div>
-              <span className="text-xs font-bold text-secondary">Fit to Screen</span>
-            </div>
-            <Switch
-              checked={layout.fitToScreen}
-              onChange={(checked) => onUpdateLayout(checked ? { fitToScreen: true, useGrid: false } : { fitToScreen: false })}
-              disabled={layout.useGrid !== false}
-            />
-          </div>
 
-          {/* Row Height Config (Active only when fitToScreen is FALSE) */}
-          <div className={`space-y-1 pt-1 transition-opacity ${layout.fitToScreen ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+
+          {/* Row Height Config */}
+          <div className="space-y-1 pt-1 transition-opacity opacity-100">
             <span className="text-[10px] uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
-              <MoveVertical className="w-3 h-3" /> Default Row Height (px) {layout.fitToScreen && <span className="normal-case font-normal">(Fit OFF일 때만)</span>}
+              <MoveVertical className="w-3 h-3" /> Default Row Height (px)
             </span>
             <input
               type="number"
@@ -129,92 +93,74 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             />
           </div>
 
-          {/* 그리드 사용 — Fit to Screen과 둘 중 하나만 ON */}
-          <div
-            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-xl)] transition-all ${layout.fitToScreen ? 'opacity-50 pointer-events-none cursor-not-allowed' : 'cursor-pointer hover:bg-[var(--border-muted)]'}`}
-            title={layout.fitToScreen ? 'Fit to Screen을 OFF로 하면 선택할 수 있습니다' : undefined}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.useGrid !== false ? '칸 단위 스냅' : '픽셀 자유'}>
-                {layout.useGrid !== false ? (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/></svg>
-                ) : (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="2" y="2" width="5" height="4" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="8" y="2" width="6" height="7" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="15" y="2" width="3" height="3" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="2" y="7" width="4" height="5" fill="currentColor" opacity="0.45" rx="0.5"/><rect x="7" y="10" width="6" height="4" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
-                )}
+          {/* 레이아웃 모드 (그리드 vs 자유 배치) */}
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button
+              onClick={() => onUpdateLayout({ useGrid: true, freePosition: false })}
+              className={`p-3 flex flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border transition-all ${layout.useGrid !== false ? 'bg-primary/10 border-primary text-primary' : 'bg-[var(--surface-muted)] border-[var(--border-base)] text-[var(--text-muted)] hover:bg-[var(--border-muted)]'}`}
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-[var(--background)] rounded-lg border border-[var(--border-muted)]" title="칸 단위 스냅">
+                <svg viewBox="0 0 20 20" className="w-5 h-5 text-current"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.7" rx="0.5"/><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.8" rx="0.5"/><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
               </div>
-              <span className="text-xs font-bold text-secondary">그리드 사용</span>
+              <span className="text-xs font-bold">그리드 배치</span>
+            </button>
+            <button
+              onClick={() => onUpdateLayout({ useGrid: false, freePosition: true })}
+              className={`p-3 flex flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border transition-all ${layout.useGrid === false ? 'bg-primary/10 border-primary text-primary' : 'bg-[var(--surface-muted)] border-[var(--border-base)] text-[var(--text-muted)] hover:bg-[var(--border-muted)]'}`}
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-[var(--background)] rounded-lg border border-[var(--border-muted)]" title="마우스 위치까지 픽셀 단위 자유 배치">
+                <svg viewBox="0 0 20 20" className="w-5 h-5 text-current"><rect x="2" y="2" width="6" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="9" y="2" width="6" height="8" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="16" y="2" width="6" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="2" y="8" width="5" height="6" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="8" y="11" width="7" height="5" fill="currentColor" opacity="0.7" rx="0.5"/></svg>
+              </div>
+              <span className="text-xs font-bold">자유 배치</span>
+            </button>
+          </div>
+
+          <p className="text-[10px] text-muted italic px-1 font-medium mt-1 leading-relaxed">
+            {layout.useGrid !== false 
+              ? "* 지정된 Rows, Cols 간격을 기준으로 위젯이 정렬 스냅됩니다." 
+              : "* 스냅 없이 마우스 위치까지 픽셀 단위로 위치 조정과 겹침 배치가 가능합니다."}
+          </p>
+
+          <div className="h-px w-full bg-[var(--border-muted)] my-3" />
+
+          {/* 중력 (Vertical Compact) 설정 */}
+          <div
+            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] cursor-pointer hover:bg-[var(--border-muted)] transition-all group rounded-[var(--radius-xl)]`}
+          >
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-bold text-secondary">수직 밀착 (GRAVITY)</span>
+              <span className="text-[10px] text-muted font-medium ml-0.5">위젯이 상단으로 자동 정렬됩니다.</span>
             </div>
             <Switch
-              checked={layout.useGrid !== false}
-              onChange={(checked) => onUpdateLayout(checked ? { useGrid: true, fitToScreen: false } : { useGrid: false })}
-              disabled={layout.fitToScreen}
+              checked={!layout.freePosition}
+              onChange={(checked) => onUpdateLayout({ freePosition: !checked })}
             />
-          </div>
-          <div className={`space-y-1 pt-1 transition-opacity ${layout.useGrid !== false ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-            <p className="text-[10px] text-muted px-1">
-              그리드 OFF일 때 위젯 크기를 <strong>마우스 위치까지</strong> 자유롭게 늘렸다 줄였다 할 수 있습니다.
-            </p>
           </div>
 
           {/* 해상도별 레이아웃 (Breakpoints) */}
           <div
             className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] cursor-pointer hover:bg-[var(--border-muted)] transition-all group rounded-[var(--radius-xl)]`}
           >
-            <span className="text-xs font-bold text-secondary">해상도별 레이아웃 (BREAKPOINTS)</span>
+            <span className="text-xs font-bold text-secondary">해상도별 레이아웃 작동 (BREAKPOINTS)</span>
             <Switch
               checked={layout.useResponsive ?? false}
               onChange={(checked) => onUpdateLayout({ useResponsive: checked })}
             />
           </div>
-          <p className="text-[10px] text-muted px-1">LG(1200px) / MD(996px) / SM(768px) / XS(480px) 구간별로 컬럼·레이아웃 전환</p>
-
-          {/* 자유 배치 (Free Position) */}
-          <div
-            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] cursor-pointer hover:bg-[var(--border-muted)] transition-all group rounded-[var(--radius-xl)]`}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title="위로 쏠리지 않고 고정">
-                <svg viewBox="0 0 20 20" className="w-full h-full text-primary/70"><rect x="1" y="2" width="18" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="3" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="11" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/></svg>
-              </div>
-              <span className="text-xs font-bold text-secondary">자유 배치 (FREE POSITION)</span>
-            </div>
-            <Switch
-              checked={layout.freePosition ?? false}
-              onChange={(checked) => onUpdateLayout({ freePosition: checked })}
-            />
-          </div>
-          <p className="text-[10px] text-muted px-1">위젯이 위로 쏠리지 않고 원하는 위치(정중앙 등)에 고정되도록 합니다.</p>
-
-          <p className="text-[10px] text-muted italic px-1 leading-relaxed border-t border-[var(--border-muted)] pt-3 mt-2">
-            * <strong>Fit to Screen</strong>과 <strong>그리드 사용</strong>은 둘 중 하나만 켤 수 있습니다.<br />
-            * <strong>Fit ON</strong>: 화면 높이를 Rows만큼 나누어 스크롤 없이 꽉 차게 표시<br />
-            * <strong>Fit OFF</strong>: 지정된 Row Height(px)만큼 고정, 내용이 많으면 스크롤 발생
-          </p>
+          <p className="text-[10px] text-muted px-1 mt-1">LG(1200px) / MD(996px) / SM(768px) / XS(480px) 모드일때 반응형으로 위젯 재배치</p>
         </div>
       </div>
     </div >
   );
 
-  const isSec = selectedWidget.isDual && activeDualTab === 1;
-
-  const currentType = isSec ? (selectedWidget.secondaryType || selectedWidget.type) : selectedWidget.type;
-  const currentConfig = isSec ? (selectedWidget.secondaryConfig || selectedWidget.config) : selectedWidget.config;
-  const currentData = isSec ? (selectedWidget.secondaryData || selectedWidget.data || []) : (selectedWidget.data || []);
-  const currentMainValue = isSec ? (selectedWidget.secondaryMainValue || '0') : (selectedWidget.mainValue || '0');
-  const currentSubValue = isSec ? (selectedWidget.secondarySubValue || '') : (selectedWidget.subValue || '');
+  const currentType = selectedWidget.type;
+  const currentConfig = selectedWidget.config;
+  const currentData = selectedWidget.data || [];
+  const currentMainValue = selectedWidget.mainValue || '0';
+  const currentSubValue = selectedWidget.subValue || '';
 
   const updateCurrentWidget = (updates: Partial<Widget>) => {
-    if (!isSec) {
-      onUpdateWidget(selectedWidget.id, updates);
-    } else {
-      const secUpdates: any = {};
-      if (updates.type) secUpdates.secondaryType = updates.type;
-      if (updates.config) secUpdates.secondaryConfig = { ...selectedWidget.secondaryConfig, ...updates.config };
-      if (updates.data) secUpdates.secondaryData = updates.data;
-      if (updates.mainValue !== undefined) secUpdates.secondaryMainValue = updates.mainValue;
-      if (updates.subValue !== undefined) secUpdates.secondarySubValue = updates.subValue;
-      onUpdateWidget(selectedWidget.id, secUpdates);
-    }
+    onUpdateWidget(selectedWidget.id, updates);
   };
 
   const toggleConfig = (key: string) => {
@@ -225,6 +171,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
     if (key === 'hideHeader') {
       onUpdateWidget(selectedWidget.id, { hideHeader: !selectedWidget.hideHeader });
+      return;
+    }
+
+    if (key === 'hideBorder') {
+      onUpdateWidget(selectedWidget.id, { hideBorder: !selectedWidget.hideBorder });
       return;
     }
 
@@ -333,6 +284,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
   const isSummary = [WidgetType.SUMMARY].includes(currentType);
   const isGeneralKpi = currentType === WidgetType.GENERAL_KPI;
+  const isFacility2 = currentType === WidgetType.DASH_FACILITY_2;
+  const isIconResizable = isGeneralKpi || isFacility2 || currentType === WidgetType.DASH_RANK_LIST;
   const isEarningProgress = currentType === WidgetType.EARNING_PROGRESS;
   const isEarningTrend = currentType === WidgetType.EARNING_TREND;
   const isTextBlock = currentType === WidgetType.TEXT_BLOCK;
@@ -355,6 +308,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   ].includes(currentType);
 
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
+  const isBarChart = [WidgetType.CHART_BAR, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
   const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   // 위젯 타입별 가용 옵션 필터링
@@ -367,146 +321,32 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
     { key: 'useGradient', label: 'Gradient Fill', visible: isAxisChart || currentType === WidgetType.SUMMARY },
     { key: 'hideHeader', label: 'Hide Header', visible: true },
+    { key: 'hideBorder', label: 'Hide Border', visible: true },
     { key: 'noBezel', label: 'No Bezel', visible: true },
   ].filter(opt => opt.visible);
 
 
   return (
-    <div className={`w-80 h-full flex flex-col p-6 space-y-8 overflow-y-auto custom-scrollbar transition-all duration-500 ${isCyber ? 'bg-black/95 border-l border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.15)]' : 'bg-[var(--surface)] border-l border-[var(--border-base)] shadow-2xl'}`}>
-      <div className={`flex items-center justify-between border-b ${isCyber ? 'border-cyan-500/30 pb-4 mb-2' : 'border-transparent mb-4'}`}>
-        <h2 className={`text-xl font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
-          {isCyber ? <span className="glitch-text" data-text="WIDGET_CONFIG_v2">WIDGET_CONFIG_v2</span> : 'Widget Settings'}
-        </h2>
-        <button onClick={onClose} className={`p-1 rounded-full transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="space-y-4 pt-2 pb-2">
-        <div
-          onClick={() => {
-            const isDual = !selectedWidget.isDual;
-            onUpdateWidget(selectedWidget.id, {
-              isDual,
-              dualLayout: selectedWidget.dualLayout || 'horizontal',
-              dualGap: selectedWidget.dualGap ?? 16,
-              secondaryType: selectedWidget.secondaryType || selectedWidget.type,
-              secondaryConfig: selectedWidget.secondaryConfig || selectedWidget.config,
-              secondaryData: selectedWidget.secondaryData || selectedWidget.data,
-              showSubTitles: selectedWidget.showSubTitles ?? false,
-              subTitle1: selectedWidget.subTitle1 || 'Primary',
-              subTitle2: selectedWidget.subTitle2 || 'Secondary'
-            });
-          }}
-          className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-2xl cursor-pointer hover:bg-[var(--border-muted)] transition-all group"
-        >
-          <div className="flex items-center gap-2">
-            <LayoutGrid className={`w-4 h-4 ${selectedWidget.isDual ? 'text-[var(--primary-color)]' : 'text-[var(--text-muted)]'}`} />
-            <span className="text-sm font-black uppercase tracking-tighter">Dual Mode</span>
-          </div>
-          <Switch
-            checked={selectedWidget.isDual || false}
-            onChange={(checked) => {
-              onUpdateWidget(selectedWidget.id, {
-                isDual: checked,
-                dualLayout: selectedWidget.dualLayout || 'horizontal',
-                dualGap: selectedWidget.dualGap ?? 16,
-                secondaryType: selectedWidget.secondaryType || selectedWidget.type,
-                secondaryConfig: selectedWidget.secondaryConfig || selectedWidget.config,
-                secondaryData: selectedWidget.secondaryData || selectedWidget.data,
-                showSubTitles: selectedWidget.showSubTitles ?? false,
-                subTitle1: selectedWidget.subTitle1 || 'Primary',
-                subTitle2: selectedWidget.subTitle2 || 'Secondary'
-              });
-            }}
-          />
+    <div className={`w-80 max-h-[85vh] flex flex-col p-6 space-y-6 overflow-hidden transition-all duration-500 rounded ${isCyber ? 'bg-black/95 border border-cyan-500/50 shadow-[0_0_40px_rgba(0,229,255,0.25)]' : 'bg-[var(--surface)] border border-[var(--border-base)] shadow-2xl'}`}>
+      <div className={`flex items-center justify-between border-b cursor-grab active:cursor-grabbing ${isCyber ? 'border-cyan-500/30 pb-4' : 'border-transparent'}`} onMouseDown={onDragStart}>
+        <div className="flex items-center gap-2">
+          <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
+          <h2 className={`text-xl font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
+            {isCyber ? <span className="glitch-text" data-text="WIDGET_CONFIG_v2">WIDGET_CONFIG_v2</span> : 'Widget Settings'}
+          </h2>
         </div>
-
-        {selectedWidget.isDual && (
-          <div className="flex p-1 bg-[var(--surface-muted)] rounded-[var(--radius-xl)]">
-            <button
-              onClick={() => setActiveDualTab(0)}
-              className={`flex-1 py-2 px-3 rounded-[var(--radius-lg)] text-[10px] font-black uppercase tracking-widest transition-all ${activeDualTab === 0 ? 'bg-[var(--surface)] text-[var(--primary-color)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-            >
-              Left Graph
-            </button>
-            <button
-              onClick={() => setActiveDualTab(1)}
-              className={`flex-1 py-2 px-3 rounded-[var(--radius-lg)] text-[10px] font-black uppercase tracking-widest transition-all ${activeDualTab === 1 ? 'bg-[var(--surface)] text-[var(--primary-color)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
-            >
-              Right Graph
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="저장하기">
+            <Check className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className={`p-1 rounded transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {
-        selectedWidget.isDual && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Layers className="w-4 h-4" /> Dual Layout Config
-            </label>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => onUpdateWidget(selectedWidget.id, { dualLayout: 'horizontal' })}
-                  className={`p-2.5 ${isCyber ? 'rounded-md' : 'rounded-xl'} border text-[10px] font-bold uppercase transition-all ${selectedWidget.dualLayout === 'horizontal' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-gray-50 border-[var(--border-base)] text-gray-400'}`}
-                >
-                  Horizontal
-                </button>
-                <button
-                  onClick={() => onUpdateWidget(selectedWidget.id, { dualLayout: 'vertical' })}
-                  className={`p-2.5 ${isCyber ? 'rounded-md' : 'rounded-xl'} border text-[10px] font-bold uppercase transition-all ${selectedWidget.dualLayout === 'vertical' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-gray-50 border-[var(--border-base)] text-gray-400'}`}
-                >
-                  Vertical
-                </button>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 flex justify-between">
-                  Gap (Spacing) <span>{selectedWidget.dualGap ?? 16}px</span>
-                </span>
-                <input
-                  type="range" min="0" max="64" step="4"
-                  value={selectedWidget.dualGap ?? 16}
-                  onChange={(e) => onUpdateWidget(selectedWidget.id, { dualGap: parseInt(e.target.value) })}
-                  className={`w-full accent-blue-600 h-1.5 bg-gray-200 dark:bg-gray-700 ${isCyber ? 'rounded-md' : 'rounded-lg'} appearance-none cursor-pointer`}
-                />
-              </div>
-
-              <div className="pt-2 border-t border-[var(--border-muted)] space-y-3">
-                <div className="flex items-center justify-between group">
-                  <span className="text-xs font-black text-muted uppercase tracking-tighter">Show Subtitles</span>
-                  <Switch
-                    checked={selectedWidget.showSubTitles || false}
-                    onChange={(checked) => onUpdateWidget(selectedWidget.id, { showSubTitles: checked })}
-                  />
-                </div>
-
-                {selectedWidget.showSubTitles && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={selectedWidget.subTitle1 || ''}
-                      onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle1: e.target.value })}
-                      className={`p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none`}
-                      placeholder="Left Label"
-                    />
-                    <input
-                      type="text"
-                      value={selectedWidget.subTitle2 || ''}
-                      onChange={(e) => onUpdateWidget(selectedWidget.id, { subTitle2: e.target.value })}
-                      className={`p-2 bg-white dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-lg'} text-[10px] font-bold outline-none`}
-                      placeholder="Right Label"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      <section className="space-y-4">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+        <section className="space-y-4">
         <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${isCyber ? 'text-cyan-400/60 glitch-text' : 'text-gray-400'}`} data-text="VISUAL_MODULES">
           <Layers className="w-4 h-4" /> {isCyber ? 'VISUAL_MODULES' : 'Visualization'}
         </label>
@@ -517,7 +357,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-xl'} transition-all ${isCyber
+                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-sm'} transition-all ${isCyber
                   ? `btn-surface ${currentType === id ? 'active' : ''}`
                   : `border ${currentType === id
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
@@ -544,7 +384,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-xl'} transition-all ${isCyber
+                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-sm'} transition-all ${isCyber
                   ? `btn-surface ${currentType === id ? 'active' : ''}`
                   : `border ${currentType === id
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
@@ -571,7 +411,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-xl'} border transition-all ${currentType === id
+                className={`p-2 flex flex-col items-center gap-1 ${isCyber ? 'rounded-md' : 'rounded-sm'} border transition-all ${currentType === id
                   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
                   : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
                   }`}
@@ -599,7 +439,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={96}
                   value={selectedWidget.titleSize ?? 48}
                   onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                 />
               </div>
               <div>
@@ -607,13 +447,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <div className="relative group mt-1">
                   <input
                     type="text"
-                    value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
+                    value={selectedWidget.icon || ''}
                     onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                    className="w-full p-2.5 pl-9 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold"
+                    className="w-full p-2.5 pl-9 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold"
                     placeholder="e.g. group, monitoring, star"
                   />
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
-                    {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
+                    {selectedWidget.icon || 'star'}
                   </span>
                 </div>
               </div>
@@ -635,7 +475,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   value={selectedWidget.mainValue ?? ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
                   rows={4}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
                   placeholder="여기에 글자를 입력하세요."
                 />
               </div>
@@ -648,7 +488,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     max={72}
                     value={selectedWidget.titleSize ?? 18}
                     onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 18 })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
@@ -656,7 +496,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <select
                     value={selectedWidget.titleWeight ?? '400'}
                     onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="100">100 (Thin)</option>
                     <option value="200">200 (Extra Light)</option>
@@ -714,7 +554,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={96}
                   value={selectedWidget.titleSize ?? 48}
                   onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                 />
               </div>
               <div className="space-y-1">
@@ -723,7 +563,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={selectedWidget.comparisonText ?? ''}
                   onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                   placeholder="Compared of $11,750 last year"
                 />
               </div>
@@ -734,7 +574,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="number"
                     value={selectedWidget.trendPercent ?? 21}
                     onChange={(e) => updateCurrentWidget({ trendPercent: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
@@ -804,14 +644,63 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             <div className="space-y-2">
               <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Icon</span>
               <select
-                value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
+                value={selectedWidget.icon || 'User'}
                 onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
               >
                 {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+            </div>
+          </section>
+        )
+      }
+
+      {isIconResizable && (
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <PaletteIcon className="w-4 h-4" /> Icon Size
+          </label>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[10px] uppercase font-bold text-gray-400">Size (px)</span>
+              <span className="text-xs font-bold text-blue-500">{selectedWidget.iconSize || 48}px</span>
+            </div>
+            <input
+              type="range"
+              min="24"
+              max="128"
+              step="4"
+              value={selectedWidget.iconSize || 48}
+              onChange={(e) => updateCurrentWidget({ iconSize: parseInt(e.target.value, 10) })}
+              className="w-full accent-blue-500 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+        </section>
+      )}
+
+      {
+        isBarChart && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <BarChartHorizontal className="w-4 h-4" /> Bar Settings
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Bar Width (%)</span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{currentConfig.barWidth ?? 60}%</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={100}
+                step={5}
+                value={currentConfig.barWidth ?? 60}
+                onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, barWidth: parseInt(e.target.value, 10) } })}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+              />
+              <p className="text-[9px] text-muted italic px-1 mt-1">* 얇은 막대 그래프를 원하시면 수치를 낮춰보세요.</p>
             </div>
           </section>
         )
@@ -842,7 +731,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:${isCyber ? 'rounded-md' : 'rounded-lg'} file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
+                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-sm'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:${isCyber ? 'rounded-md' : 'rounded-lg'} file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
                   />
                 </div>
               </div>
@@ -854,7 +743,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentMainValue || ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-sm'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -866,7 +755,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentSubValue || ''}
                   onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-sm'} text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="Image description..."
                 />
               </div>
@@ -876,7 +765,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
       }
 
       {
-        !isSec && (
+        (
           <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <PaletteIcon className="w-4 h-4" /> Background
@@ -910,7 +799,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <div
                   key={option.key}
                   onClick={() => toggleConfig(option.key as any)}
-                  className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
+                  className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
                 >
                   <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {option.label}
@@ -918,9 +807,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <div className="pointer-events-none">
                     <Switch
                       checked={
-                        option.key === 'noBezel' ? (isSec ? selectedWidget.secondaryNoBezel : selectedWidget.noBezel) || false :
+                        option.key === 'noBezel' ? selectedWidget.noBezel || false :
                           option.key === 'hideHeader' ? (selectedWidget.hideHeader || false) :
-                            (currentConfig as any)[option.key] || false
+                            option.key === 'hideBorder' ? (selectedWidget.hideBorder || false) :
+                              (currentConfig as any)[option.key] || false
                       }
                       onChange={() => { }}
                     />
@@ -965,7 +855,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
             <div className="space-y-2">
               {(currentConfig.series || []).map((s, idx) => (
-                <div key={s.key} className={`p-3 bg-gray-50 dark:bg-gray-800 ${isCyber ? 'rounded-md' : 'rounded-xl'} border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm`}>
+                <div key={s.key} className={`p-3 bg-gray-50 dark:bg-gray-800 ${isCyber ? 'rounded-md' : 'rounded-sm'} border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm`}>
                   <div className="flex flex-col gap-0.5 mr-1">
                     <button
                       disabled={idx === 0}
@@ -1047,7 +937,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentConfig.xAxisLabel || ''}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
-                  className={`w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-sm'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold`}
                   placeholder="e.g. Month, Project Name"
                 />
                 <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
@@ -1061,7 +951,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               type="text"
               value={currentConfig.unit || ''}
               onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-xl'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
+              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] ${isCyber ? 'rounded-md' : 'rounded-sm'} text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               placeholder="e.g. 명, $, %"
             />
           </div>
@@ -1077,7 +967,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     max={96}
                     value={selectedWidget.titleSize ?? 48}
                     onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                    className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                    className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                   />
                 </div>
               )}
@@ -1088,7 +978,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={currentMainValue || ''}
                     onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
                   />
                 </div>
               )}
@@ -1099,7 +989,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={currentSubValue || ''}
                     onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-sm text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>
               )}
@@ -1113,7 +1003,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               const isSankey = currentType === WidgetType.CHART_SANKEY;
 
               return (
-                <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">
+                <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">
                   <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
                     <div className="w-full flex items-center gap-2">
                       {/* Primary Label (Source for Sankey) */}
@@ -1198,8 +1088,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </select>
           </div>
         </div>
-      </section>
-    </div >
+        </section>
+      </div>
+    </div>
   );
 };
 
