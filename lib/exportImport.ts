@@ -162,7 +162,12 @@ export async function importProjectFromZip(
     if (files[path].dir || (!path.startsWith(IMAGES_DIR + "/") && path !== PREVIEW_FILENAME)) continue;
     const entry = files[path];
     const blob = await entry.async("blob");
-    urlByKey[path] = URL.createObjectURL(blob);
+    // URL.createObjectURL is temporary and breaks on refresh. Use DataUrl for persistence in storage.
+    urlByKey[path] = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
   }
 
   function resolveRef(val: unknown): unknown {

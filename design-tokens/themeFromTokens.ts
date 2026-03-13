@@ -92,7 +92,7 @@ export function tokensToDashboardTheme(
  * 앱 기본 테마 (Dark). design-tokens.json 기준.
  */
 export function getDefaultThemeFromTokens(overrides: Partial<DashboardTheme> = {}): DashboardTheme {
-  return tokensToDashboardTheme(designTokens as Tokens, ThemeMode.DARK, { ...overrides });
+  return tokensToDashboardTheme(designTokens as Tokens, ThemeMode.DARK, { dualModeSupport: true, ...overrides });
 }
 
 /**

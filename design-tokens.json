@@ -426,12 +426,12 @@
                     "description": "Border style for widgets in Edit Mode"
                 },
                 "selected_border_color": {
-                    "value": "#8b5cf6",
+                    "value": "#3b82f6",
                     "type": "color",
-                    "description": "Vibrant purple border for selected widget (Light Mode)"
+                    "description": "Brand blue border for selected widget"
                 },
                 "selected_shadow_glow": {
-                    "value": "0 0 35px rgba(139, 92, 246, 0.4)",
+                    "value": "0 0 35px rgba(59, 130, 246, 0.4)",
                     "type": "string"
                 },
                 "action_hover_text": {
@@ -447,12 +447,17 @@
                     "type": "color"
                 },
                 "selected_overlay_bg": {
-                    "value": "rgba(139, 92, 246, 0.08)",
+                    "value": "rgba(59, 130, 246, 0.08)",
                     "type": "color"
                 },
                 "selected_inner_glow": {
-                    "value": "inset 0 0 25px rgba(139, 92, 246, 0.15)",
+                    "value": "inset 0 0 25px rgba(59, 130, 246, 0.15)",
                     "type": "string"
+                },
+                "bar_width_default": {
+                    "value": "60",
+                    "type": "number",
+                    "description": "Default bar thickness percentage (0-100)"
                 }
             },
             "glassmorphism": {

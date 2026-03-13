@@ -94,8 +94,8 @@ export interface Widget {
   icon?: string;
   iconSize?: number;
   noBezel?: boolean;
+  noBorder?: boolean;
   hideHeader?: boolean;
-  hideBorder?: boolean;
   /** Background opacity 0–100 (default 100 = opaque). */
   backgroundOpacity?: number;
   /** Progress 0–100 for EARNING_PROGRESS (circular gauge). */
@@ -108,6 +108,20 @@ export interface Widget {
   comparisonText?: string;
   /** Category items for EARNING_TREND: label + progress 0–100, optional color. */
   categoryItems?: { label: string; value: number; color?: string }[];
+  // Dual Chart Support
+  isDual?: boolean;
+  dualLayout?: "horizontal" | "vertical";
+  dualGap?: number;
+  secondaryType?: WidgetType;
+  secondaryConfig?: ChartConfig;
+  secondaryData?: any[];
+  showSubTitles?: boolean;
+  subTitle1?: string;
+  subTitle2?: string;
+  secondaryMainValue?: string;
+  secondarySubValue?: string;
+  secondaryIcon?: string;
+  secondaryNoBezel?: boolean;
 }
 
 export enum HeaderPosition {
@@ -210,6 +224,7 @@ export interface DashboardTheme {
   modeStyles?: {
     light?: Partial<DashboardTheme>;
     dark?: Partial<DashboardTheme>;
+    cyber?: Partial<DashboardTheme>;
   };
   showPageTabs?: boolean;
   /** 프로젝트별 커스텀 차트 팔레트(hex). 생키/파이 등에서 theme.primaryColor 대신 사용 */

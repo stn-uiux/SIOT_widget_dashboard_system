@@ -18,7 +18,7 @@ function getDefaultTheme(): DashboardTheme {
   } catch {
     return {
       name: 'Dark Mode',
-      primaryColor: '#6366f1',
+      primaryColor: '#3b82f6',
       backgroundColor: '#020617',
       surfaceColor: '#0f172a',
       mode: ThemeMode.DARK,

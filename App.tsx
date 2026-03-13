@@ -107,10 +107,11 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
     // 이렇게 하면 새 테마 필드 추가 시 저장된 데이터가 undefined로 남아 리셋되는 현상을 방지
     const migratedProjects: Project[] = parsed.projects.map((p) => ({
       ...p,
-      // 테마: DEFAULT_THEME를 base로 하고, 저장된 값을 덮어씀 (새 필드는 DEFAULT_THEME 기본값 사용)
       theme: { ...DEFAULT_THEME, ...p.theme },
       pages: (p.pages || []).map((pg) => ({
         ...pg,
+        // 레이아웃: DEFAULT_PAGE.layout를 base로 하고, 저장된 값을 덮어씀
+        layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
         // 헤더: DEFAULT_HEADER를 base로 하고, 저장된 값을 덮어씀
         header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
       })),
@@ -144,6 +145,28 @@ function getInitialProjectsState(): ProjectsState {
 (import.meta as any).hot?.on?.('vite:beforeUpdate', () => {
   _cachedProjectsState = null;
 });
+
+const PRESETS_STORAGE_KEY = "siot_theme_presets";
+
+function loadPresetsSync(fallback: ThemePreset[]): ThemePreset[] {
+  try {
+    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return fallback;
+    return parsed;
+  } catch {
+    return fallback;
+  }
+}
+
+function savePresets(presets: ThemePreset[]) {
+  try {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  } catch (e) {
+    console.error("Failed to save presets", e);
+  }
+}
 
 /** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
 const computeInitialLayout = (
@@ -208,6 +231,12 @@ const DashboardGrid: React.FC<{
     responsiveLayouts,
     onResponsiveLayoutChange,
   } = props;
+
+  const [resizingId, setResizingId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [liveSize, setLiveSize] = useState<{ w: number; h: number } | null>(null);
+  const resizeRafRef = useRef<number | null>(null);
+
   const { containerRef: gridContainerRef, width: gridWidth } = useContainerWidth({
     initialWidth: 1280,
   });
@@ -402,6 +431,7 @@ const DashboardGrid: React.FC<{
           })()}
           {layout.useResponsive && responsiveLayouts && onResponsiveLayoutChange ? (
             <ResponsiveGridLayout
+              className={resizingId || draggingId ? "is-interacting" : ""}
               width={gridWidth}
               breakpoints={RESPONSIVE_BREAKPOINTS}
               cols={RESPONSIVE_COLS}
@@ -418,34 +448,72 @@ const DashboardGrid: React.FC<{
               }}
               autoSize={!layout.fitToScreen}
               onLayoutChange={(_layout, layouts) => onResponsiveLayoutChange(layouts)}
+              onDragStart={(layout, oldItem, newItem) => {
+                setDraggingId(newItem.i);
+              }}
+              onDragStop={() => {
+                setDraggingId(null);
+              }}
+              onResizeStart={(layout, oldItem, newItem) => {
+                setResizingId(newItem.i);
+                setLiveSize({ w: newItem.w, h: newItem.h });
+              }}
+              onResize={(layout, oldItem, newItem) => {
+                if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                resizeRafRef.current = requestAnimationFrame(() => {
+                  setLiveSize({ w: newItem.w, h: newItem.h });
+                });
+              }}
+              onResizeStop={() => {
+                if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                setResizingId(null);
+                setLiveSize(null);
+              }}
               style={{
                 position: "relative",
                 zIndex: 1,
                 minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
               }}
             >
-              {(widgets || []).map((widget) => (
-                <div
-                  key={widget.id}
-                  className={`h-full transition-[background,border,box-shadow,transform] duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
-                  style={selectedWidgetId === widget.id ? { zIndex: 50 } : {}}
-                >
-                  <WidgetCard
-                    widget={widget}
-                    theme={theme}
-                    isEditMode={isEditMode}
-                    onEdit={onWidgetSelect}
-                    onUpdate={onUpdateWidget}
-                    onDelete={onDeleteWidget}
-                    onOpenExcel={onOpenExcel}
-                    glassStyle={layout?.glassmorphism ?? false}
-                  />
-                </div>
-              ))}
+              {(widgets || []).map((widget) => {
+                const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
+                const isThisResizing = resizingId === widget.id;
+                return (
+                  <div
+                    key={widget.id}
+                    className={`h-full relative ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                    style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
+                  >
+                    <WidgetCard
+                      widget={widget}
+                      theme={theme}
+                      isEditMode={isEditMode}
+                      onEdit={onWidgetSelect}
+                      onUpdate={onUpdateWidget}
+                      onDelete={onDeleteWidget}
+                      onOpenExcel={onOpenExcel}
+                      glassStyle={layout?.glassmorphism ?? false}
+                      selected={selectedWidgetId === widget.id}
+                      isResizing={isThisResizing}
+                      isDragging={draggingId === widget.id}
+                    />
+                    {isEditMode && isThisResizing && liveSize && (
+                      <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-[10px] font-bold text-white/90 font-mono tracking-tighter leading-none">
+                            {liveSize.w} × {liveSize.h}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </ResponsiveGridLayout>
           ) : (
             <>
               <GridLayout
+                className={resizingId || draggingId ? "is-interacting" : ""}
                 layout={displayLayout}
                 width={gridWidth}
                 gridConfig={{
@@ -463,30 +531,67 @@ const DashboardGrid: React.FC<{
                 }}
                 autoSize={!layout.fitToScreen}
                 onLayoutChange={handleLayoutChange}
+                onDragStart={(layout, oldItem, newItem) => {
+                  setDraggingId(newItem.i);
+                }}
+                onDragStop={() => {
+                  setDraggingId(null);
+                }}
+                onResizeStart={(layout, oldItem, newItem) => {
+                  setResizingId(newItem.i);
+                  setLiveSize({ w: newItem.w, h: newItem.h });
+                }}
+                onResize={(layout, oldItem, newItem) => {
+                  if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                  resizeRafRef.current = requestAnimationFrame(() => {
+                    setLiveSize({ w: newItem.w, h: newItem.h });
+                  });
+                }}
+                onResizeStop={() => {
+                  if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                  setResizingId(null);
+                  setLiveSize(null);
+                }}
                 style={{
                   position: "relative",
                   zIndex: 1,
                   minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
                 }}
               >
-                {(widgets || []).map((widget) => (
-                <div
-                  key={widget.id}
-                  className={`h-full transition-[background,border,box-shadow,transform] duration-200 ${selectedWidgetId === widget.id ? "widget-selected" : ""}`}
-                  style={selectedWidgetId === widget.id ? { zIndex: 50 } : {}}
-                >
-                  <WidgetCard
-                    widget={widget}
-                    theme={theme}
-                    isEditMode={isEditMode}
-                    onEdit={onWidgetSelect}
-                    onUpdate={onUpdateWidget}
-                    onDelete={onDeleteWidget}
-                    onOpenExcel={onOpenExcel}
-                    glassStyle={layout?.glassmorphism ?? false}
-                  />
-                </div>
-              ))}
+                {(widgets || []).map((widget) => {
+                    const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
+                    const isThisResizing = resizingId === widget.id;
+                    return (
+                      <div
+                        key={widget.id}
+                        className={`h-full relative ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                        style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
+                      >
+                      <WidgetCard
+                        widget={widget}
+                        theme={theme}
+                        isEditMode={isEditMode}
+                        onEdit={onWidgetSelect}
+                        onUpdate={onUpdateWidget}
+                        onDelete={onDeleteWidget}
+                        onOpenExcel={onOpenExcel}
+                        glassStyle={layout?.glassmorphism ?? false}
+                        selected={selectedWidgetId === widget.id}
+                        isResizing={isThisResizing}
+                        isDragging={draggingId === widget.id}
+                      />
+                      {isEditMode && isThisResizing && liveSize && (
+                        <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className="text-[10px] font-bold text-white/90 font-mono tracking-tighter leading-none">
+                              {liveSize.w} × {liveSize.h}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </GridLayout>
             </>
           )}
@@ -520,7 +625,7 @@ const DashboardGrid: React.FC<{
                   </div>
 
                   {/* Text with letter spacing animation */}
-                  <span className="relative z-10 font-black text-[13px] uppercase tracking-[0.2em] text-white group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md">
+                  <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-slate-700" : "text-white"}`}>
                     Add Widget
                   </span>
 
@@ -728,14 +833,15 @@ const getSmartColorForMode = (
   type: "bg" | "surface" | "text",
 ): string => {
   const { h, s, l } = hexToHsl(hex);
-  if (mode === ThemeMode.DARK) {
-    if (type === "bg") return hslToHex(h, Math.min(s, 20), 5); // Very dark, low saturation
-    if (type === "surface") return hslToHex(h, Math.min(s, 15), 12); // Slightly lighter than bg
-    return hslToHex(h, Math.min(s, 10), 90); // Near white text
+  if (mode === ThemeMode.DARK || mode === ThemeMode.CYBER) {
+    const isCyber = mode === ThemeMode.CYBER;
+    if (type === "bg") return hslToHex(h, Math.min(s, isCyber ? 40 : 20), isCyber ? 2 : 5); 
+    if (type === "surface") return hslToHex(h, Math.min(s, isCyber ? 35 : 15), isCyber ? 6 : 12); 
+    return hslToHex(h, Math.min(s, 10), 90); 
   } else {
-    if (type === "bg") return hslToHex(h, Math.min(s, 10), 98); // Near white
-    if (type === "surface") return hslToHex(h, Math.min(s, 5), 100); // Pure white
-    return hslToHex(h, Math.max(s, 40), 15); // Dark text with some saturation
+    if (type === "bg") return "#ffffff"; 
+    if (type === "surface") return "#ffffff"; 
+    return "#1e293b"; 
   }
 };
 
@@ -1000,7 +1106,7 @@ const App: React.FC = () => {
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
-  // App root ref so DesignSystem applies theme only to this subtree (per-project scope)
+  const projectScopeRef = useRef<HTMLDivElement>(null);
   const appRootRef = useRef<HTMLDivElement>(null);
   const [mainAreaHeight, setMainAreaHeight] = useState(600);
 
@@ -1124,6 +1230,7 @@ const App: React.FC = () => {
           theme: { ...DEFAULT_THEME, ...p.theme },
           pages: (p.pages || []).map((pg) => ({
             ...pg,
+            layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
             header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
           })),
         }));
@@ -1140,10 +1247,6 @@ const App: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
-  useEffect(() => {
-    saveProjectsState(projects, activeProjectId);
-  }, [projects, activeProjectId]);
 
   const showToast = (
     message: string,
@@ -1157,6 +1260,11 @@ const App: React.FC = () => {
   const { theme } = currentProject;
   const { widgets, layout, header: pageHeader } = currentPage;
   const header = pageHeader || DEFAULT_HEADER;
+
+  const pageBgUrl = layout && (theme.mode === ThemeMode.LIGHT 
+    ? (layout.backgroundImageLight || layout.backgroundImage) 
+    : (layout.backgroundImageDark || layout.backgroundImage));
+  const showUnifiedBg = !!(layout?.backgroundGlobe || pageBgUrl);
 
   const updateCurrentPage = (updates: Partial<DashboardPage>) => {
     setProjects((prev) =>
@@ -1257,15 +1365,15 @@ const App: React.FC = () => {
     showToast(`Added ${type} widget`);
   };
 
-  const updateWidget = (id: string, updates: Partial<Widget>) => {
+  const updateWidget = useCallback((id: string, updates: Partial<Widget>) => {
     updateCurrentPage({
       widgets: widgets.map((w) => (w.id === id ? { ...w, ...updates } : w)),
     });
-  };
+  }, [widgets, updateCurrentPage]);
 
-  const deleteWidget = (id: string) => {
+  const deleteWidget = useCallback((id: string) => {
     setDeleteConfirmId(id);
-  };
+  }, []);
 
   const confirmDeleteWidget = () => {
     if (!deleteConfirmId) return;
@@ -1285,11 +1393,11 @@ const App: React.FC = () => {
     showToast("Widget removed successfully", "success");
   };
 
-  const handleWidgetSelect = (id: string | null) => {
+  const handleWidgetSelect = useCallback((id: string | null) => {
     setSelectedWidgetId(id);
     // Explicitly close design sidebar when selecting a widget or deselecting
     setIsDesignSidebarOpen(false);
-  };
+  }, []);
 
   const handleToggleEditMode = () => {
     setIsEditMode(!isEditMode);
@@ -1301,11 +1409,82 @@ const App: React.FC = () => {
     setSelectedWidgetId(null);
   };
 
-  const [presets, setPresets] = useState<ThemePreset[]>(THEME_PRESETS);
+  const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
+
+  // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      saveProjectsState(projects, activeProjectId);
+    }, 400); // 0.4초 후 저장 (저장 누락 방지를 위해 단축)
+    
+    const handleBeforeUnload = () => {
+      saveProjectsState(projects, activeProjectId);
+      savePresets(presets);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [projects, activeProjectId, presets]);
 
   const handleApplyPreset = (preset: ThemePreset) => {
-    updateProjectTheme(preset.theme);
-    showToast(`Applied preset: ${preset.name}`);
+    const currentTheme = currentProject.theme;
+    
+    // 1. Snapshot CURRENT colors before overwriting
+    const currentSnapshot = {
+      backgroundColor: currentTheme.backgroundColor,
+      surfaceColor: currentTheme.surfaceColor,
+      primaryColor: currentTheme.primaryColor,
+      titleColor: currentTheme.titleColor,
+      textColor: currentTheme.textColor,
+    };
+
+    const newModeStyles = {
+      ...(currentTheme.modeStyles || {}),
+      [currentTheme.mode]: currentSnapshot,
+    };
+
+    // 2. Prepare updates from preset
+    const { 
+      mode, 
+      backgroundColor, 
+      surfaceColor, 
+      primaryColor, 
+      titleColor, 
+      textColor, 
+      chartPalette,
+      cardShadow,
+      borderColor
+    } = preset.theme;
+
+    const updates: Partial<DashboardTheme> = {
+      name: preset.name,
+      mode,
+      modeStyles: newModeStyles,
+      backgroundColor,
+      surfaceColor,
+      primaryColor,
+      titleColor,
+      textColor,
+      chartPalette,
+      cardShadow,
+      borderColor
+    };
+
+    // 3. If target mode has a saved custom config, AND we are essentially 
+    // just switching to that mode via a default preset, we might want to restore it.
+    // However, if the user explicitly clicks a preset, they usually want that preset's colors.
+    // BUT! For the default "Light Mode" / "Dark Mode" presets, they act like mode switches.
+    const isDefaultModePreset = preset.name === "Light Mode" || preset.name === "Dark Mode" || preset.name === "Cyber Mode";
+    const targetSaved = (newModeStyles as any)[mode];
+    if (isDefaultModePreset && targetSaved && Object.keys(targetSaved).length > 0) {
+      Object.assign(updates, targetSaved);
+    }
+
+    updateProjectTheme(updates);
+    showToast(`Applied ${preset.name}`);
   };
 
   const handleSavePreset = (name: string) => {
@@ -1314,16 +1493,53 @@ const App: React.FC = () => {
       name,
       theme: { ...currentProject.theme, name },
     };
-    setPresets((prev) => [...prev, newPreset]);
+    setPresets((prev) => {
+      const next = [...prev, newPreset];
+      savePresets(next);
+      return next;
+    });
     showToast(`Saved new preset: ${name}`);
   };
 
-  const handleThemeChange = (newTheme: Partial<DashboardTheme>) => {
+  const handleThemeChange = useCallback((newTheme: Partial<DashboardTheme>) => {
     updateProjectTheme(newTheme);
-  };
+  }, [updateProjectTheme]);
 
   const handleModeSwitch = (mode: ThemeMode) => {
-    updateProjectTheme({ mode });
+    const currentTheme = currentProject.theme;
+    if (currentTheme.mode === mode) return;
+
+    // Current snapshot to save
+    const currentSnapshot = {
+      backgroundColor: currentTheme.backgroundColor,
+      surfaceColor: currentTheme.surfaceColor,
+      primaryColor: currentTheme.primaryColor,
+      titleColor: currentTheme.titleColor,
+      textColor: currentTheme.textColor,
+    };
+
+    const newModeStyles = {
+      ...(currentTheme.modeStyles || {}),
+      [currentTheme.mode]: currentSnapshot,
+    };
+
+    const updates: Partial<DashboardTheme> = { 
+      mode,
+      modeStyles: newModeStyles 
+    };
+
+    // If target mode already has a saved custom config, restore it
+    const targetSaved = (newModeStyles as any)[mode];
+    if (targetSaved && Object.keys(targetSaved).length > 0) {
+      Object.assign(updates, targetSaved);
+    } else {
+      // Otherwise, fallback to smart conversion
+      updates.backgroundColor = getSmartColorForMode(currentTheme.backgroundColor, mode, "bg");
+      updates.surfaceColor = getSmartColorForMode(currentTheme.surfaceColor, mode, "surface");
+      updates.titleColor = getSmartColorForMode(currentTheme.titleColor, mode, "text");
+    }
+
+    updateProjectTheme(updates);
   };
 
   const handleUpdateLayout = (updates: Partial<LayoutConfig>) => {
@@ -1487,19 +1703,15 @@ const App: React.FC = () => {
     try {
       const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
       const projectToApply = { ...importedProject, id: activeProjectId };
-      setProjects((prev) =>
-        prev.map((p) => (p.id === activeProjectId ? projectToApply : p)),
-      );
+      const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
+      setProjects(nextProjects);
       setLayoutStore((prev) => {
         const next = { ...prev, [activeProjectId]: layoutPositions };
         layoutStoreRef.current = next;
         saveLayoutStore(next);
         return next;
       });
-      await saveProjectsState(
-        projects.map((p) => (p.id === activeProjectId ? projectToApply : p)),
-        activeProjectId,
-      );
+      await saveProjectsState(nextProjects, activeProjectId);
       showToast("불러오기 완료.");
     } catch (err) {
       console.error(err);
@@ -1590,9 +1802,13 @@ const App: React.FC = () => {
   return (
     <div
       ref={appRootRef}
-      className={`h-screen flex flex-col transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)] overflow-hidden ${isCyber ? "cyber" : ""}`}
+      className={`h-screen flex flex-col transition-colors duration-300 overflow-hidden ${
+        theme.mode === ThemeMode.LIGHT 
+          ? "bg-[#f1f5f9] text-[#1e293b]" 
+          : "bg-[#020617] text-[#f8fafc] dark"
+      }`}
     >
-      <DesignSystem theme={theme} targetRef={appRootRef} />
+      <DesignSystem theme={theme} targetRef={projectScopeRef} />
       {isCyber && <div className="cyber-hud-line" />}
 
       {/* 내보내기 중 로딩 바 (캡처 순간에는 숨겨서 스크린샷에 안 나오게) */}
@@ -1626,13 +1842,17 @@ const App: React.FC = () => {
 
       {!isPreviewMode && (
         <header
-          className={`z-50 px-6 py-3 flex items-center justify-between shrink-0 transition-all duration-500 ${isCyber ? "bg-black/40 border-b border-cyan-500/30" : "border-b backdrop-blur-md bg-[var(--surface)]/80 border-[var(--border-base)]"}`}
+          className={`z-50 px-6 py-3 flex items-center justify-between shrink-0 transition-all duration-500 border-b backdrop-blur-md ${
+            theme.mode === ThemeMode.LIGHT
+              ? "bg-white/80 border-gray-200"
+              : "bg-[#0f172a]/80 border-[#1e293b]"
+          }`}
         >
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <IsometricLogo
-                isCyber={isCyber}
-                isDark={theme.mode === ThemeMode.DARK}
+                isCyber={false}
+                isDark={true}
                 primaryColor={theme.primaryColor}
               />
               <div>
@@ -1927,33 +2147,27 @@ const App: React.FC = () => {
         </header>
       )}
 
-      {/* Main Workspace (Flex-Row for Left Sidebar / Content / Right Sidebar) — same structure for all projects */}
-      <div className="flex-1 flex overflow-hidden relative">
+      {/* Main Workspace — sidebars are OUTSIDE the project theme scope now */}
+      <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${
+        theme.mode === ThemeMode.LIGHT ? "bg-[#f1f5f9] text-[#1e293b]" : "bg-[#020617] text-[#f8fafc]"
+      }`}>
         {/* Unified Page Background (Image or Globe) — now placed here to cover both header and main content */}
-        {(() => {
-          const bgUrl = layout && (theme.mode === ThemeMode.LIGHT
-            ? (layout.backgroundImageLight ?? layout.backgroundImage)
-            : (layout.backgroundImageDark ?? layout.backgroundImage));
-
-          if (!layout?.backgroundGlobe && !bgUrl) return null;
-
-          return (
-            <div className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto" aria-hidden>
-              {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
-              {bgUrl && (
-                <div
-                  className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
-                  style={{
-                    backgroundImage: `url(${bgUrl})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                  }}
-                />
-              )}
-            </div>
-          );
-        })()}
+        {showUnifiedBg && (
+          <div className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto" aria-hidden>
+            {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
+            {pageBgUrl && (
+              <div
+                className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
+                style={{
+                  backgroundImage: `url(${pageBgUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            )}
+          </div>
+        )}
 
         {/* Left Side Header (if positioned LEFT) */}
         {header.show && header.position === HeaderPosition.LEFT && (
@@ -1997,8 +2211,15 @@ const App: React.FC = () => {
 
         {/* Central Area: Dashboard grid (ref for export preview capture) */}
         <div
-          ref={exportPreviewRef}
-          className={`flex-1 flex flex-col relative overflow-hidden bg-transparent ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
+          ref={(el) => {
+            // @ts-ignore
+            projectScopeRef.current = el;
+            // @ts-ignore
+            exportPreviewRef.current = el;
+          }}
+          className={`flex-1 flex flex-col relative overflow-hidden text-[var(--text-main)] transition-colors duration-300 ${
+            showUnifiedBg ? "bg-transparent" : "bg-[var(--background)]"
+          }`}
         >
             {/* Top Header (if positioned TOP) */}
             {header.show && header.position === HeaderPosition.TOP && (
@@ -2097,12 +2318,12 @@ const App: React.FC = () => {
         {/* 3. Floating Panel (Design or Settings) */}
         {showSidebar && (
           <div 
-            className={`fixed z-50 transition-[transform,opacity,shadow] duration-300 ${isDraggingPanel ? 'transition-none scale-[1.02] shadow-premium-lg' : ''}`}
+            className={`fixed z-50 transition-[transform,opacity,shadow] duration-200 ${isDraggingPanel ? 'transition-none pointer-events-none' : ''}`}
             style={{ 
               top: `${panelPos.y}px`, 
               right: `${panelPos.x}px`,
               width: '320px',
-              pointerEvents: 'none'
+              cursor: isDraggingPanel ? 'move' : 'default'
             }}
           >
             <div className="pointer-events-auto overflow-hidden rounded">
@@ -2134,6 +2355,12 @@ const App: React.FC = () => {
                   layout={layout}
                   onUpdateWidget={updateWidget}
                   onUpdateLayout={handleUpdateLayout}
+                  onBatchUpdateWidgets={(updates) => {
+                    updateCurrentPage({
+                      widgets: widgets.map((w) => ({ ...w, ...updates })),
+                    });
+                    showToast("모든 위젯에 설정이 적용되었습니다.");
+                  }}
                   onClose={() => setSelectedWidgetId(null)}
                   onDragStart={handleDragStart}
                   onSave={() => persistActiveProject()}
@@ -2144,7 +2371,13 @@ const App: React.FC = () => {
                   selectedWidget={null}
                   layout={layout}
                   onUpdateWidget={updateWidget}
-                   onUpdateLayout={handleUpdateLayout}
+                  onUpdateLayout={handleUpdateLayout}
+                  onBatchUpdateWidgets={(updates) => {
+                    updateCurrentPage({
+                      widgets: widgets.map((w) => ({ ...w, ...updates })),
+                    });
+                    showToast("모든 위젯에 설정이 적용되었습니다.");
+                  }}
                   onClose={() => setIsLayoutSidebarOpen(false)}
                   onDragStart={handleDragStart}
                   onSave={() => persistActiveProject()}
@@ -2171,7 +2404,7 @@ const App: React.FC = () => {
         onClose={() => setExcelWidgetId(null)}
         widget={widgets.find((w) => w.id === excelWidgetId) || null}
         onUpload={handleExcelUpload}
-        isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
+        isDark={true}
       />
 
       {/* Premium Toast Notification */}
@@ -2183,7 +2416,7 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteWidget}
         onCancel={() => setDeleteConfirmId(null)}
-        isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
+        isDark={true}
       />
       <ConfirmModal
         isOpen={deleteProjectId !== null}
@@ -2193,7 +2426,7 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteProject}
         onCancel={() => setDeleteProjectId(null)}
-        isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
+        isDark={true}
       />
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -2231,7 +2464,7 @@ const App: React.FC = () => {
         isOpen={isWidgetPickerOpen}
         onClose={() => setIsWidgetPickerOpen(false)}
         onSelect={addWidgetWithType}
-        isDark={theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER}
+        isDark={true}
       />
     </div>
   );
