@@ -67,10 +67,13 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
         const variant: GlassVariant | undefined = glass && isDark ? glass.dark : glass?.light;
         const blur = glass?.blur?.value ?? '12px';
-        const defBg = isDark ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)';
+        const defBgKey = isDark ? '--glass-default-bg-dark' : '--glass-default-bg-light';
+        const defBg = getComputedStyle(document.documentElement).getPropertyValue(defBgKey).trim() || (isDark ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)');
         const defOpacity = isDark ? 0.35 : 0.55;
-        const defBorder = isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)';
-        const defShadow = isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)';
+        const defBorderKey = isDark ? '--glass-default-border-dark' : '--glass-default-border-light';
+        const defBorder = getComputedStyle(document.documentElement).getPropertyValue(defBorderKey).trim() || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)');
+        const defShadowKey = isDark ? '--glass-default-shadow-dark' : '--glass-default-shadow-light';
+        const defShadow = getComputedStyle(document.documentElement).getPropertyValue(defShadowKey).trim() || (isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)');
         const tokenBg = variant && tokenValue(variant.background);
         const parsed = tokenBg ? parseRgba(tokenBg) : null;
         const glassRgb = parsed?.rgb ?? (isDark ? '15, 23, 42' : '255, 255, 255');
@@ -84,10 +87,8 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
 
         // Mode Classes (on the same element we're theming)
         root.classList.remove('dark', 'cyber', 'midnight-pro');
-        if (theme.mode === ThemeMode.DARK) {
+        if (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER) {
             root.classList.add('dark');
-        } else if (theme.mode === ThemeMode.CYBER) {
-            root.classList.add('dark', 'cyber');
         }
     }, [theme, targetRef]);
 

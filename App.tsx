@@ -22,6 +22,7 @@ import {
   Download,
   Upload,
 } from "lucide-react";
+import { getSemanticColorForMode } from "./design-tokens/themeFromTokens";
 import {
   INITIAL_PROJECT_LIST,
   MOCK_CHART_DATA,
@@ -105,17 +106,26 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
 
     // ── 스키마 마이그레이션: 저장된 데이터에 없는 새 필드를 기본값으로 채움 ──
     // 이렇게 하면 새 테마 필드 추가 시 저장된 데이터가 undefined로 남아 리셋되는 현상을 방지
-    const migratedProjects: Project[] = parsed.projects.map((p) => ({
-      ...p,
-      theme: { ...DEFAULT_THEME, ...p.theme },
-      pages: (p.pages || []).map((pg) => ({
+    const migratedProjects: Project[] = parsed.projects.map((p) => {
+      const mappedPages = (p.pages || []).map((pg) => ({
         ...pg,
-        // 레이아웃: DEFAULT_PAGE.layout를 base로 하고, 저장된 값을 덮어씀
         layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-        // 헤더: DEFAULT_HEADER를 base로 하고, 저장된 값을 덮어씀
         header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
-      })),
-    }));
+      }));
+      // 페이지가 하나도 없으면 기본 페이지 하나 생성 (빈 화면 방지)
+      const pages = mappedPages.length > 0
+        ? mappedPages
+        : [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
+      const activePageId = p.activePageId && pages.some((pg) => pg.id === p.activePageId)
+        ? p.activePageId
+        : pages[0].id;
+      return {
+        ...p,
+        theme: { ...DEFAULT_THEME, ...p.theme },
+        pages,
+        activePageId,
+      };
+    });
 
     return { projects: migratedProjects, activeProjectId: id };
   } catch {
@@ -337,10 +347,13 @@ const DashboardGrid: React.FC<{
   );
 
   const hasLayoutBackground = !!(layout?.backgroundGlobe || layout?.backgroundImage || layout?.backgroundImageLight || layout?.backgroundImageDark);
+  const gridAreaBg = hasLayoutBackground
+    ? (theme.mode === ThemeMode.LIGHT ? "var(--grid-area-overlay-light)" : "transparent")
+    : "var(--background)";
   return (
     <div
       className="h-full min-h-0"
-      style={{ padding: "var(--dashboard-padding)", background: hasLayoutBackground ? "transparent" : "var(--background)" }}
+      style={{ padding: "var(--dashboard-padding)", background: gridAreaBg }}
     >
       <div
         ref={gridContainerRef as React.RefObject<HTMLDivElement>}
@@ -354,8 +367,8 @@ const DashboardGrid: React.FC<{
             style={{
               borderRadius: "var(--border-radius)",
               width: "100%",
-              maxWidth: "800px",
-              minHeight: "320px",
+              maxWidth: "var(--empty-state-max-width)",
+              minHeight: "var(--empty-state-min-height)",
             }}
             className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
           >
@@ -384,8 +397,10 @@ const DashboardGrid: React.FC<{
             const rowH = rglRowHeight;
             const hPeriod = rowH + margin;
             const totalH = 3000;
-            const colAlpha = 0.05; // 5% 투명도
-            const rowAlpha = 0.05;
+            const gridFillVar = theme.mode === ThemeMode.LIGHT ? "--grid-guide-fill-light" : "--grid-guide-fill-dark";
+            const gridFill = typeof document !== "undefined"
+              ? getComputedStyle(document.documentElement).getPropertyValue(gridFillVar).trim() || "rgba(0,0,0,0.06)"
+              : "rgba(0,0,0,0.06)";
             const columns = Array.from({ length: cols }, (_, i) => ({
               x: i * (colWidth + margin),
               width: colWidth,
@@ -404,13 +419,13 @@ const DashboardGrid: React.FC<{
               columns
                 .map(
                   (c) =>
-                    `<rect x='${c.x}' y='0' width='${c.width}' height='${totalH}' fill='rgba(255,255,255,${colAlpha})'/>`,
+                    `<rect x='${c.x}' y='0' width='${c.width}' height='${totalH}' fill='${gridFill}'/>`,
                 )
                 .join(""),
               rows
                 .map(
                   (r) =>
-                    `<rect x='0' y='${r.y}' width='${gridWidth}' height='${r.height}' fill='rgba(255,255,255,${rowAlpha})'/>`,
+                    `<rect x='0' y='${r.y}' width='${gridWidth}' height='${r.height}' fill='${gridFill}'/>`,
                 )
                 .join(""),
               "</svg>",
@@ -481,7 +496,7 @@ const DashboardGrid: React.FC<{
                 return (
                   <div
                     key={widget.id}
-                    className={`h-full relative ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                    className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
                     style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
                   >
                     <WidgetCard
@@ -500,7 +515,7 @@ const DashboardGrid: React.FC<{
                     {isEditMode && isThisResizing && liveSize && (
                       <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
                         <div className="flex items-center justify-center gap-1.5">
-                          <span className="text-[10px] font-bold text-white/90 font-mono tracking-tighter leading-none">
+                          <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
                             {liveSize.w} × {liveSize.h}
                           </span>
                         </div>
@@ -564,7 +579,7 @@ const DashboardGrid: React.FC<{
                     return (
                       <div
                         key={widget.id}
-                        className={`h-full relative ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                        className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
                         style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
                       >
                       <WidgetCard
@@ -583,7 +598,7 @@ const DashboardGrid: React.FC<{
                       {isEditMode && isThisResizing && liveSize && (
                         <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
                           <div className="flex items-center justify-center gap-1.5">
-                            <span className="text-[10px] font-bold text-white/90 font-mono tracking-tighter leading-none">
+                            <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
                               {liveSize.w} × {liveSize.h}
                             </span>
                           </div>
@@ -610,7 +625,7 @@ const DashboardGrid: React.FC<{
                     border border-white/20 dark:border-white/10
                     rounded-full overflow-hidden transition-all duration-500
                     hover:scale-105 hover:px-8 active:scale-95
-                    shadow-[0_20px_50px_rgba(0,0,0,0.3)]
+                    shadow-[var(--shadow-header-bar)]
                     before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity
                   `}
                 >
@@ -629,13 +644,6 @@ const DashboardGrid: React.FC<{
                     Add Widget
                   </span>
 
-                  {/* Cyber Sparkle (if cyber mode) */}
-                  {theme.mode === ThemeMode.CYBER && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="absolute top-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
-                      <div className="absolute bottom-0 left-1/4 w-1/2 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
-                    </div>
-                  )}
                 </button>
 
                 {/* Subtle outer glow */}
@@ -644,7 +652,7 @@ const DashboardGrid: React.FC<{
               
               {/* Hint under the button */}
               <div className="mt-3 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm border border-white/5 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
-                <span className="text-[9px] text-white/70 uppercase tracking-widest font-bold">Pick analysis component</span>
+                <span className="text-white/70 uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)' }}>Pick analysis component</span>
               </div>
             </div>
           )}
@@ -656,12 +664,11 @@ const DashboardGrid: React.FC<{
 };
 
 const IsometricLogo: React.FC<{
-  isCyber?: boolean;
   isDark?: boolean;
   primaryColor?: string;
-}> = ({ isCyber, isDark, primaryColor = "#3b82f6" }) => {
-  const color = isCyber ? "#00e5ff" : primaryColor;
-  const isLight = !isCyber && !isDark;
+}> = ({ isDark, primaryColor }) => {
+  const color = primaryColor ?? (typeof document !== "undefined" ? getComputedStyle(document.documentElement).getPropertyValue("--primary-color").trim() : "");
+  const isLight = !isDark;
   const accentColor = isLight ? color : "white";
   return (
     <div className="relative w-10 h-10 group flex items-center justify-center">
@@ -676,9 +683,7 @@ const IsometricLogo: React.FC<{
             <stop offset="0%" stopColor={color} />
             <stop
               offset="100%"
-              stopColor={
-                isCyber ? "var(--primary-90)" : "var(--secondary-color)"
-              }
+              stopColor="var(--secondary-color)"
             />
           </linearGradient>
           <linearGradient id="panelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -718,7 +723,7 @@ const IsometricLogo: React.FC<{
         />
 
         {/* Vertical Panels */}
-        <g className={isCyber ? "animate-pulse" : ""}>
+        <g>
           {/* Back Panel */}
           <path
             d="M55 42 L55 12 L75 22 L75 52 Z"
@@ -766,65 +771,9 @@ const IsometricLogo: React.FC<{
           />
         </g>
       </svg>
-      {isCyber ? (
-        <div className="absolute inset-0 bg-[var(--cyber-bg-alpha)] blur-xl rounded-full scale-110 -z-10 animate-pulse" />
-      ) : (
-        <div className="absolute inset-0 bg-[var(--primary-subtle)] blur-xl rounded-full scale-110 -z-10" />
-      )}
+      <div className="absolute inset-0 bg-[var(--primary-subtle)] blur-xl rounded-full scale-110 -z-10" />
     </div>
   );
-};
-
-// --- Color Utilities for Smart Mode Shifting ---
-const hexToHsl = (hex: string): { h: number; s: number; l: number } => {
-  let r = 0,
-    g = 0,
-    b = 0;
-  if (hex.length === 4) {
-    r = parseInt(hex[1] + hex[1], 16) / 255;
-    g = parseInt(hex[2] + hex[2], 16) / 255;
-    b = parseInt(hex[3] + hex[3], 16) / 255;
-  } else if (hex.length === 7) {
-    r = parseInt(hex.substring(1, 3), 16) / 255;
-    g = parseInt(hex.substring(3, 5), 16) / 255;
-    b = parseInt(hex.substring(5, 7), 16) / 255;
-  }
-  const max = Math.max(r, g, b),
-    min = Math.min(r, g, b);
-  let h = 0,
-    s = 0,
-    l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-  return { h: h * 360, s: s * 100, l: l * 100 };
-};
-
-const hslToHex = (h: number, s: number, l: number): string => {
-  s /= 100;
-  l /= 100;
-  const k = (n: number) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) =>
-    l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
-  const toHex = (x: number) =>
-    Math.round(x * 255)
-      .toString(16)
-      .padStart(2, "0");
-  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 };
 
 const getSmartColorForMode = (
@@ -832,17 +781,7 @@ const getSmartColorForMode = (
   mode: ThemeMode,
   type: "bg" | "surface" | "text",
 ): string => {
-  const { h, s, l } = hexToHsl(hex);
-  if (mode === ThemeMode.DARK || mode === ThemeMode.CYBER) {
-    const isCyber = mode === ThemeMode.CYBER;
-    if (type === "bg") return hslToHex(h, Math.min(s, isCyber ? 40 : 20), isCyber ? 2 : 5); 
-    if (type === "surface") return hslToHex(h, Math.min(s, isCyber ? 35 : 15), isCyber ? 6 : 12); 
-    return hslToHex(h, Math.min(s, 10), 90); 
-  } else {
-    if (type === "bg") return "#ffffff"; 
-    if (type === "surface") return "#ffffff"; 
-    return "#1e293b"; 
-  }
+  return getSemanticColorForMode(mode, type === "bg" ? "bg" : type === "surface" ? "surface" : "text");
 };
 
 /** Header-specific Widget Components */
@@ -865,8 +804,8 @@ const HeaderClock = () => {
     <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 text-[var(--text-main)] font-mono whitespace-nowrap overflow-hidden">
       <span className="text-lg font-bold tracking-tighter shrink-0">{h}:{m}</span>
       <div className="flex flex-col leading-none shrink-0">
-        <span className="text-[8px] font-bold opacity-70 uppercase">{day}</span>
-        <span className="text-[9px] font-black">{datePart?.replace(/\//g, "-")}</span>
+        <span className="font-bold opacity-70 uppercase" style={{ fontSize: 'var(--text-nano)' }}>{day}</span>
+        <span className="font-black" style={{ fontSize: 'var(--text-micro)' }}>{datePart?.replace(/\//g, "-")}</span>
       </div>
     </div>
   );
@@ -874,8 +813,8 @@ const HeaderClock = () => {
 
 const HeaderMonitor = () => (
   <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 bg-white dark:bg-[var(--surface-elevated)] border border-[var(--border-base)] dark:border-white/5 shadow-sm rounded-full text-[var(--text-main)] whitespace-nowrap overflow-hidden">
-    <span className="text-[10px] font-bold tracking-tight uppercase">시스템 감시</span>
-    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
+    <span className="font-bold tracking-tight uppercase" style={{ fontSize: 'var(--text-caption)' }}>시스템 감시</span>
+    <div className="w-2 h-2 rounded-full bg-[var(--error)] animate-pulse shadow-[var(--shadow-error-glow)] shrink-0" />
   </div>
 );
 
@@ -884,7 +823,7 @@ const HeaderImage = ({ url }: { url?: string }) => (
     {url ? (
       <img src={url} alt="Header Widget" className="max-w-full max-h-full object-contain" />
     ) : (
-      <div className="text-[10px] font-bold text-muted uppercase">No Image</div>
+      <div className="font-bold text-muted uppercase" style={{ fontSize: 'var(--text-caption)' }}>No Image</div>
     )}
   </div>
 );
@@ -894,7 +833,7 @@ const HeaderLogo = ({ url }: { url?: string }) => (
     {url ? (
       <img src={url} alt="Logo" className="max-w-full max-h-full object-contain" />
     ) : (
-      <div className="text-[10px] font-bold text-muted uppercase">No Logo</div>
+      <div className="font-bold text-muted uppercase" style={{ fontSize: 'var(--text-caption)' }}>No Logo</div>
     )}
   </div>
 );
@@ -928,7 +867,6 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   theme,
   onModeSwitch,
 }) => {
-  const isCyber = theme.mode === ThemeMode.CYBER;
   const widgets = header.widgets || [];
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -1045,7 +983,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
                   e.stopPropagation();
                   onUpdate({ widgets: widgets.filter(v => v.id !== w.id) });
                 }}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded flex items-center justify-center hover:bg-red-600 shadow-lg transition-colors z-30"
+                className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error)] text-white rounded flex items-center justify-center hover:opacity-90 shadow-lg transition-colors z-30"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -1067,8 +1005,8 @@ const App: React.FC = () => {
   const currentProject =
     projects.find((p) => p.id === activeProjectId) || projects[0];
   const currentPage =
-    currentProject.pages.find((p) => p.id === currentProject.activePageId) ||
-    currentProject.pages[0];
+    currentProject?.pages?.find((p) => p.id === currentProject.activePageId) ||
+    currentProject?.pages?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -1256,9 +1194,10 @@ const App: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Shortcuts to current state for components
-  const { theme } = currentProject;
-  const { widgets, layout, header: pageHeader } = currentPage;
+  // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
+  const { theme } = currentProject ?? { theme: DEFAULT_THEME };
+  const _page = currentPage ?? (currentProject?.pages?.[0]);
+  const { widgets = [], layout = DEFAULT_PAGE.layout, header: pageHeader } = _page ?? { widgets: [], layout: DEFAULT_PAGE.layout, header: DEFAULT_HEADER };
   const header = pageHeader || DEFAULT_HEADER;
 
   const pageBgUrl = layout && (theme.mode === ThemeMode.LIGHT 
@@ -1347,12 +1286,17 @@ const App: React.FC = () => {
       titleSize: (defaultData as any)?.titleSize,
       titleWeight: (defaultData as any)?.titleWeight,
       noBezel: false,
+      navItems: (defaultData as any)?.navItems ? JSON.parse(JSON.stringify((defaultData as any).navItems)) : undefined,
     };
+    if (type === WidgetType.VERTICAL_NAV_CARD) {
+      newWidget.colSpan = 3;
+      newWidget.rowSpan = 14;
+    }
 
     // Explicitly update RGL layout to place new widget at bottom
     applyLayoutUpdate((byProject) => {
       const cur = byProject[currentPage.id];
-      const newItem = { i: newId, x: 0, y: bottomY, w: 4, h: 10 } as LayoutItem;
+      const newItem = { i: newId, x: 0, y: bottomY, w: newWidget.colSpan, h: newWidget.rowSpan } as LayoutItem;
       if (layout.useResponsive) {
         const layouts = (cur && !Array.isArray(cur) ? cur : { lg: Array.isArray(cur) ? (cur as LayoutItem[]) : [] }) as Record<string, LayoutItem[]>;
         return { ...byProject, [currentPage.id]: { ...layouts, lg: [...(layouts.lg || []), newItem] } };
@@ -1695,6 +1639,25 @@ const App: React.FC = () => {
     setIsPreviewMode(true);
   };
 
+  /** ZIP에서 불러온 프로젝트: 페이지 없음/깨진 activePageId 보정 (흰 화면 방지) */
+  const normalizeImportedProject = (project: Project): Project => {
+    let pages = Array.isArray(project.pages) ? project.pages : [];
+    pages = pages.map((pg) => ({
+      ...DEFAULT_PAGE,
+      ...pg,
+      layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
+      header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
+    }));
+    if (pages.length === 0) {
+      pages = [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
+    }
+    const activePageId =
+      project.activePageId && pages.some((p) => p.id === project.activePageId)
+        ? project.activePageId
+        : pages[0].id;
+    return { ...project, theme: { ...DEFAULT_THEME, ...project.theme }, pages, activePageId };
+  };
+
   const handleImportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -1702,7 +1665,7 @@ const App: React.FC = () => {
     setIsProjectDropdownOpen(false);
     try {
       const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
-      const projectToApply = { ...importedProject, id: activeProjectId };
+      const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId });
       const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
       setProjects(nextProjects);
       setLayoutStore((prev) => {
@@ -1773,43 +1736,21 @@ const App: React.FC = () => {
     (isLayoutSidebarOpen || isDesignSidebarOpen || selectedWidgetId !== null);
 
   const libraryOptions = [
-    {
-      value: ChartLibrary.RECHARTS,
-      label: "Recharts",
-      icon: BarChart3,
-      color: "#3b82f6",
-    },
-    {
-      value: ChartLibrary.APEXCHARTS,
-      label: "ApexCharts",
-      icon: TrendingUp,
-      color: "#10b981",
-    },
-    {
-      value: ChartLibrary.AMCHARTS,
-      label: "amCharts",
-      icon: Activity,
-      color: "#8b5cf6",
-    },
-  ];
+    { value: ChartLibrary.RECHARTS, label: "Recharts", icon: BarChart3, colorVar: "--primary-color" },
+    { value: ChartLibrary.APEXCHARTS, label: "ApexCharts", icon: TrendingUp, colorVar: "--success" },
+    { value: ChartLibrary.AMCHARTS, label: "amCharts", icon: Activity, colorVar: "--purple-500" },
+  ] as const;
 
   const currentLibrary =
     libraryOptions.find((opt) => opt.value === theme.chartLibrary) ||
     libraryOptions[0];
 
-  const isCyber = theme.mode === ThemeMode.CYBER;
-
   return (
     <div
       ref={appRootRef}
-      className={`h-screen flex flex-col transition-colors duration-300 overflow-hidden ${
-        theme.mode === ThemeMode.LIGHT 
-          ? "bg-[#f1f5f9] text-[#1e293b]" 
-          : "bg-[#020617] text-[#f8fafc] dark"
-      }`}
+      className={`h-screen flex flex-col transition-colors duration-300 overflow-hidden bg-[var(--background)] text-[var(--text-main)] ${theme.mode !== ThemeMode.LIGHT ? "dark" : ""}`}
     >
       <DesignSystem theme={theme} targetRef={projectScopeRef} />
-      {isCyber && <div className="cyber-hud-line" />}
 
       {/* 내보내기 중 로딩 바 (캡처 순간에는 숨겨서 스크린샷에 안 나오게) */}
       {capturingForExport && !hideBarForCapture && (
@@ -1842,36 +1783,18 @@ const App: React.FC = () => {
 
       {!isPreviewMode && (
         <header
-          className={`z-50 px-6 py-3 flex items-center justify-between shrink-0 transition-all duration-500 border-b backdrop-blur-md ${
-            theme.mode === ThemeMode.LIGHT
-              ? "bg-white/80 border-gray-200"
-              : "bg-[#0f172a]/80 border-[#1e293b]"
-          }`}
+          className="z-50 px-6 py-3 flex items-center justify-between shrink-0 transition-all duration-500 border-b backdrop-blur-md bg-[var(--surface)]/80 border-[var(--border-base)]"
         >
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <IsometricLogo
-                isCyber={false}
-                isDark={true}
+                isDark={theme.mode !== ThemeMode.LIGHT}
                 primaryColor={theme.primaryColor}
               />
               <div>
-                <h1
-                  className={`font-bold leading-tight flex items-center ${isCyber ? "text-[var(--primary-color)] neon-glow uppercase tracking-widest italic" : "text-main"}`}
-                >
-                  {isCyber ? (
-                    <span>STN INFOTECH CORE</span>
-                  ) : (
-                    <>
-                      STN infotech{" "}
-                      <span className="badge-pro">PRO</span>
-                    </>
-                  )}
-                  {isCyber && (
-                    <span className="text-[8px] bg-[var(--secondary-color)] text-white px-1.5 py-0.5 ml-2 font-black rounded-sm animate-pulse">
-                      HUD v3.0
-                    </span>
-                  )}
+                <h1 className="font-bold leading-tight flex items-center text-main">
+                  Widget Dashboard{" "}
+                  <span className="badge-pro">PRO</span>
                 </h1>
                 <div className="relative">
                   <button
@@ -1880,13 +1803,11 @@ const App: React.FC = () => {
                     }
                     className="flex items-center gap-1.5 group"
                   >
-                    <span
-                      className={`text-[10px] uppercase font-bold transition-colors ${isCyber ? "text-cyan-400 group-hover:text-white" : "text-muted group-hover:text-primary"}`}
-                    >
+                    <span className="uppercase font-bold transition-colors text-muted group-hover:text-primary" style={{ fontSize: 'var(--text-caption)' }}>
                       {currentProject.name}
                     </span>
                     <ChevronDown
-                      className={`w-3 h-3 transition-transform ${isProjectDropdownOpen ? "rotate-180" : ""} ${isCyber ? "text-cyan-400" : "text-muted"}`}
+                      className={`w-3 h-3 transition-transform ${isProjectDropdownOpen ? "rotate-180" : ""} text-muted`}
                     />
                   </button>
 
@@ -1897,10 +1818,10 @@ const App: React.FC = () => {
                         onClick={() => setIsProjectDropdownOpen(false)}
                       />
                       <div
-                        className={`absolute top-full left-0 mt-2 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] ${isCyber ? "rounded-md" : "rounded"}`}
+                        className="absolute top-full left-0 mt-2 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] rounded"
                       >
                         <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
-                          <p className="text-[10px] uppercase font-bold text-muted tracking-widest">
+                          <p className="uppercase font-bold text-muted tracking-widest" style={{ fontSize: 'var(--text-caption)' }}>
                             Select Project
                           </p>
                         </div>
@@ -1940,7 +1861,7 @@ const App: React.FC = () => {
                                       <p className="font-bold text-xs uppercase tracking-tight truncate">
                                         {p.name}
                                       </p>
-                                      <p className="text-[8px] text-muted uppercase font-bold">
+                                      <p className="text-muted uppercase font-bold" style={{ fontSize: 'var(--text-nano)' }}>
                                         {p.pages.length} Pages
                                       </p>
                                     </div>
@@ -1970,7 +1891,7 @@ const App: React.FC = () => {
                                       e.stopPropagation();
                                       setDeleteProjectId(p.id);
                                     }}
-                                    className="p-1.5 rounded hover:bg-red-500/10 text-muted hover:text-red-500 shrink-0"
+                                    className="p-1.5 rounded hover:bg-[var(--action-danger-hover-bg)] text-muted hover:text-[var(--error)] shrink-0"
                                     title="프로젝트 삭제"
                                     disabled={projects.length <= 1}
                                   >
@@ -1985,19 +1906,19 @@ const App: React.FC = () => {
                           <button
                             onClick={handleExportClick}
                             disabled={capturingForExport}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-sm"} flex items-center justify-center gap-2`}
+                            className="btn-base btn-ghost w-full px-4 py-2.5 rounded-sm flex items-center justify-center gap-2"
                           >
                             <Upload className="w-4 h-4 shrink-0" />
-                            <span className="text-[10px] font-bold uppercase">
+                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
                               내보내기
                             </span>
                           </button>
                           <button
                             onClick={() => importInputRef.current?.click()}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 ${isCyber ? "rounded-md" : "rounded-sm"} flex items-center justify-center gap-2`}
+                            className="btn-base btn-ghost w-full px-4 py-2.5 rounded-sm flex items-center justify-center gap-2"
                           >
                             <Download className="w-4 h-4 shrink-0" />
-                            <span className="text-[10px] font-bold uppercase">
+                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
                               내려받기
                             </span>
                           </button>
@@ -2010,10 +1931,10 @@ const App: React.FC = () => {
                           />
                           <button
                             onClick={addProject}
-                            className={`btn-base btn-ghost w-full px-4 py-2.5 text-primary ${isCyber ? "rounded-md" : "rounded-sm"}`}
+                            className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm"
                           >
                             <Plus className="w-4 h-4" />{" "}
-                            <span className="text-[10px] font-bold uppercase">
+                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
                               New Project
                             </span>
                           </button>
@@ -2030,15 +1951,15 @@ const App: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
-                className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isLibraryDropdownOpen ? "active" : ""}`}
+                className={`btn-base btn-surface ${isLibraryDropdownOpen ? "active" : ""}`}
               >
                 <div
                   className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: `${currentLibrary.color}20` }}
+                  style={{ backgroundColor: `color-mix(in srgb, var(${currentLibrary.colorVar}) 12%, transparent)`, color: `var(${currentLibrary.colorVar})` }}
                 >
                   <currentLibrary.icon
                     className="w-3.5 h-3.5 underline-offset-2"
-                    style={{ color: currentLibrary.color }}
+                    style={{ color: `var(${currentLibrary.colorVar})` }}
                   />
                 </div>
                 <span>{currentLibrary.label}</span>
@@ -2054,14 +1975,14 @@ const App: React.FC = () => {
                     onClick={() => setIsLibraryDropdownOpen(false)}
                   />
                   <div
-                    className={`absolute top-full right-0 mt-2 w-52 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 ${isCyber ? "bg-black/90 border border-cyan-500/50 shadow-[0_0_30px_rgba(0,229,255,0.2)] rounded-md" : "bg-[var(--surface)] border border-[var(--border-base)] rounded shadow-premium"}`}
+                    className="absolute top-full right-0 mt-2 w-52 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] rounded shadow-premium"
                   >
                     <div className="px-3 py-2 mb-1">
                       <p
-                        className={`text-[10px] uppercase font-bold tracking-widest ${isCyber ? "text-cyan-400/60 glitch-text" : "text-muted"}`}
-                        data-text="SELECT_CORE_ENGINE"
+                        className="uppercase font-bold tracking-widest text-muted"
+                        style={{ fontSize: 'var(--text-caption)' }}
                       >
-                        {isCyber ? "SELECT_CORE_ENGINE" : "Select Engine"}
+                        Select Engine
                       </p>
                     </div>
                     {libraryOptions.map((opt) => (
@@ -2074,34 +1995,25 @@ const App: React.FC = () => {
                           });
                           setIsLibraryDropdownOpen(false);
                         }}
-                        className={`w-full justify-between px-3 py-2.5 flex items-center transition-all ${isCyber
-                          ? `hover:bg-cyan-500/10 ${theme.chartLibrary === opt.value ? "bg-cyan-500/20 text-cyan-400" : "text-cyan-600"}`
-                          : `btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`
-                          }`}
+                        className={`w-full justify-between px-3 py-2.5 flex items-center transition-all btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${isCyber ? "bg-cyan-900/40 border border-cyan-500/30" : ""}`}
-                            style={
-                              !isCyber
-                                ? { backgroundColor: `${opt.color}15` }
-                                : {}
-                            }
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                            style={{ backgroundColor: `color-mix(in srgb, var(${opt.colorVar}) 12%, transparent)` }}
                           >
                             <opt.icon
                               className="w-4 h-4"
-                              style={{ color: isCyber ? "#00e5ff" : opt.color }}
+                              style={{ color: `var(${opt.colorVar})` }}
                             />
                           </div>
-                          <span
-                            className={`font-bold text-xs uppercase tracking-tight ${isCyber ? "italic" : ""}`}
-                          >
+                          <span className="font-bold text-xs uppercase tracking-tight">
                             {opt.label}
                           </span>
                         </div>
                         {theme.chartLibrary === opt.value && (
                           <CheckCircle2
-                            className={`w-4 h-4 ${isCyber ? "text-cyan-400" : "text-primary"}`}
+                            className="w-4 h-4 text-primary"
                           />
                         )}
                       </button>
@@ -2115,7 +2027,7 @@ const App: React.FC = () => {
 
             <button
               onClick={handleToggleDesignSidebar}
-              className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isDesignSidebarOpen ? "active" : ""}`}
+              className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
             >
               <Palette className="w-4 h-4" /> <span>Design</span>
             </button>
@@ -2125,13 +2037,13 @@ const App: React.FC = () => {
                 setSelectedWidgetId(null);
                 setIsDesignSidebarOpen(false);
               }}
-              className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isLayoutSidebarOpen ? "active" : ""}`}
+              className={`btn-base btn-surface ${isLayoutSidebarOpen ? "active" : ""}`}
             >
               <LayoutGrid className="w-4 h-4" /> <span>Layout</span>
             </button>
             <button
               onClick={handleProjectSave}
-              className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isEditMode ? "active" : ""}`}
+              className={`btn-base btn-surface ${isEditMode ? "active" : ""}`}
             >
               <Edit3 className="w-4 h-4" />{" "}
               <span>Edit Project</span>
@@ -2139,7 +2051,7 @@ const App: React.FC = () => {
             <button
               disabled={isEditMode}
               onClick={() => setIsPreviewMode(true)}
-              className={`btn-base ${isCyber ? "btn-premium" : "btn-surface"} ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+              className={`btn-base btn-surface ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
             >
               <Eye className="w-4 h-4" /> <span>Preview</span>
             </button>
@@ -2148,12 +2060,20 @@ const App: React.FC = () => {
       )}
 
       {/* Main Workspace — sidebars are OUTSIDE the project theme scope now */}
-      <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${
-        theme.mode === ThemeMode.LIGHT ? "bg-[#f1f5f9] text-[#1e293b]" : "bg-[#020617] text-[#f8fafc]"
-      }`}>
+      <div className="flex-1 flex overflow-hidden relative transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)]">
         {/* Unified Page Background (Image or Globe) — now placed here to cover both header and main content */}
         {showUnifiedBg && (
-          <div className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto" aria-hidden>
+          <div
+            className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto"
+            aria-hidden
+            onWheel={layout?.backgroundGlobe ? (e) => {
+              const main = mainAreaRef.current;
+              if (main) {
+                main.scrollTop += e.deltaY;
+                e.preventDefault();
+              }
+            } : undefined}
+          >
             {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
             {pageBgUrl && (
               <div
@@ -2209,7 +2129,7 @@ const App: React.FC = () => {
           </aside>
         )}
 
-        {/* Central Area: Dashboard grid (ref for export preview capture) */}
+        {/* Central Area: Dashboard grid (ref for export preview capture). 지구 배경 시 pointer-events-none으로 빈 공간 클릭이 지구로 전달되게 함 */}
         <div
           ref={(el) => {
             // @ts-ignore
@@ -2219,7 +2139,7 @@ const App: React.FC = () => {
           }}
           className={`flex-1 flex flex-col relative overflow-hidden text-[var(--text-main)] transition-colors duration-300 ${
             showUnifiedBg ? "bg-transparent" : "bg-[var(--background)]"
-          }`}
+          } ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
         >
             {/* Top Header (if positioned TOP) */}
             {header.show && header.position === HeaderPosition.TOP && (
@@ -2281,7 +2201,7 @@ const App: React.FC = () => {
             {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
             <main
               ref={mainAreaRef}
-              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active" : ""}`}
+              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
               style={layout?.glassmorphism ? (() => {
                 const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
                 const alpha = Math.pow(p, 0.72);
@@ -2293,7 +2213,7 @@ const App: React.FC = () => {
                 };
               })() : undefined}
             >
-              <div className="relative z-10 h-full min-h-0">
+              <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
                 <DashboardGrid
                   layout={layout}
                   theme={theme}
@@ -2322,7 +2242,7 @@ const App: React.FC = () => {
             style={{ 
               top: `${panelPos.y}px`, 
               right: `${panelPos.x}px`,
-              width: '320px',
+              width: 'var(--panel-min-width)',
               cursor: isDraggingPanel ? 'move' : 'default'
             }}
           >
@@ -2355,6 +2275,7 @@ const App: React.FC = () => {
                   layout={layout}
                   onUpdateWidget={updateWidget}
                   onUpdateLayout={handleUpdateLayout}
+                  onUpdateTheme={handleThemeChange}
                   onBatchUpdateWidgets={(updates) => {
                     updateCurrentPage({
                       widgets: widgets.map((w) => ({ ...w, ...updates })),
@@ -2372,6 +2293,7 @@ const App: React.FC = () => {
                   layout={layout}
                   onUpdateWidget={updateWidget}
                   onUpdateLayout={handleUpdateLayout}
+                  onUpdateTheme={handleThemeChange}
                   onBatchUpdateWidgets={(updates) => {
                     updateCurrentPage({
                       widgets: widgets.map((w) => ({ ...w, ...updates })),
@@ -2430,9 +2352,10 @@ const App: React.FC = () => {
       />
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded min-w-[320px]">
+          <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded min-w-[var(--panel-min-width)]">
             <div
-              className={`w-10 h-10 rounded-sm flex items-center justify-center ${toast.type === "success" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}
+              className="w-10 h-10 rounded-sm flex items-center justify-center"
+              style={toast.type === "success" ? { backgroundColor: 'color-mix(in srgb, var(--success) 10%, transparent)', color: 'var(--success)' } : { backgroundColor: 'var(--action-danger-hover-bg)', color: 'var(--error)' }}
             >
               {toast.type === "success" ? (
                 <CheckCircle2 className="w-5 h-5" />
@@ -2441,7 +2364,7 @@ const App: React.FC = () => {
               )}
             </div>
             <div className="flex-1">
-              <p className="text-[10px] uppercase font-bold text-muted tracking-widest mb-0.5">
+              <p className="uppercase font-bold text-muted tracking-widest mb-0.5" style={{ fontSize: 'var(--text-caption)' }}>
                 System Notification
               </p>
               <p className="text-sm font-bold text-main">{toast.message}</p>

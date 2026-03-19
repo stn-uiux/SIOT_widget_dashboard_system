@@ -5,10 +5,9 @@ import {
     CheckCircle2, XCircle, AlertTriangle, Info,
     Search, ChevronDown, MousePointer2, Layout,
     ArrowLeft, Sun, Moon, Settings, FileSpreadsheet,
-    GripVertical, List, Edit3, Plus, Download
+    GripVertical, List, Edit3, Plus
 } from 'lucide-react';
 import './DesignDocs.css';
-import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 import { ThemeMode } from '../types';
@@ -55,15 +54,6 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => downloadFigmaVariablesJson('design-tokens-figma.json')}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border-base)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-semibold hover:bg-[var(--border-muted)] transition-colors"
-                        title="Figma 변수(Variables)로 쓸 수 있는 JSON 다운로드"
-                    >
-                        <Download className="w-4 h-4" />
-                        Figma 변수로 내보내기
-                    </button>
                     <div className="text-[10px] bg-primary text-white px-2 py-1 rounded font-black">v1.2.8</div>
                 </div>
             </header>
@@ -295,7 +285,7 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
 
                                 <div className="docs-section">
                                     <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest">Navigation Tabs</h3>
-                                    <div className="preview-box p-md rounded-xl cyber" style={{ backgroundColor: 'var(--background)' }}>
+                                    <div className="preview-box p-md rounded-xl" style={{ backgroundColor: 'var(--background)' }}>
                                         <div className="flex gap-4">
                                             <button className="nav-tab-clean active">ACTIVE TAB</button>
                                             <button className="nav-tab-clean">INACTIVE TAB</button>

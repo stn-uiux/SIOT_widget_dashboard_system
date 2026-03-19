@@ -1,0 +1,29 @@
+---
+description: Design system governance - tokens only, no hardcoding (hex/px/rem). Mandatory for UI.
+alwaysApply: true
+---
+
+# CRITICAL: STOP AND ASK
+- BEFORE generating any UI code, analyze if the required tokens exist.
+- IF tokens are missing or you are tempted to use Tailwind's arbitrary values (e.g., p-4, bg-white/90, bg-[#fff]), you MUST stop and ask for a token mapping first.
+- **NEW COMPONENT REVIEW**: For Checkboxes, Radio buttons, or new Input types, you MUST propose the style and tokens before implementation for cross-review.
+
+## Single source of truth
+- **Zero tolerance for hard-coding**: never use raw values (hex, px, rem) for colors, spacing, or typography.
+- **Token mandatory**: if a token is missing, you MUST ask to create one. Do not fallback to hard-coded values.
+- **Primary authority**: design-tokens.json and CSS variables in index.css are the absolute source of truth.
+
+## Change management process (strict order)
+1. **Propose**: If existing tokens don't fit, propose a new token name and value first.
+2. **Document**: Update design-tokens.json and designdocs.tsx after approval.
+3. **Implement**: Only then, apply the tokens to the component code.
+- **Error correction**: If you find legacy hard-coded values, refactor them to tokens immediately.
+
+## Implementation standard
+- All generated UI must match the spacing and shadow patterns in designdocs.tsx.
+- Always use existing components from designsystem.tsx instead of building from scratch with raw HTML.
+
+## Forbidden (use tokens or variables instead)
+- Hex colors: `#3b82f6`, `#0f172a` → use `var(--primary-color)`, `var(--surface)` etc.
+- Arbitrary Tailwind: `bg-[#f1f5f9]`, `text-[10px]` → use token-based classes or CSS variables.
+- Raw rgba/px in style: `rgba(0,0,0,0.08)`, `fontSize: '10px'` → add token and use it.

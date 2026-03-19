@@ -40,10 +40,23 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
 
   useEffect(() => {
     if (!svgRef.current || !worldData) return;
+    const getVar = (name: string) =>
+      typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() : '';
 
     const { width, height } = dimensions;
     const baseRadius = Math.min(width, height) / 2.2;
     const currentRadius = baseRadius * zoom;
+    const l = isLight ? 'light' : 'dark';
+
+    const globeGlowFill = getVar(`--globe-glow-fill-${l}`);
+    const globeRingStroke = getVar(`--globe-ring-stroke-${l}`);
+    const globeBlurOuter = getVar('--globe-blur-outer') || '80px';
+    const globeBlurInner = getVar('--globe-blur-inner') || '4px';
+    const globeSphereFill = getVar(`--globe-sphere-fill-${l}`);
+    const globeSphereStroke = getVar(`--globe-sphere-stroke-${l}`);
+    const globeGraticuleStroke = getVar(`--globe-graticule-stroke-${l}`);
+    const globeLandFill = getVar(`--globe-land-fill-${l}`);
+    const globeLandStroke = getVar(`--globe-land-stroke-${l}`);
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -63,8 +76,8 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.35)
-      .attr('fill', isLight ? '#bae6fd' : '#0ea5e9')
-      .style('filter', `blur(${80}px)`)
+      .attr('fill', globeGlowFill)
+      .style('filter', `blur(${globeBlurOuter})`)
       .style('opacity', isLight ? 0.3 : 0.12);
 
     mainGroup
@@ -73,17 +86,17 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.08)
       .attr('fill', 'none')
-      .attr('stroke', isLight ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.35)')
+      .attr('stroke', globeRingStroke)
       .attr('stroke-width', 2)
-      .style('filter', 'blur(4px)');
+      .style('filter', `blur(${globeBlurInner})`);
 
     mainGroup
       .append('circle')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 0.98)
-      .attr('fill', isLight ? '#ffffff' : '#020617')
-      .attr('stroke', isLight ? '#e2e8f0' : '#0f172a');
+      .attr('fill', globeSphereFill)
+      .attr('stroke', globeSphereStroke);
 
     const graticule = d3.geoGraticule();
     mainGroup
@@ -91,15 +104,15 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .datum(graticule())
       .attr('d', path as unknown as string)
       .attr('fill', 'none')
-      .attr('stroke', isLight ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.14)')
+      .attr('stroke', globeGraticuleStroke)
       .attr('stroke-width', 0.5);
 
     mainGroup
       .append('path')
       .datum(worldData)
       .attr('d', path as unknown as string)
-      .attr('fill', isLight ? 'rgba(14, 165, 233, 0.1)' : 'rgba(14, 165, 233, 0.28)')
-      .attr('stroke', isLight ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.45)')
+      .attr('fill', globeLandFill)
+      .attr('stroke', globeLandStroke)
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
   }, [rotation, zoom, dimensions, worldData, isLight]);

@@ -5,7 +5,7 @@ import {
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
   Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
-  RotateCcw, GripVertical, CheckCircle2
+  RotateCcw, GripVertical, CheckCircle2, Minus
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
@@ -17,38 +17,38 @@ interface SidebarProps {
   layout: LayoutConfig;
   onUpdateWidget: (id: string, updates: Partial<Widget>) => void;
   onUpdateLayout: (updates: Partial<LayoutConfig>) => void;
+  onUpdateTheme?: (updates: Partial<DashboardTheme>) => void;
   onBatchUpdateWidgets?: (updates: Partial<Widget>) => void;
   onClose: () => void;
   onDragStart?: (e: React.MouseEvent) => void;
   onSave?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpdateWidget, onUpdateLayout, onBatchUpdateWidgets, onClose, onDragStart, onSave }) => {
+const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpdateWidget, onUpdateLayout, onUpdateTheme, onBatchUpdateWidgets, onClose, onDragStart, onSave }) => {
   const [activeDualTab, setActiveDualTab] = React.useState<0 | 1>(0);
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
-  const isCyber = theme.mode === ThemeMode.CYBER;
-
+  const isCyber = false; // Cyber styling removed
   if (!selectedWidget) return (
     <div className={`w-80 max-h-[85vh] flex flex-col p-6 space-y-8 overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
       theme.mode === ThemeMode.LIGHT 
         ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[#0f172a] border-[#1e293b] text-slate-50"
+        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
     }`}>
       <div className={`flex items-center justify-between mb-4 border-b cursor-default pb-4 ${
-        theme.mode === ThemeMode.LIGHT ? "border-gray-100" : "border-[#1e293b]/30"
+        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]/30"
       }`} onMouseDown={onDragStart}>
         <div className="flex items-center gap-2">
-          <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
-          <h2 className={`text-xl font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
-            {isCyber ? <span className="glitch-text" data-text="LAYOUT_CTRL">LAYOUT_CTRL</span> : 'Layout Settings'}
+          <GripVertical className="w-4 h-4 text-gray-300" />
+          <h2 className="text-xl font-bold tracking-tighter">
+            Layout Settings
           </h2>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="저장하기">
+          <button onClick={onSave} className="p-1 rounded transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
             <Check className="w-4 h-4" />
           </button>
-          <button onClick={onClose} className={`p-1 rounded-full transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+          <button onClick={onClose} className="p-1 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
           {/* Row Height Config */}
           <div className="space-y-1 pt-1">
-            <span className="text-[10px] uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
+            <span className="text-caption uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
               <MoveVertical className="w-3 h-3" /> Default Row Height (px)
             </span>
             <input
@@ -101,6 +101,24 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)]`}
             />
           </div>
+
+          {/* Widget Gaps */}
+          {onUpdateTheme && (
+            <div className="space-y-1 pt-1">
+              <span className="text-caption uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
+                Widget Gaps (px)
+              </span>
+              <input
+                type="number"
+                min={0}
+                max={40}
+                step={1}
+                value={theme.spacing ?? 16}
+                onChange={(e) => onUpdateTheme({ spacing: Math.max(0, Math.min(40, parseInt(e.target.value, 10) || 0)) })}
+                className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)]`}
+              />
+            </div>
+          )}
 
           {/* 그리드 사용 */}
           <div
@@ -126,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           {layout.useGrid !== false && (
             <div className={`p-4 mt-2 space-y-4 rounded-[1.25rem] border overflow-hidden relative group transition-all duration-300 ${
               isCyber 
-                ? 'bg-cyan-500/5 border-cyan-500/20 shadow-[inset_0_0_20px_rgba(6,182,212,0.05)]' 
+                ? 'bg-[var(--focus-cyan-bg)] border-[var(--focus-cyan-border)] shadow-[var(--focus-cyan-shadow)]' 
                 : 'bg-gradient-to-br from-[var(--primary-subtle)] to-[var(--surface-muted)] border-[var(--primary-color)]/10 shadow-sm'
             }`}>
               {/* Subtle accent line */}
@@ -137,9 +155,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <div className={`p-1.5 rounded-lg ${isCyber ? 'bg-cyan-500/20 text-cyan-400' : 'bg-[var(--primary-color)]/10 text-primary'}`}>
                     <Workflow className="w-3.5 h-3.5" />
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${isCyber ? 'text-cyan-400' : 'text-primary'}`}>Batch Size Sync</span>
+                  <span className={`text-caption font-black uppercase tracking-[0.15em] ${isCyber ? 'text-cyan-400' : 'text-primary'}`}>Batch Size Sync</span>
                 </div>
-                <div className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tight ${isCyber ? 'bg-cyan-500/10 text-cyan-400/70' : 'bg-gray-100 text-gray-500'}`}>
+                <div className={`px-1.5 py-0.5 rounded text-nano font-bold uppercase tracking-tight ${isCyber ? 'bg-cyan-500/10 text-cyan-400/70' : 'bg-gray-100 text-gray-500'}`}>
                   Grid Only
                 </div>
               </div>
@@ -147,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <div className="flex items-center gap-2 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
                 {/* Width Input Group */}
                 <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
-                  <span className="text-[8px] font-black text-muted uppercase tracking-widest pl-0.5">Width (Cols)</span>
+                  <span className="text-nano font-black text-muted uppercase tracking-widest pl-0.5">Width (Cols)</span>
                   <div className="flex items-center gap-1.5">
                     <LayoutGrid className="w-3 h-3 text-muted/60" />
                     <input
@@ -164,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
                 {/* Height Input Group */}
                 <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
-                  <span className="text-[8px] font-black text-muted uppercase tracking-widest pl-0.5">Height (Rows)</span>
+                  <span className="text-nano font-black text-muted uppercase tracking-widest pl-0.5">Height (Rows)</span>
                   <div className="flex items-center gap-1.5">
                     <Layers className="w-3 h-3 text-muted/60" />
                     <input
@@ -182,7 +200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 onClick={() => onBatchUpdateWidgets?.({ colSpan: batchW, rowSpan: batchH })}
                 className={`w-full group/btn relative overflow-hidden py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-lg ${
                   isCyber 
-                    ? 'bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest hover:shadow-[0_0_20px_rgba(6,182,212,0.6)]' 
+                    ? 'bg-cyan-500 text-black font-black uppercase text-caption tracking-widest hover:shadow-[var(--focus-cyan-glow)]' 
                     : 'bg-[var(--primary-color)] text-white text-xs font-bold hover:brightness-110 hover:shadow-[var(--primary-color)]/25'
                 }`}
               >
@@ -195,7 +213,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
               <div className="flex items-start gap-1.5 px-1 py-0.5">
                 <div className={`w-1 h-1 rounded-full mt-1.5 shrink-0 ${isCyber ? 'bg-cyan-500/60' : 'bg-primary/40'}`} />
-                <p className="text-[9px] text-muted font-medium leading-[1.3] italic">
+                <p className="text-micro text-muted font-medium leading-[1.3] italic">
                   현재 페이지의 모든 위젯 규격을 {batchW}×{batchH} 그리드 칸으로 정렬합니다.
                 </p>
               </div>
@@ -203,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           )}
 
           <div className={`space-y-1 pt-1 transition-opacity ${layout.useGrid !== false ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-            <p className="text-[10px] text-muted px-1">
+            <p className="text-caption text-muted px-1">
               그리드 OFF일 때 위젯 크기를 <strong>마우스 위치까지</strong> 자유롭게 늘렸다 줄였다 할 수 있습니다.
             </p>
           </div>
@@ -218,7 +236,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               onChange={(checked) => onUpdateLayout({ useResponsive: checked })}
             />
           </div>
-          <p className="text-[10px] text-muted px-1">LG(1200px) / MD(996px) / SM(768px) / XS(480px) 구간별로 컬럼·레이아웃 전환</p>
+          <p className="text-caption text-muted px-1">LG(1200px) / MD(996px) / SM(768px) / XS(480px) 구간별로 컬럼·레이아웃 전환</p>
 
           {/* 자유 배치 (Free Position) */}
           <div
@@ -454,10 +472,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
       theme.mode === ThemeMode.LIGHT 
         ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[#0f172a] border-[#1e293b] text-slate-50"
+        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
     }`}>
       <div className={`flex items-center justify-between p-6 border-b cursor-move pb-4 ${
-        theme.mode === ThemeMode.LIGHT ? "border-gray-100" : "border-[#1e293b]/30"
+        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]/30"
       }`} onMouseDown={onDragStart}>
         <div className="flex items-center gap-2">
           <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
@@ -466,7 +484,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </h2>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="저장하기">
+          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-[var(--success-button-bg)] text-emerald-400 shadow-[var(--success-button-glow)]' : 'bg-[var(--success)] text-white hover:opacity-90 shadow-lg'}`} title="저장하기">
             <Check className="w-4 h-4" />
           </button>
           <button onClick={onClose} className={`p-1 rounded-full transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
@@ -496,7 +514,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
-                <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
               </button>
             ))}
         </div>
@@ -523,7 +541,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
-                <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
               </button>
             ))}
         </div>
@@ -547,7 +565,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
-                <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
               </button>
             ))}
         </div>
@@ -562,7 +580,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-3">
               <div>
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
                 <input
                   type="number"
                   min={12}
@@ -573,7 +591,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 />
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Google Icon Name</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Google Icon Name</span>
                 <div className="relative group mt-1">
                   <input
                     type="text"
@@ -600,7 +618,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-3">
               <div>
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
                 <textarea
                   value={selectedWidget.mainValue ?? ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
@@ -611,7 +629,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
                   <input
                     type="number"
                     min={8}
@@ -622,7 +640,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
                   <select
                     value={selectedWidget.titleWeight ?? '400'}
                     onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
@@ -653,7 +671,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
               </div>
               <input
@@ -677,7 +695,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-3">
               <div>
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
                 <input
                   type="number"
                   min={12}
@@ -688,7 +706,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Comparison text</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Comparison text</span>
                 <input
                   type="text"
                   value={selectedWidget.comparisonText ?? ''}
@@ -699,7 +717,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               </div>
               <div className="flex items-center gap-3">
                 <div className="space-y-1 flex-1">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Trend %</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Trend %</span>
                   <input
                     type="number"
                     value={selectedWidget.trendPercent ?? 21}
@@ -708,7 +726,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
-                  <span className="text-[10px] uppercase font-bold text-gray-400">Direction</span>
+                  <span className="text-caption uppercase font-bold text-gray-400">Direction</span>
                   <Switch
                     checked={selectedWidget.trendUp !== false}
                     onChange={(checked) => updateCurrentWidget({ trendUp: checked })}
@@ -717,8 +735,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 </div>
               </div>
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1 block">Category bars</span>
-                {(selectedWidget.categoryItems ?? [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: '#f97316' }, { label: 'Marketing', value: 12 }]).map((item, idx) => (
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">Category bars</span>
+                {(selectedWidget.categoryItems ?? [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: 'var(--warning)' }, { label: 'Marketing', value: 12 }]).map((item, idx) => (
                   <div key={idx} className="flex gap-2 items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)]">
                     <input
                       type="text"
@@ -772,7 +790,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <PaletteIcon className="w-4 h-4" /> KPI Icon
             </label>
             <div className="space-y-2">
-              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Icon</span>
+              <span className="text-caption uppercase font-bold text-gray-400 ml-1">Icon</span>
               <select
                 value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
                 onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
@@ -788,6 +806,99 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
       }
 
       {
+        currentType === WidgetType.VERTICAL_NAV_CARD && (
+          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <Layers className="w-4 h-4" /> 세로 네비 카드
+            </label>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">카드 개수 (1~8)</span>
+                <div
+                  className="inline-flex items-center rounded-[9999px] border border-[var(--border-base)] overflow-hidden"
+                  style={{
+                    background: 'var(--surface-muted)',
+                    padding: 'var(--spacing-xs) var(--spacing-sm)',
+                    gap: 'var(--spacing-sm)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const items = selectedWidget.navItems ?? [];
+                      if (items.length <= 1) return;
+                      const next = items.slice(0, -1);
+                      const removedWasActive = items[items.length - 1]?.active;
+                      if (removedWasActive && next.length > 0 && !next.some((it) => it.active)) {
+                        next[0] = { ...next[0], active: true };
+                      }
+                      onUpdateWidget(selectedWidget.id, { navItems: next });
+                    }}
+                    disabled={((selectedWidget.navItems ?? []).length) <= 1}
+                    className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
+                    style={{
+                      width: 'var(--spacing-lg)',
+                      height: 'var(--spacing-lg)',
+                      color: 'var(--text-main)',
+                    }}
+                    title="카드 줄이기"
+                  >
+                    <Minus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
+                  </button>
+                  <span
+                    className="tabular-nums font-semibold min-w-[1.25rem] text-center"
+                    style={{ color: 'var(--text-main)', fontSize: 'var(--content-size)' }}
+                  >
+                    {(selectedWidget.navItems ?? []).length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const items = selectedWidget.navItems ?? [];
+                      if (items.length >= 8) return;
+                      onUpdateWidget(selectedWidget.id, {
+                        navItems: [...items, { id: `nav_${Date.now()}`, label: '새 메뉴', active: false }],
+                      });
+                    }}
+                    disabled={((selectedWidget.navItems ?? []).length) >= 8}
+                    className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
+                    style={{
+                      width: 'var(--spacing-lg)',
+                      height: 'var(--spacing-lg)',
+                      color: 'var(--text-main)',
+                    }}
+                    title="카드 추가 (최대 8개)"
+                  >
+                    <Plus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">메뉴 문구</span>
+                {((selectedWidget.navItems ?? []) as { id: string; label: string; active?: boolean }[]).map((item, idx) => (
+                  <div key={item.id} className="flex gap-2 items-center">
+                    <span className="text-xs text-[var(--text-muted)] w-6 tabular-nums">{idx + 1}.</span>
+                    <input
+                      type="text"
+                      value={item.label}
+                      onChange={(e) => {
+                        const next = (selectedWidget.navItems ?? []).map((it, j) =>
+                          j === idx ? { ...it, label: e.target.value } : it
+                        );
+                        onUpdateWidget(selectedWidget.id, { navItems: next });
+                      }}
+                      className="flex-1 min-w-0 p-2 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] text-sm outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+                      placeholder="메뉴 이름"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      }
+
+      {
         isImage && (
           <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -797,7 +908,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             <div className="space-y-4">
               {/* File Upload */}
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Upload Image</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Upload Image</span>
                 <div className="relative">
                   <input
                     type="file"
@@ -819,7 +930,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
               {/* URL Input */}
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
                 <input
                   type="text"
                   value={currentMainValue || ''}
@@ -831,7 +942,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
               {/* Caption */}
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
                 <input
                   type="text"
                   value={currentSubValue || ''}
@@ -853,7 +964,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400">Size (px)</span>
+                <span className="text-caption uppercase font-bold text-gray-400">Size (px)</span>
                 <span className="text-xs font-bold text-blue-500">{selectedWidget.iconSize || 48}px</span>
               </div>
               <input
@@ -878,7 +989,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Graph Width (%)</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Graph Width (%)</span>
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{currentConfig.barWidth ?? 60}%</span>
               </div>
               <input
@@ -890,7 +1001,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, barWidth: parseInt(e.target.value, 10) } })}
                 className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
               />
-              <p className="text-[9px] text-muted italic px-1 mt-1">* 수치를 낮추면 더 얇은 그래프가 됩니다.</p>
+              <p className="text-micro text-muted italic px-1 mt-1">* 수치를 낮추면 더 얇은 그래프가 됩니다.</p>
             </div>
           </section>
         )
@@ -904,7 +1015,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </label>
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Background opacity</span>
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Background opacity</span>
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
               </div>
               <input
@@ -973,7 +1084,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   title="Reset series colors to brand/theme"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold uppercase">Reset</span>
+                  <span className="text-caption font-bold uppercase">Reset</span>
                 </button>
                 <button
                   onClick={handleAddSeries}
@@ -1014,7 +1125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       />
                       <input
                         type="color"
-                        value={s.color?.startsWith('var') ? '#3b82f6' : s.color || '#3b82f6'}
+                        value={s.color?.startsWith('var') ? (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '') : s.color || (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '')}
                         onChange={(e) => handleUpdateSeries(s.key, { color: e.target.value })}
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
@@ -1028,7 +1139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         />
                         <input
                           type="color"
-                          value={s.endColor?.startsWith('var') ? '#3b82f6' : s.endColor || s.color || '#3b82f6'}
+                          value={s.endColor?.startsWith('var') ? (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '') : s.endColor || s.color || (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '')}
                           onChange={(e) => handleUpdateSeries(s.key, { endColor: e.target.value })}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                         />
@@ -1042,7 +1153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         if (val.startsWith('#')) handleUpdateSeries(s.key, { color: val });
                       }}
                       placeholder="#HEX"
-                      className="w-14 bg-transparent border-none p-0 text-[10px] font-medium uppercase text-muted outline-none focus:ring-0 ml-1"
+                      className="w-14 bg-transparent border-none p-0 text-caption font-medium uppercase text-muted outline-none focus:ring-0 ml-1"
                       title="Direct HEX input"
                     />
                   </div>
@@ -1074,7 +1185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         <div className="space-y-3">
           {!isSummary && (
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Header (Axis Label)</span>
+              <span className="text-caption uppercase font-bold text-gray-400 ml-1">Header (Axis Label)</span>
               <div className="relative group">
                 <input
                   type="text"
@@ -1089,7 +1200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           )}
 
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Unit</span>
+            <span className="text-caption uppercase font-bold text-gray-400 ml-1">Unit</span>
             <input
               type="text"
               value={currentConfig.unit || ''}
@@ -1103,7 +1214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             <>
               {isSummaryChart && (
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">큰 숫자 크기 (px)</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">큰 숫자 크기 (px)</span>
                   <input
                     type="number"
                     min={12}
@@ -1116,7 +1227,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               )}
               {!isImage && (
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Current Value</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Current Value</span>
                   <input
                     type="text"
                     value={currentMainValue || ''}
@@ -1127,7 +1238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               )}
               {!isImage && !isEarningTrend && (
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Description</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Description</span>
                   <input
                     type="text"
                     value={currentSubValue || ''}
@@ -1151,7 +1262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <div className="w-full flex items-center gap-2">
                       {/* Primary Label (Source for Sankey) */}
                       <div className="flex-1">
-                        <span className="text-[9px] uppercase font-bold text-gray-400 mb-0.5 block">
+                        <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
                           {isSankey ? 'Source' : (currentConfig.xAxisLabel || 'Label')}
                         </span>
                         <input
@@ -1168,7 +1279,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         <>
                           <span className="text-gray-400">→</span>
                           <div className="flex-1">
-                            <span className="text-[9px] uppercase font-bold text-gray-400 mb-0.5 block">
+                            <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
                               {isSankey ? 'Target' : 'Category'}
                             </span>
                             <input
@@ -1188,7 +1299,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   {/* Series Values */}
                   {(currentConfig.series || [{ key: 'value', label: 'Value' }]).map((s) => (
                     <div key={s.key} className="flex items-center justify-between gap-4">
-                      <span className="text-[9px] font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
+                      <span className="text-micro font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
                       <input
                         type="number"
                         value={item[s.key] ?? 0}
@@ -1211,7 +1322,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
+            <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
             <select
               value={selectedWidget.colSpan}
               onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })}
@@ -1221,7 +1332,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </select>
           </div>
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] ml-1">Height</span>
+            <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Height</span>
             <select
               value={selectedWidget.rowSpan}
               onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })}

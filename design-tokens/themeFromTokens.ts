@@ -35,6 +35,17 @@ function semanticForMode(tokens: Tokens['tokens'], mode: 'light' | 'dark'): Reco
   };
 }
 
+/** design-tokens semantic color by mode (for theme switching). Single source of truth. */
+export function getSemanticColorForMode(mode: ThemeMode, type: 'bg' | 'surface' | 'text'): string {
+  const t = (designTokens as Tokens).tokens;
+  const key = mode === ThemeMode.LIGHT ? 'light' : 'dark';
+  const semantic = (t.colors?.semantic as Record<string, Record<string, TokenObj>>)?.[key];
+  if (!semantic) return '';
+  if (type === 'bg') return getValue(semantic.background);
+  if (type === 'surface') return getValue(semantic.surface);
+  return getValue(semantic.text_main);
+}
+
 /**
  * design-tokens.json → DashboardTheme 변환
  * (앱 전용 필드: chartLibrary, mode, showPageTabs 등은 인자/기본값으로 채움)

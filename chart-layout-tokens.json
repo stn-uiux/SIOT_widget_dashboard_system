@@ -1,0 +1,64 @@
+{
+    "project": "STN infotech PRO Dashboard",
+    "version": "1.0.0",
+    "tokens": {
+        "charts": {
+            "bar": {
+                "mode": {
+                    "value": "grouped",
+                    "type": "string",
+                    "description": "grouped (side-by-side) or stacked"
+                },
+                "spacing": {
+                    "value": 12,
+                    "type": "dimension",
+                    "description": "Gap between bars in grouped mode"
+                },
+                "maxWidth": {
+                    "value": 40,
+                    "type": "dimension"
+                }
+            },
+            "line": {
+                "tension": {
+                    "value": 0.4,
+                    "type": "number",
+                    "description": "Bezier curve tension (0 to 1)"
+                },
+                "dotRadius": {
+                    "value": 4,
+                    "type": "dimension"
+                }
+            },
+            "common": {
+                "gridOpacity": {
+                    "value": 0.5,
+                    "type": "number"
+                },
+                "legendPadding": {
+                    "value": 5,
+                    "type": "dimension",
+                    "description": "Gap between chart (x-axis/labels) and legend. Used by Bar, Line, Area, Combo."
+                }
+            }
+        },
+        "widgets": {
+            "header": {
+                "height": {
+                    "value": "48px",
+                    "type": "dimension"
+                },
+                "paddingX": {
+                    "value": "var(--spacing)",
+                    "type": "dimension"
+                }
+            },
+            "content": {
+                "gap": {
+                    "value": "16px",
+                    "type": "dimension"
+                }
+            }
+        }
+    }
+}

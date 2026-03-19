@@ -40,6 +40,8 @@ export enum WidgetType {
   BLANK = "BLANK",
   /** 텍스트 전용 — 글자만 표시, 크기·굵기 설정 가능 */
   TEXT_BLOCK = "TEXT_BLOCK",
+  /** 세로형 네비게이션 카드 (프로젝트 요약/링크용) */
+  VERTICAL_NAV_CARD = "VERTICAL_NAV_CARD",
 }
 
 export enum ThemeMode {
@@ -108,6 +110,8 @@ export interface Widget {
   comparisonText?: string;
   /** Category items for EARNING_TREND: label + progress 0–100, optional color. */
   categoryItems?: { label: string; value: number; color?: string }[];
+  /** Navigation items for VERTICAL_NAV_CARD. */
+  navItems?: { id: string; label: string; active?: boolean }[];
   // Dual Chart Support
   isDual?: boolean;
   dualLayout?: "horizontal" | "vertical";
@@ -229,6 +233,8 @@ export interface DashboardTheme {
   showPageTabs?: boolean;
   /** 프로젝트별 커스텀 차트 팔레트(hex). 생키/파이 등에서 theme.primaryColor 대신 사용 */
   chartPalette?: string[];
+  /** 테마별 개별 설정(light/dark 개별값) 사용 여부 */
+  dualModeSupport?: boolean;
 }
 
 export interface ThemePreset {

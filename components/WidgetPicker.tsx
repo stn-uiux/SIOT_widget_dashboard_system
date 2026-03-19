@@ -125,7 +125,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                 {/* Footer */}
                 <div className="px-8 py-4 bg-black/5 dark:bg-white/5 border-t border-[var(--border-muted)] flex items-center justify-between shrink-0">
                     <p className="text-[10px] text-muted font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5" /> STN DESIGN SYSTEM OVERLAY
+                        <Layers className="w-3.5 h-3.5" /> SIOT DESIGN SYSTEM
                     </p>
                     <div className="flex gap-4">
                         <button onClick={onClose} className="px-6 py-2 rounded-xl text-sm font-bold text-muted hover:text-main transition-colors">Close</button>

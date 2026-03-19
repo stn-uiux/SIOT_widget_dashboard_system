@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Download, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
-import { downloadFigmaVariablesJson } from '../design-tokens/exportForFigma';
+import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, HeaderWidgetType, HeaderWidget } from '../types';
 import { BRAND_COLORS } from '../constants';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
+
+/** primary hex 기준 5~95 스케일 색 계산 (DesignSystem과 동일 공식) */
+function shadeColor(hex: string, percent: number): string {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!m) return hex;
+  let R = parseInt(m[1], 16);
+  let G = parseInt(m[2], 16);
+  let B = parseInt(m[3], 16);
+  R = Math.min(255, Math.max(0, Math.floor(R * (100 + percent) / 100)));
+  G = Math.min(255, Math.max(0, Math.floor(G * (100 + percent) / 100)));
+  B = Math.min(255, Math.max(0, Math.floor(B * (100 + percent) / 100)));
+  return '#' + [R, G, B].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 
 /** 배경 이미지: 화질 유지 위해 리사이즈만 하고 JPEG 품질 최대(0.98). 원본에 가깝게 저장 */
 const MAX_BG_DIMENSION = 3840;
@@ -78,61 +90,56 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
     setActiveTab('mode');
   };
 
-  const isCyber = theme.mode === ThemeMode.CYBER;
-
   const tabs = [
-    { id: 'mode', label: isCyber ? 'ARCHIVE' : 'Mode', icon: Sparkles },
-    { id: 'global', label: isCyber ? 'SYSTEM' : 'Global', icon: Palette },
-    { id: 'header', label: isCyber ? 'HUD CFG' : 'Header', icon: Heading },
-    { id: 'advanced', label: isCyber ? 'CORE' : 'Advanced', icon: Box },
+    { id: 'mode', label: 'Mode', icon: Sparkles },
+    { id: 'global', label: 'Global', icon: Palette },
+    { id: 'header', label: 'Header', icon: Heading },
+    { id: 'advanced', label: 'Advanced', icon: Box },
   ];
 
   return (
     <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
       theme.mode === ThemeMode.LIGHT 
         ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[#0f172a] border-[#1e293b] text-slate-50"
+        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
     }`}>
       <div className={`flex items-center justify-between p-6 border-b cursor-move ${
-        theme.mode === ThemeMode.LIGHT ? "border-gray-100" : "border-[#1e293b]"
+        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]"
       }`} onMouseDown={onDragStart}>
         <div className="flex items-center gap-2">
-          <GripVertical className={`w-4 h-4 ${isCyber ? 'text-cyan-500/50' : 'text-gray-300'}`} />
-          <Palette className={`w-5 h-5 ${isCyber ? 'text-cyan-400 animate-pulse' : 'text-primary'}`} />
-          <h2 className={`text-lg font-bold tracking-tighter ${isCyber ? 'text-cyan-400 italic' : ''}`}>
-            {isCyber ? <span className="glitch-text" data-text="DESIGN_ENGINE_v4">DESIGN_ENGINE_v4</span> : 'Design System'}
+          <GripVertical className="w-4 h-4 text-gray-300" />
+          <Palette className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-bold tracking-tighter">
+            Design System
           </h2>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={onOpenDocs}
-            className={`p-1.5 rounded transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-500/60 hover:text-cyan-400' : 'hover:bg-[var(--border-muted)] text-muted hover:text-primary'}`}
+            className="p-1.5 rounded transition-colors hover:bg-[var(--border-muted)] text-muted hover:text-primary"
             title="Open Documentation"
           >
             <BookOpen className="w-4 h-4" />
           </button>
-          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 ${isCyber ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg'}`} title="저장하기">
+          <button onClick={onSave} className="p-1 rounded transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
             <Check className="w-4 h-4" />
           </button>
-          <button onClick={onClose} className={`p-1 rounded-full opacity-60 transition-colors ${isCyber ? 'hover:bg-cyan-500/20 text-cyan-400' : 'btn-ghost'}`}>
+          <button onClick={onClose} className="p-1 rounded-full opacity-60 transition-colors btn-ghost">
             <X className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className={`flex shrink-0 ${isCyber ? 'bg-black border-b border-cyan-500/30 p-1 gap-1' : 'border-b border-[var(--border-base)] bg-gray-50/50 dark:bg-gray-900/50'}`}>
+      <div className="flex shrink-0 border-b border-[var(--border-base)] bg-gray-50/50 dark:bg-gray-900/50">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as TabType)}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${isCyber
-              ? `btn-surface ${activeTab === tab.id ? 'active' : ''}`
-              : `border-b-2 ${activeTab === tab.id ? 'border-primary text-primary bg-[var(--surface)]' : 'border-transparent text-muted hover:text-main'}`
-              }`}
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all border-b-2 ${activeTab === tab.id ? 'border-primary text-primary bg-[var(--surface)]' : 'border-transparent text-muted hover:text-main'}`}
           >
             <tab.icon className="w-4 h-4" />
-            <span className={`text-[9px] font-bold uppercase tracking-tighter ${isCyber ? 'italic' : ''}`}>{tab.label}</span>
+            <span className="text-micro font-bold uppercase tracking-tighter">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -161,7 +168,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm text-main truncate">{preset.name}</p>
-                        <p className="text-[10px] text-muted uppercase font-bold">{preset.theme.mode.toUpperCase()} • {preset.theme.borderRadius}px Radius</p>
+                        <p className="text-caption text-muted uppercase font-bold">{preset.theme.mode.toUpperCase()} • {preset.theme.borderRadius} Radius</p>
                       </div>
                       {theme.name === preset.name && <CheckCircle2 className="w-5 h-5 text-primary" />}
                     </div>
@@ -198,7 +205,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       const val = e.target.value;
                       if (val.startsWith('#')) updateTheme({ primaryColor: val });
                     }}
-                    className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                    className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                     placeholder="#HEX"
                   />
                 </div>
@@ -206,16 +213,20 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <Palette className="w-4 h-4 text-muted group-hover:text-primary transition-colors" />
                   <input
                     type="color"
-                    value={theme.primaryColor.startsWith('#') ? theme.primaryColor : '#3b82f6'}
+                    value={theme.primaryColor.startsWith('#') ? theme.primaryColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '')}
                     onChange={(e) => updateTheme({ primaryColor: e.target.value })}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
               </div>
               <div className="flex gap-1 h-3 rounded-full overflow-hidden opacity-80 mt-3">
-                {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95].map(step => (
-                  <div key={step} className="flex-1" style={{ backgroundColor: `var(--primary-${step})` }} />
-                ))}
+                {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95].map(step => {
+                  const baseHex = theme.primaryColor.startsWith('#') && theme.primaryColor.length >= 7
+                    ? theme.primaryColor.slice(0, 7)
+                    : '#6366f1';
+                  const shadeHex = shadeColor(baseHex, (step - 50) * -1.5);
+                  return <div key={step} className="flex-1" style={{ backgroundColor: shadeHex }} />;
+                })}
               </div>
             </section>
 
@@ -224,7 +235,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Border Radius</span>
+                    <span className="text-caption uppercase font-bold text-muted">Border Radius</span>
                     <span className="text-xs font-mono text-primary font-bold">{theme.borderRadius}px</span>
                   </div>
                   <input
@@ -236,7 +247,19 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Chart Elements Radius</span>
+                    <span className="text-caption uppercase font-bold text-muted">Widget Border Width</span>
+                    <span className="text-xs font-mono text-primary font-bold">{theme.borderWidth ?? 1}px</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="8" step="1"
+                    value={theme.borderWidth ?? 1}
+                    onChange={(e) => updateTheme({ borderWidth: parseInt(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-caption uppercase font-bold text-muted">Chart Elements Radius</span>
                     <span className="text-xs font-mono text-primary font-bold">{theme.chartRadius}px</span>
                   </div>
                   <input
@@ -248,7 +271,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Widget Spacing</span>
+                    <span className="text-caption uppercase font-bold text-muted">Widget Spacing</span>
                     <span className="text-xs font-mono text-primary font-bold">{theme.spacing}px</span>
                   </div>
                   <input
@@ -260,7 +283,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Dashboard Padding</span>
+                    <span className="text-caption uppercase font-bold text-muted">Dashboard Padding</span>
                     <span className="text-xs font-mono text-primary font-bold">{theme.dashboardPadding}px</span>
                   </div>
                   <input
@@ -271,6 +294,34 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   />
                 </div>
                 </div>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+              <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Typography Scale</h3>
+              <div className="space-y-4">
+                {[
+                  { label: 'Title Size', key: 'titleSize', min: 12, max: 32 },
+                  { label: 'Content (Base)', key: 'contentSize', min: 8, max: 24 },
+                  { label: 'Tiny Scale', key: 'textTiny', min: 6, max: 16 },
+                  { label: 'Small Scale', key: 'textSmall', min: 8, max: 20 },
+                  { label: 'Medium Scale', key: 'textMd', min: 12, max: 32 },
+                  { label: 'Large Scale', key: 'textLg', min: 20, max: 60 },
+                  { label: 'Hero Scale', key: 'textHero', min: 0, max: 100 },
+                ].map((item) => (
+                  <div key={item.key} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-caption uppercase font-bold text-muted">{item.label}</span>
+                      <span className="text-xs font-mono text-primary font-bold">{(theme as any)[item.key]}px</span>
+                    </div>
+                    <input
+                      type="range" min={item.min} max={item.max} step="1"
+                      value={(theme as any)[item.key]}
+                      onChange={(e) => updateTheme({ [item.key]: parseInt(e.target.value) })}
+                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                    />
+                  </div>
+                ))}
+              </div>
             </section>
           </div>
         )}
@@ -290,7 +341,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 <div className="space-y-6 pt-4 border-t border-[var(--border-base)] animate-in slide-in-from-top-2 duration-200">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Position</span>
+                      <span className="text-caption uppercase font-bold text-muted">Position</span>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => updateHeader({ position: HeaderPosition.TOP })}
@@ -309,7 +360,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase font-bold text-gray-400">
+                        <span className="text-caption uppercase font-bold text-muted">
                           {header.position === HeaderPosition.TOP ? 'Height' : 'Width'}
                         </span>
                         <span className="text-xs font-mono text-primary font-bold">
@@ -327,9 +378,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Appearance</span>
+                      <span className="text-caption uppercase font-bold text-muted">Appearance</span>
                       <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
-                        <span className="text-[10px] font-bold text-muted uppercase">
+                        <span className="text-caption font-bold text-muted uppercase">
                           Show {header.position === HeaderPosition.TOP ? 'Bottom' : 'Right'} Line
                         </span>
                         <Switch
@@ -340,7 +391,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Title Content</span>
+                      <span className="text-caption uppercase font-bold text-muted">Title Content</span>
                       <input
                         type="text"
                         value={header.title}
@@ -349,7 +400,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       />
                     </div>
                     <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Alignment</span>
+                      <span className="text-caption uppercase font-bold text-muted">Alignment</span>
                       <div className="flex bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-[var(--border-base)]">
                         {[TextAlignment.LEFT, TextAlignment.CENTER, TextAlignment.RIGHT].map((align) => (
                           <button
@@ -368,9 +419,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
                   <div className="space-y-2 pt-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">Background Color</span>
+                      <span className="text-caption uppercase font-bold text-muted">Background Color</span>
                       <label className="flex items-center gap-2 cursor-pointer group">
-                        <span className="text-[9px] font-bold uppercase text-muted group-hover:text-primary transition-colors">Transparent</span>
+                        <span className="text-micro font-bold uppercase text-muted group-hover:text-primary transition-colors">Transparent</span>
                         <Switch
                           checked={header.backgroundColor === 'transparent'}
                           onChange={(checked) => updateHeader({ backgroundColor: checked ? 'transparent' : theme.backgroundColor })}
@@ -389,13 +440,13 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                               updateHeader({ backgroundColor: val });
                             }
                           }}
-                          className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                          className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                           title="HEX Color Code"
                         />
                       </div>
                       <input
                         type="color"
-                        value={header.backgroundColor !== 'transparent' && header.backgroundColor.startsWith('#') ? header.backgroundColor : '#ffffff'}
+                        value={header.backgroundColor !== 'transparent' && header.backgroundColor.startsWith('#') ? header.backgroundColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() : '')}
                         onChange={(e) => updateHeader({ backgroundColor: e.target.value })}
                         className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                       />
@@ -405,14 +456,14 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   {/* Header Background Image */}
                   <div className="space-y-2 pt-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1.5">
+                      <span className="text-caption uppercase font-bold text-muted flex items-center gap-1.5">
                         <Image className="w-3.5 h-3.5" /> Background Image
                       </span>
                       {header.backgroundImage && (
                         <button
                           type="button"
                           onClick={() => updateHeader({ backgroundImage: undefined })}
-                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[9px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-micro font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
                         >
                           리셋
                         </button>
@@ -426,7 +477,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
-                        <span className="absolute bottom-1 left-2 text-[8px] font-bold text-white/80 uppercase tracking-widest drop-shadow">Preview</span>
+                        <span className="absolute bottom-1 left-2 text-nano font-bold text-white/80 uppercase tracking-widest drop-shadow">Preview</span>
                       </div>
                     )}
                     <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
@@ -461,7 +512,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Text Color</span>
+                    <span className="text-caption uppercase font-bold text-muted">Text Color</span>
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColor }} />
@@ -474,7 +525,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                               updateHeader({ textColor: val });
                             }
                           }}
-                          className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                          className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                         />
                       </div>
                       <input
@@ -491,8 +542,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-bold uppercase text-main">Show Page Tabs</p>
-                          <p className="text-[9px] text-muted">Hide for single page dashboards</p>
+                          <p className="text-caption font-bold uppercase text-main">Show Page Tabs</p>
+                          <p className="text-micro text-muted">Hide for single page dashboards</p>
                         </div>
                         <Switch
                           checked={theme.showPageTabs !== false}
@@ -550,11 +601,11 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                           className="flex flex-col items-center gap-2 p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface)] hover:border-primary hover:bg-primary/5 transition-all cursor-grab active:cursor-grabbing group"
                         >
                           <item.icon className="w-5 h-5 text-muted group-hover:text-primary transition-colors" />
-                          <span className="text-[8px] font-bold uppercase text-muted group-hover:text-primary truncate w-full text-center">{item.label}</span>
+                          <span className="text-nano font-bold uppercase text-muted group-hover:text-primary truncate w-full text-center">{item.label}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="text-[9px] text-muted italic text-center">Drag or click to add to header</p>
+                    <p className="text-micro text-muted italic text-center">Drag or click to add to header</p>
                   </div>
                 </div>
               )}
@@ -566,7 +617,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
           <div className="space-y-8 animate-in fade-in duration-300">
             <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase text-primary tracking-widest leading-none mb-1">Design Mode</p>
+                <p className="text-caption font-bold uppercase text-primary tracking-widest leading-none mb-1">Design Mode</p>
                 <p className="text-xs font-bold text-main uppercase">{theme.mode} Mode Styles</p>
               </div>
               <div className="p-2 bg-[var(--surface)] shadow-sm rounded-xl border border-[var(--border-base)]">
@@ -590,12 +641,12 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                           const val = e.target.value;
                           if (val.startsWith('#')) updateTheme({ backgroundColor: val });
                         }}
-                        className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                       />
                     </div>
                     <input
                       type="color"
-                      value={theme.backgroundColor.startsWith('#') ? theme.backgroundColor : '#f8fafc'}
+                      value={theme.backgroundColor.startsWith('#') ? theme.backgroundColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim() : '')}
                       onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
                       className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                     />
@@ -611,12 +662,12 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         const val = e.target.value;
                         if (val.startsWith('#')) updateTheme({ surfaceColor: val });
                       }}
-                      className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                      className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                     />
                   </div>
                   <input
                     type="color"
-                    value={theme.surfaceColor.startsWith('#') ? theme.surfaceColor : '#ffffff'}
+                    value={theme.surfaceColor.startsWith('#') ? theme.surfaceColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() : '')}
                     onChange={(e) => updateTheme({ surfaceColor: e.target.value })}
                     className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                   />
@@ -631,12 +682,12 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         const val = e.target.value;
                         if (val.startsWith('#')) updateTheme({ titleColor: val });
                       }}
-                      className="w-20 bg-transparent border-none p-0 text-[10px] font-bold uppercase text-main outline-none focus:ring-0"
+                      className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
                     />
                   </div>
                   <input
                     type="color"
-                    value={theme.titleColor.startsWith('#') ? theme.titleColor : '#0f172a'}
+                    value={theme.titleColor.startsWith('#') ? theme.titleColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() : '')}
                     onChange={(e) => updateTheme({ titleColor: e.target.value })}
                     className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                   />
@@ -661,16 +712,16 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         backgroundFlicker: false,
                       },
                     })}
-                    className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                    className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-caption font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
                   >
                     리셋
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-muted uppercase tracking-tight">라이트/다크 모드별로 다른 배경을 넣으면 테마 전환 시 자연스럽게 바뀝니다. (미설정 시 공통 배경 사용)</p>
+              <p className="text-caption text-muted uppercase tracking-tight">라이트/다크 모드별로 다른 배경을 넣으면 테마 전환 시 자연스럽게 바뀝니다. (미설정 시 공통 배경 사용)</p>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
+                <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
                   <input
                     type="file"
@@ -701,7 +752,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> 다크 모드 배경</p>
+                <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> 다크 모드 배경</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
                   <input
                     type="file"
@@ -731,7 +782,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 />
               </div>
 
-              <p className="text-[10px] text-muted uppercase tracking-tight">공통 배경 (라이트/다크 미설정 시 사용)</p>
+              <p className="text-caption text-muted uppercase tracking-tight">공통 배경 (라이트/다크 미설정 시 사용)</p>
               <input
                 type="text"
                 placeholder="/assets/bg-project2.png 또는 URL"
@@ -742,7 +793,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
               {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundImageLight || currentPage.layout?.backgroundImageDark) && (
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-[10px] font-bold uppercase text-muted">Neon flicker</span>
+                  <span className="text-caption font-bold uppercase text-muted">Neon flicker</span>
                   <Switch
                     checked={currentPage.layout?.backgroundFlicker ?? false}
                     onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundFlicker: checked } })}
@@ -750,25 +801,25 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 </div>
               )}
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
-                <span className="text-[10px] font-bold uppercase text-muted">지구 배경 (Globe)</span>
+                <span className="text-caption font-bold uppercase text-muted">지구 배경 (Globe)</span>
                 <Switch
                   checked={currentPage.layout?.backgroundGlobe ?? false}
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundGlobe: checked } })}
                 />
               </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">대시보드 배경에 회전하는 지구 표시. 빈 곳 드래그하면 지구가 돌아갑니다 (project3 등)</p>
+              <p className="text-micro text-muted uppercase tracking-tight">대시보드 배경에 회전하는 지구 표시. 빈 곳 드래그하면 지구가 돌아갑니다 (project3 등)</p>
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
-                <span className="text-[10px] font-bold uppercase text-muted">Glassmorphism</span>
+                <span className="text-caption font-bold uppercase text-muted">Glassmorphism</span>
                 <Switch
                   checked={currentPage.layout?.glassmorphism ?? false}
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphism: checked } })}
                 />
               </div>
-              <p className="text-[9px] text-muted uppercase tracking-tight">위젯 카드를 반투명·블러·테두리 스타일로 (project2 등)</p>
+              <p className="text-micro text-muted uppercase tracking-tight">위젯 카드를 반투명·블러·테두리 스타일로 (project2 등)</p>
               {currentPage.layout?.glassmorphism && (
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase text-muted">글래스 투명도</span>
+                    <span className="text-caption font-bold uppercase text-muted">글래스 투명도</span>
                     <span className="text-xs font-mono text-[var(--primary-color)] font-bold">
                       {currentPage.layout?.glassmorphismOpacity ?? (theme.mode === ThemeMode.LIGHT ? 55 : 35)}%
                     </span>
@@ -781,86 +832,17 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphismOpacity: Number(e.target.value) } })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[var(--surface-muted)] accent-[var(--primary-color)]"
                   />
-                  <p className="text-[9px] text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
+                  <p className="text-micro text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
                 </div>
               )}
-              <p className="text-[9px] text-muted uppercase tracking-tight mt-2">해상도별 레이아웃·자유 배치는 <strong>Layout Settings</strong> 패널에서 설정할 수 있습니다.</p>
-            </section>
-
-            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
-              <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
-                <Layout className="w-3.5 h-3.5" /> Layout & Borders
-              </h3>
-              <div className="space-y-4">
-                {[
-                  { label: 'Widget Rounded', key: 'borderRadius', min: 0, max: 40 },
-                  { label: 'Widget Border', key: 'borderWidth', min: 0, max: 8 },
-                  { label: 'Widget Gaps', key: 'spacing', min: 0, max: 40 },
-                ].map((item) => (
-                  <div key={item.key} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">{item.label}</span>
-                      <span className="text-xs font-mono text-[var(--primary-color)] font-bold">{(theme as any)[item.key]}px</span>
-                    </div>
-                    <input
-                      type="range" min={item.min} max={item.max} step="1"
-                      value={(theme as any)[item.key]}
-                      onChange={(e) => updateTheme({ [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
-              <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
-                <Download className="w-3.5 h-3.5" /> Figma 연동
-              </h3>
-              <p className="text-[10px] text-muted uppercase tracking-tight">design-tokens를 Figma 변수(Variables)용 JSON으로 내보냅니다.</p>
-              <button
-                type="button"
-                onClick={() => downloadFigmaVariablesJson('design-tokens-figma.json')}
-                className="w-full py-2.5 px-4 rounded-xl border border-[var(--border-base)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold hover:bg-[var(--border-muted)] transition-colors flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Figma 변수로 내보내기
-              </button>
-            </section>
-
-            <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
-              <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Typography Scale</h3>
-              <div className="space-y-4">
-                {[
-                  { label: 'Title Size', key: 'titleSize', min: 12, max: 32 },
-                  { label: 'Content (Base)', key: 'contentSize', min: 8, max: 24 },
-                  { label: 'Tiny Scale', key: 'textTiny', min: 6, max: 16 },
-                  { label: 'Small Scale', key: 'textSmall', min: 8, max: 20 },
-                  { label: 'Medium Scale', key: 'textMd', min: 12, max: 32 },
-                  { label: 'Large Scale', key: 'textLg', min: 20, max: 60 },
-                  { label: 'Hero Scale', key: 'textHero', min: 0, max: 100 },
-                ].map((item) => (
-                  <div key={item.key} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">{item.label}</span>
-                      <span className="text-xs font-mono text-primary font-bold">{(theme as any)[item.key]}px</span>
-                    </div>
-                    <input
-                      type="range" min={item.min} max={item.max} step="1"
-                      value={(theme as any)[item.key]}
-                      onChange={(e) => updateTheme({ [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
-                    />
-                  </div>
-                ))}
-              </div>
+              <p className="text-micro text-muted uppercase tracking-tight mt-2">해상도별 레이아웃·자유 배치는 <strong>Layout Settings</strong> 패널에서 설정할 수 있습니다.</p>
             </section>
           </div>
         )}
       </div>
 
       <div className="p-6 border-t border-[var(--border-base)] bg-gray-50 dark:bg-gray-900/50">
-        <div className="flex items-center justify-between text-[10px] text-muted font-bold uppercase">
+        <div className="flex items-center justify-between text-caption text-muted font-bold uppercase">
           <span>Current Active Style</span>
           <span className="text-primary">{theme.name || 'Custom'}</span>
         </div>

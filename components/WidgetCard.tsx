@@ -17,7 +17,7 @@ import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, T
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary, ChartConfig } from '../types';
 import { GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import MapWidget from './MapWidget';
-import layoutTokens from '../layout-tokens.json';
+import chartLayoutTokens from '../chart-layout-tokens.json';
 
 
 const GENERAL_KPI_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -259,16 +259,39 @@ const AmChartComponent = React.memo<{
   strokeColor: string
 }>(({ widget, theme, isDark, contentSize, labelColor, strokeColor }) => {
   const chartRef = React.useRef<HTMLDivElement>(null);
+  const rootRef = React.useRef<am5.Root | null>(null);
 
   React.useLayoutEffect(() => {
-    if (!chartRef.current) return;
+    const container = chartRef.current;
+    if (!container || !(container instanceof HTMLElement) || !container.isConnected) return;
 
-    const root = am5.Root.new(chartRef.current);
-    root._logo?.dispose();
+    let cancelled = false;
+    let root: am5.Root | null = null;
+
+    const initChart = () => {
+      if (cancelled) return;
+      const el = chartRef.current;
+      if (!el || !el.isConnected) return;
+      try {
+        root = am5.Root.new(el);
+        rootRef.current = root;
+      } catch {
+        return;
+      }
+      root._logo?.dispose();
 
     const localResolve = (c: string | undefined) => resolveColor(c, theme.primaryColor, theme.primaryColor);
-    const labelFill = am5.color(isDark ? '#f1f5f9' : resolveColor(labelColor, '#64748b'));
-    const axisStroke = am5.color(isDark ? '#94a3b8' : resolveColor(strokeColor, '#444444'));
+    const toHex = (cssOrHex: string): string => {
+      if (!cssOrHex || cssOrHex.startsWith('#')) return cssOrHex || '#64748b';
+      if (cssOrHex.startsWith('var(')) {
+        const varName = cssOrHex.replace(/var\(|\)$/g, '').trim();
+        const computed = typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(varName).trim() : '';
+        return computed || '#64748b';
+      }
+      return cssOrHex;
+    };
+    const labelFill = am5.color(toHex(isDark ? 'var(--text-muted)' : resolveColor(labelColor, 'var(--text-muted)')));
+    const axisStroke = am5.color(toHex(isDark ? 'var(--text-muted)' : resolveColor(strokeColor, 'var(--text-secondary)')));
 
     root.setThemes([
       am5themes_Animated.new(root),
@@ -280,7 +303,13 @@ const AmChartComponent = React.memo<{
       root.tooltipContainer.setAll({ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 });
     }
 
-    const { xAxisKey, showGrid, showXAxis, showYAxis } = widget.config;
+    const config = widget.config || {};
+    const seriesList = config.series && config.series.length > 0
+      ? config.series
+      : [{ key: 'value', label: 'Value', color: 'var(--primary-color)' }];
+    const safeConfig = { ...config, series: seriesList };
+    const { xAxisKey = 'name', showGrid = true, showXAxis = true, showYAxis = true } = safeConfig;
+    const data = Array.isArray(widget.data) ? widget.data : [];
 
     if (widget.type === WidgetType.CHART_PIE) {
       const chart = root.container.children.push(am5percent.PieChart.new(root, {
@@ -291,14 +320,14 @@ const AmChartComponent = React.memo<{
       const series = chart.series.push(am5percent.PieSeries.new(root, {
         name: "Series",
         categoryField: xAxisKey,
-        valueField: widget.config.series[0]?.key || 'value'
+        valueField: seriesList[0]?.key || 'value'
       }));
 
       series.get("colors").set("colors", PIE_COLORS.map(c => am5.color(localResolve(c))));
       series.labels.template.setAll({ fill: labelFill, fontSize: contentSize });
       series.ticks.template.setAll({ stroke: axisStroke });
 
-      series.data.setAll(widget.data);
+      series.data.setAll(data);
       series.appear(1000, 100);
     } else if (widget.type === WidgetType.CHART_RADAR) {
       const chart = root.container.children.push(am5radar.RadarChart.new(root, {
@@ -315,7 +344,7 @@ const AmChartComponent = React.memo<{
         categoryField: xAxisKey,
         renderer: xRenderer,
       }));
-      xAxis.data.setAll(widget.data);
+      xAxis.data.setAll(data);
 
       const yRenderer = am5radar.AxisRendererRadial.new(root, {});
       yRenderer.labels.template.setAll({ fontSize: contentSize, fill: labelFill });
@@ -324,7 +353,7 @@ const AmChartComponent = React.memo<{
         renderer: yRenderer
       }));
 
-      widget.config.series.forEach(s => {
+      seriesList.forEach(s => {
         const series = chart.series.push(am5radar.RadarLineSeries.new(root, {
           name: s.label,
           xAxis: xAxis,
@@ -352,14 +381,14 @@ const AmChartComponent = React.memo<{
           fill: am5.color(resolveColor(s.color, theme.primaryColor, theme.primaryColor))
         });
 
-        series.data.setAll(widget.data);
+        series.data.setAll(data);
         series.appear(1000);
       });
     } else if (widget.type === WidgetType.CHART_SANKEY) {
       const series = root.container.children.push(am5flow.Sankey.new(root, {
         sourceIdField: xAxisKey || "from",
-        targetIdField: widget.config.yAxisKey || "to",
-        valueField: widget.config.series[0]?.key || "value",
+        targetIdField: safeConfig.yAxisKey || "to",
+        valueField: seriesList[0]?.key || "value",
         paddingRight: 12,
         paddingLeft: 12,
         nodePadding: 20
@@ -386,7 +415,7 @@ const AmChartComponent = React.memo<{
         strokeStyle: "solid"
       });
 
-      series.data.setAll(widget.data);
+      series.data.setAll(data);
       series.appear(1000, 100);
     } else if (widget.type === WidgetType.CHART_BAR || widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST) {
       const isHorizontal = widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST;
@@ -436,20 +465,20 @@ const AmChartComponent = React.memo<{
           renderer: yRenderer,
           tooltip: am5.Tooltip.new(root, {})
         }));
-        yAxis.data.setAll(widget.data);
+        yAxis.data.setAll(data);
       } else {
         xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
           categoryField: xAxisKey,
           renderer: xRenderer,
           tooltip: am5.Tooltip.new(root, {})
         }));
-        xAxis.data.setAll(widget.data);
+        xAxis.data.setAll(data);
         yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
           renderer: yRenderer
         }));
       }
 
-      const isStacked = layoutTokens.tokens.charts.bar.mode.value === 'stacked';
+      const isStacked = chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked';
       if (isStacked) {
         if (isHorizontal) {
           xAxis.set("stacked", true);
@@ -458,7 +487,7 @@ const AmChartComponent = React.memo<{
         }
       }
 
-      widget.config.series.forEach(s => {
+      seriesList.forEach(s => {
         const series = chart.series.push(am5xy.ColumnSeries.new(root, {
           name: s.label,
           xAxis: xAxis,
@@ -479,10 +508,10 @@ const AmChartComponent = React.memo<{
           cornerRadiusBL: 0,
           strokeOpacity: 0,
           fill: am5.color(resolveColor(s.color, theme.primaryColor, theme.primaryColor)),
-          [isHorizontal ? "height" : "width"]: am5.percent(widget.config.barWidth ?? 60)
+          [isHorizontal ? "height" : "width"]: am5.percent(safeConfig.barWidth ?? 60)
         });
 
-        series.data.setAll(widget.data);
+        series.data.setAll(data);
         series.appear(1000);
       });
     } else if (widget.type === WidgetType.CHART_LINE || widget.type === WidgetType.CHART_AREA || widget.type === WidgetType.DASH_TRAFFIC_STATUS || widget.type === WidgetType.DASH_FAILURE_STATS || widget.type === WidgetType.DASH_NET_TRAFFIC) {
@@ -514,7 +543,7 @@ const AmChartComponent = React.memo<{
         renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {})
       }));
-      xAxis.data.setAll(widget.data);
+      xAxis.data.setAll(data);
 
       const yRenderer = am5xy.AxisRendererY.new(root, {
         strokeOpacity: showYAxis ? 0.1 : 0,
@@ -531,7 +560,7 @@ const AmChartComponent = React.memo<{
         renderer: yRenderer
       }));
 
-      widget.config.series.forEach(s => {
+      seriesList.forEach(s => {
         const series = chart.series.push(am5xy.LineSeries.new(root, {
           name: s.label,
           xAxis: xAxis,
@@ -565,7 +594,7 @@ const AmChartComponent = React.memo<{
         if (widget.type === WidgetType.DASH_TRAFFIC_STATUS) {
           (series as any).set("tensionX", 0.77);
         }
-        series.data.setAll(widget.data);
+        series.data.setAll(data);
         series.appear(1000);
       });
       chart.appear(1000, 100);
@@ -598,7 +627,7 @@ const AmChartComponent = React.memo<{
         renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {})
       }));
-      xAxis.data.setAll(widget.data);
+      xAxis.data.setAll(data);
 
       const yRenderer = am5xy.AxisRendererY.new(root, {
         strokeOpacity: showYAxis ? 0.1 : 0,
@@ -615,7 +644,7 @@ const AmChartComponent = React.memo<{
         renderer: yRenderer
       }));
 
-      widget.config.series.forEach((s, idx) => {
+      seriesList.forEach((s, idx) => {
         if (idx === 0) {
           const series = chart.series.push(am5xy.ColumnSeries.new(root, {
             name: s.label,
@@ -635,7 +664,7 @@ const AmChartComponent = React.memo<{
             fill: am5.color(resolveColor(s.color, theme.primaryColor, theme.primaryColor))
           });
 
-          series.data.setAll(widget.data);
+          series.data.setAll(data);
           series.appear(1000);
         } else {
           const series = chart.series.push(am5xy.LineSeries.new(root, {
@@ -660,17 +689,53 @@ const AmChartComponent = React.memo<{
             })
           }));
 
-          series.data.setAll(widget.data);
+          series.data.setAll(data);
           series.appear(1000);
         }
       });
       chart.appear(1000, 100);
+    } else {
+      const label = root.container.children.push(am5.Label.new(root, {
+        text: 'Unsupported in amCharts',
+        fontSize: contentSize,
+        fill: labelFill,
+        x: am5.percent(50),
+        y: am5.percent(50),
+        centerX: am5.percent(50),
+        centerY: am5.percent(50),
+      }));
+      label.appear(100);
     }
 
+    }; // end initChart — 차트 생성은 다음 프레임으로 미뤄서 가져오기 직후 DOM/ref 타이밍 이슈 방지
+    const rafId = requestAnimationFrame(() => {
+      initChart();
+      if (cancelled) return;
+      const r = rootRef.current;
+      if (r) {
+        requestAnimationFrame(() => { try { r.resize(); } catch { /* ignore */ } });
+        setTimeout(() => { try { r.resize(); } catch { /* ignore */ } }, 50);
+        setTimeout(() => { try { r.resize(); } catch { /* ignore */ } }, 300);
+      }
+    });
+
+    const ro = typeof ResizeObserver !== 'undefined' && container
+      ? new ResizeObserver(() => {
+          if (cancelled) return;
+          try { rootRef.current?.resize(); } catch { /* ignore */ }
+        })
+      : null;
+    if (ro && container) ro.observe(container);
+
     return () => {
-      root.dispose();
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      ro?.disconnect();
+      try {
+        rootRef.current?.dispose();
+        rootRef.current = null;
+      } catch { /* ignore */ }
     };
-    // Only re-run if essential data or configuration changes, NOT on every resize
   }, [
     widget.id, 
     widget.type, 
@@ -684,7 +749,7 @@ const AmChartComponent = React.memo<{
     strokeColor
   ]);
 
-  return <div ref={chartRef} className="w-full h-full" />;
+  return <div ref={chartRef} className="w-full h-full min-h-[120px]" style={{ minHeight: 120 }} />;
 });
 
 /** ApexCharts 선택 시 Sankey 전용. wrapper 크기를 관찰해 위젯 폭에 맞춰 다시 그립니다. */
@@ -692,7 +757,7 @@ const ApexSankeyWidget: React.FC<{
   data: { nodes: { id: string; title: string }[]; edges: { source: string; target: string; value: number }[] };
   fontColor?: string;
   nodeWidth?: number;
-}> = ({ data, fontColor = '#333', nodeWidth = 20 }) => {
+}> = ({ data, fontColor = 'var(--text-main)', nodeWidth = 20 }) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const mountedRef = React.useRef(true);
@@ -841,18 +906,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   isDragging
 }) => {
   const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
-  const isCyber = theme.mode === ThemeMode.CYBER;
+  const isCyber = false; // Cyber styling removed; always use normal/dark styling
 
   const contentSize = theme.contentSize;
   const titleSize = widget.titleSize ?? theme.titleSize;
   const titleWeight = widget.titleWeight ?? theme.titleWeight;
 
-  const strokeColor = isCyber ? 'var(--cyber-border-alpha)' : 'var(--border-base)';
-  const labelColor = isCyber ? 'var(--cyber-text)' : (isDark ? '#f1f5f9' : 'var(--text-muted)');
+  const strokeColor = 'var(--border-base)';
+  const labelColor = isDark ? 'var(--text-muted)' : 'var(--text-muted)';
 
   const series = widget.config.series && widget.config.series.length > 0
     ? widget.config.series
-    : [{ key: widget.config.yAxisKey || 'value', label: widget.title, color: isCyber ? 'var(--cyber-text)' : 'var(--primary-color)' }];
+    : [{ key: widget.config.yAxisKey || 'value', label: widget.title, color: 'var(--primary-color)' }];
 
   const chartKey = `chart-${widget.id}-${widget.type}-${series.map(s => s.key).join('-')}`;
 
@@ -862,11 +927,11 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
     const customIconSize = widget.iconSize;
     return (
       <div 
-        className={`p-3 rounded-2xl flex items-center justify-center transition-all ${isCyber ? 'bg-[var(--cyber-bg-alpha)] text-[var(--cyber-text)] border border-[var(--cyber-border-alpha)]' : 'bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]'}`}
+        className="p-3 rounded-2xl flex items-center justify-center transition-all bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]"
         style={customIconSize ? { width: `${customIconSize}px`, height: `${customIconSize}px`, padding: 0 } : {}}
       >
         <span 
-          className={`material-symbols-outlined ${isCyber ? 'neon-glow' : ''}`} 
+          className="material-symbols-outlined" 
           style={{ fontSize: customIconSize ? `${customIconSize * 0.6}px` : `calc(var(--content-size) * 2.5)` }}
         >
           {icon}
@@ -928,14 +993,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         {items.map((entry, index) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="font-bold whitespace-nowrap" style={{ fontSize: 'var(--content-size)', color: isDark ? '#f1f5f9' : 'var(--text-muted)' }}>
+            <span className="font-bold whitespace-nowrap" style={{ fontSize: 'var(--content-size)', color: isDark ? 'var(--text-muted)' : 'var(--text-muted)' }}>
               {entry.value}
             </span>
           </div>
         ))}
         {showUnitInLegend && unit && (
           <div className="flex items-center gap-1.5 border-l pl-4 border-[var(--border-base)]">
-            <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: isDark ? '#e2e8f0' : 'var(--text-muted)' }}>
+            <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: isDark ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
               단위: {unit}
             </span>
           </div>
@@ -977,7 +1042,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           }
         });
         const nodes = Array.from(nodeIds).map((id) => ({ id, title: id }));
-        const resolvedFontColor = isDark ? '#e2e8f0' : '#334155';
+        const resolvedFontColor = isDark ? 'var(--text-secondary)' : 'var(--text-secondary)';
         return (
           <div className="w-full h-full min-w-0 min-h-0 flex flex-col border-0 outline-none [&_*]:outline-none" style={{ border: 'none', boxShadow: 'none' }}>
             <ApexSankeyWidget data={{ nodes, edges }} fontColor={resolvedFontColor} nodeWidth={Math.max(14, theme.chartRadius * 2)} />
@@ -992,8 +1057,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       }));
 
       const colors = localSeries.map(s => resolveColor(s.color, theme.primaryColor, theme.primaryColor));
-      const resolvedLabelColor = resolveColor(labelColor, '#888888');
-      const resolvedStrokeColor = resolveColor(strokeColor, '#444444');
+      const resolvedLabelColor = resolveColor(labelColor, 'var(--text-muted)');
+      const resolvedStrokeColor = resolveColor(strokeColor, 'var(--text-secondary)');
 
       const options: any = {
         chart: {
@@ -1002,7 +1067,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           background: 'transparent',
           foreColor: resolvedLabelColor,
           fontFamily: 'inherit',
-          stacked: layoutTokens.tokens.charts.bar.mode.value === 'stacked',
+          stacked: chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked',
           animations: {
             enabled: true,
             easing: 'easeinout',
@@ -1017,7 +1082,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           show: showGrid,
           borderColor: resolvedStrokeColor,
           strokeDashArray: 4,
-          opacity: layoutTokens.tokens.charts.common.gridOpacity.value,
+          opacity: chartLayoutTokens.tokens.charts.common.gridOpacity.value,
           padding: { top: 0, right: 0, bottom: 0, left: 0 }
         },
         xaxis: {
@@ -1191,6 +1256,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       WidgetType.EARNING_TREND,
       WidgetType.BLANK,
       WidgetType.TEXT_BLOCK,
+      WidgetType.VERTICAL_NAV_CARD,
       WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2,
       WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS,
       WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5
@@ -1461,7 +1527,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         const comparison = widget.comparisonText ?? 'Compared of $11,750 last year';
         const items = (widget.categoryItems && widget.categoryItems.length > 0)
           ? widget.categoryItems
-          : [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: '#f97316' }, { label: 'Marketing', value: 12 }];
+          : [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: 'var(--warning)' }, { label: 'Marketing', value: 12 }];
         const chartData = (currentData?.length ? currentData : (widget.data?.length ? widget.data : [])) as { name: string; value: number }[];
         const series = currentConfig?.series?.[0];
         const strokeColor = series?.color ? resolveColor(series.color, theme.primaryColor, theme.primaryColor) : theme.primaryColor;
@@ -1640,13 +1706,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 {showXAxis && <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />}
                 <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${layoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                     <Bar
                       key={s.key}
                       name={s.label}
                       dataKey={s.key}
-                      stackId={layoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
+                      stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
                       fill={currentConfig.useGradient ? `url(#grad-bar-${s.key}-${idx})` : resolveColor(s.color, isCyber ? 'var(--cyber-text)' : theme.primaryColor, theme.primaryColor)}
                       radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
                       barSize={currentConfig.barWidth != null ? Math.max(2, (currentConfig.barWidth * 0.4)) : undefined}
@@ -1697,13 +1763,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       tick={{ style: { whiteSpace: 'nowrap' } }}
                     />
                     <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${layoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                     {localSeries.map((s, idx) => (
                       <Bar
                         key={s.key}
                         name={s.label}
                         dataKey={s.key}
-                        stackId={layoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
+                        stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
                         fill={currentConfig.useGradient ? `url(#grad-hbar-${s.key}-${idx})` : resolveColor(s.color, isCyber ? 'var(--cyber-text)' : theme.primaryColor, theme.primaryColor)}
                         radius={[0, theme.chartRadius, theme.chartRadius, 0]}
                         barSize={currentConfig.barWidth != null ? Math.max(2, (currentConfig.barWidth * 0.4)) : undefined}
@@ -1744,7 +1810,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 {showXAxis && <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />}
                 <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                     <Line
                       key={s.key}
@@ -1796,7 +1862,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 {showXAxis && <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />}
                 <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                   <Area
                     key={s.key}
@@ -1864,7 +1930,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   ))}
                 </Pie>
                 <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -1888,7 +1954,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   />
                 ))}
                 <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -1951,7 +2017,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       height={height}
                       fill={getNodeColor(payload.name)}
                       fillOpacity={1}
-                      stroke={isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.08)'}
+                      stroke={isDark ? 'var(--white-alpha-20)' : 'var(--black-alpha-08)'}
                       strokeWidth={1}
                       rx={theme.chartRadius}
                     />
@@ -2030,7 +2096,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 {showXAxis && <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />}
                 <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                   idx === 0 ? (
                     <Bar
@@ -2242,7 +2308,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       className="h-full rounded transition-all duration-500"
                       style={{
                         width: `${widthPercent}%`,
-                        background: 'linear-gradient(to right, #4ac0ef 0%, #648be3 30%, #8777e3 50%, #a864e3 70%, #e3649b 100%)'
+                        background: 'var(--chart-gradient-multi)'
                       }}
                     />
                   </div>
@@ -2272,7 +2338,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} stroke={labelColor} fontSize={parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-tiny')) || 10} fontWeight="600" />
                 <YAxis hide />
                 <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '5px' }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                   <Area
                     key={s.key}
@@ -2379,7 +2445,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     strokeWidth={isCyber ? 3 : 2}
                     fill={`url(#gradNet-${idx})`}
                     dot={false}
-                    stackId={layoutTokens.tokens.charts.bar.mode.value === 'stacked' ? '1' : undefined}
+                    stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? '1' : undefined}
                   />
                 ))}
               </AreaChart>
@@ -2470,6 +2536,67 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         );
       }
 
+      case WidgetType.VERTICAL_NAV_CARD: {
+        const items = widget.navItems ?? [];
+        const navIndicatorSrc = '/assets/nav-indicator.png';
+        const updateItemLabel = (index: number, label: string) => {
+          const next = (widget.navItems ?? []).map((it, j) => (j === index ? { ...it, label } : it));
+          onUpdate?.(widget.id, { navItems: next });
+        };
+        return (
+          <div className="h-full flex overflow-hidden">
+            <div
+              className="flex-shrink-0 flex items-center overflow-hidden"
+              style={{
+                minWidth: '80px',
+                width: '80px',
+                paddingLeft: 'var(--spacing-xs)',
+                paddingRight: 0,
+              }}
+            >
+              <img
+                src={navIndicatorSrc}
+                alt=""
+                className="max-h-full w-auto max-w-full object-contain object-left"
+                style={{ display: 'block' }}
+              />
+            </div>
+            <div
+              className="flex-1 flex flex-col min-w-0 overflow-auto justify-center"
+              style={{ gap: 'var(--nav-card-gap)', marginLeft: 'calc(-1 * var(--spacing-lg))' }}
+            >
+              {items.map((item, index) => {
+                const isActive = item.active;
+                return (
+                  <div
+                    key={item.id}
+                    className={`nav-card-item ${isActive ? 'nav-card-item--active' : ''}`}
+                  >
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => updateItemLabel(index, e.target.value)}
+                        className="w-full max-w-[80%] bg-transparent border-none p-0 text-center font-medium focus:ring-0 outline-none placeholder:opacity-60"
+                        style={{ color: 'var(--white)', fontSize: 'var(--content-size)' }}
+                        placeholder="텍스트"
+                      />
+                    ) : (
+                      <span
+                        className="font-medium"
+                        style={{ color: 'var(--white)', fontSize: 'var(--content-size)' }}
+                      >
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
       case WidgetType.BLANK:
 
       default:
@@ -2481,8 +2608,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   const cardStyle: React.CSSProperties | undefined = glassStyle
     ? undefined
     : (bgOpacity >= 100
-      ? { backgroundColor: 'var(--surface, #0f172a)' }
-      : { backgroundColor: `color-mix(in srgb, var(--surface, #0f172a) ${bgOpacity}%, transparent)` });
+      ? { backgroundColor: 'var(--surface)' }
+      : { backgroundColor: `color-mix(in srgb, var(--surface) ${bgOpacity}%, transparent)` });
   const glassStyleInline: React.CSSProperties | undefined = glassStyle
     ? {
       background: bgOpacity >= 100

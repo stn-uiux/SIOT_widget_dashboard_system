@@ -19,7 +19,7 @@ let DefaultIcon = L.icon({
 // Create a special icon for current location
 let LocationIcon = L.divIcon({
     className: 'current-location-marker',
-    html: `<div style="background-color: var(--primary-color); width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); animation: pulse 2s infinite;"></div>`,
+    html: `<div style="background-color: var(--primary-color); width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: var(--marker-shadow); animation: pulse 2s infinite;"></div>`,
     iconSize: [20, 20],
     iconAnchor: [10, 10]
 });

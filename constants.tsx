@@ -131,6 +131,7 @@ export const TYPE_DEFAULT_DATA: Record<string, {
   trendUp?: boolean;
   comparisonText?: string;
   categoryItems?: { label: string; value: number; color?: string }[];
+  navItems?: { id: string; label: string; active?: boolean }[];
 }> = {
   [WidgetType.SUMMARY]: {
     mainValue: '1,234',
@@ -647,6 +648,18 @@ export const TYPE_DEFAULT_DATA: Record<string, {
     data: [],
     config: {}
   },
+  [WidgetType.VERTICAL_NAV_CARD]: {
+    title: '메뉴',
+    data: [],
+    config: {},
+    navItems: [
+      { id: 'nav_1', label: '가나다라', active: true },
+      { id: 'nav_2', label: '가나다라', active: false },
+      { id: 'nav_3', label: '가나다라', active: false },
+      { id: 'nav_4', label: '가나다라', active: false },
+      { id: 'nav_5', label: '가나다라', active: false },
+    ],
+  },
   [WidgetType.EARNING_TREND]: {
     mainValue: '$12,875',
     subValue: '21',
@@ -726,6 +739,7 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.EARNING_PROGRESS]: { label: 'Total Earning (Progress)', icon: TrendingUp, category: 'general' },
   [WidgetType.EARNING_TREND]: { label: 'Earning Trend (Chart + KPI)', icon: Activity, category: 'general' },
   [WidgetType.TEXT_BLOCK]: { label: '텍스트 (글자만)', icon: Type, category: 'general' },
+  [WidgetType.VERTICAL_NAV_CARD]: { label: '세로 네비 카드', icon: Layers, category: 'general' },
 };
 
 /** Icon options for General KPI widget (value = Lucide icon name stored in widget.icon) */
@@ -785,6 +799,7 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.EARNING_PROGRESS,
   WidgetType.EARNING_TREND,
   WidgetType.TEXT_BLOCK,
+  WidgetType.VERTICAL_NAV_CARD,
 ];
 
 // rowHeight 20 → height 200 = 10 rows
@@ -1002,7 +1017,7 @@ const PROJECT3_PAGE_WIDGETS: Widget[] = (() => {
   ];
 })();
 
-/** New Project 4: Cyber HUD (Screenshot clone) */
+/** Project 4: Cyber HUD style dashboard */
 const PROJECT4_PAGE_WIDGETS: Widget[] = (() => {
   const radarData = [
     { name: 'Precision', value: 85, secondary: 90 },
@@ -1160,7 +1175,7 @@ const PROJECT4_PAGE_WIDGETS: Widget[] = (() => {
 export const INITIAL_PROJECT_LIST: Project[] = [
   {
     id: 'project_1',
-    name: 'My Dashboard',
+    name: 'New Project 1',
     pages: [{
       ...DEFAULT_PAGE,
       id: 'page_1',
@@ -1171,8 +1186,25 @@ export const INITIAL_PROJECT_LIST: Project[] = [
     theme: DEFAULT_THEME
   },
   {
+    id: 'project_2',
+    name: 'New Project 2',
+    pages: [{
+      ...DEFAULT_PAGE,
+      id: 'page_1',
+      name: 'Data visualisation',
+      widgets: PROJECT2_PAGE_WIDGETS,
+      layout: {
+        ...DEFAULT_PAGE.layout,
+        columns: 1, // Full width stacked for this specific design
+        rows: 6
+      }
+    }],
+    activePageId: 'page_1',
+    theme: PROJECT2_CUSTOM_THEME
+  },
+  {
     id: 'project_3',
-    name: 'new project 3',
+    name: 'New Project 3',
     pages: [{
       ...DEFAULT_PAGE,
       id: 'page_1',
@@ -1189,30 +1221,20 @@ export const INITIAL_PROJECT_LIST: Project[] = [
   },
   {
     id: 'project_4',
-    name: 'STN INFOTECH HUD',
+    name: 'New Project 4',
     pages: [{
       ...DEFAULT_PAGE,
       id: 'page_1',
-      name: 'Main HUD',
+      name: 'Cyber HUD',
       widgets: PROJECT4_PAGE_WIDGETS,
-      header: {
-        ...DEFAULT_HEADER,
-        title: 'MY CUSTOM DASHBOARD',
-        backgroundColor: 'transparent',
-        textAlignment: TextAlignment.CENTER,
-      },
       layout: {
         ...DEFAULT_PAGE.layout,
-        backgroundFlicker: true,
-        glassmorphism: true,
-        glassmorphismOpacity: 22,
-      },
+        columns: 24,
+        rows: 40
+      }
     }],
     activePageId: 'page_1',
-    theme: {
-      ...DEFAULT_THEME,
-      mode: ThemeMode.CYBER,
-    },
+    theme: { ...DEFAULT_THEME, mode: ThemeMode.CYBER, name: 'Cyber Mode' }
   },
 ];
 
