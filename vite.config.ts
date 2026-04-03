@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       },
+      assetsInclude: ['**/*.zip'],
       optimizeDeps: {
         include: ['apexsankey'],
       },

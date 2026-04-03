@@ -66,10 +66,10 @@ import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 import logoB from "./assets/logo-b-1 1.png";
 import logoW from "./assets/logo-w-1 1.png";
 
-import proj1Zip from "./assets/New_Project_1_2026-03-11.zip";
-import proj2Zip from "./assets/new_project_2_2026-03-11.zip";
-import proj3Zip from "./assets/New_Project_3_2026-03-11.zip";
-import proj4Zip from "./assets/New_Project_4_2026-03-15.zip";
+import proj1Zip from "./assets/New_Project_1_2026-03-11.zip?url";
+import proj2Zip from "./assets/new_project_2_2026-03-11.zip?url";
+import proj3Zip from "./assets/New_Project_3_2026-03-11.zip?url";
+import proj4Zip from "./assets/New_Project_4_2026-03-15.zip?url";
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
