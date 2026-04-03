@@ -63,13 +63,14 @@ import GlobeBackground from "./components/GlobeBackground";
 import FloatingAssistantButton from "./components/FloatingAssistantButton";
 import { dbSave, dbLoad } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
-import logoB from "./assets/logo-b-1 1.png";
-import logoW from "./assets/logo-w-1 1.png";
+// Assets - Use safer path references to avoid Vite module transformation issues with spaces/special chars
+const logoB = new URL("./assets/logo-b-1 1.png", import.meta.url).href;
+const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
 
-import proj1Zip from "./assets/New_Project_1_2026-03-11.zip?url";
-import proj2Zip from "./assets/new_project_2_2026-03-11.zip?url";
-import proj3Zip from "./assets/New_Project_3_2026-03-11.zip?url";
-import proj4Zip from "./assets/New_Project_4_2026-03-15.zip?url";
+const proj1Zip = new URL("./assets/New_Project_1_2026-03-11.zip", import.meta.url).href;
+const proj2Zip = new URL("./assets/new_project_2_2026-03-11.zip", import.meta.url).href;
+const proj3Zip = new URL("./assets/New_Project_3_2026-03-11.zip", import.meta.url).href;
+const proj4Zip = new URL("./assets/New_Project_4_2026-03-15.zip", import.meta.url).href;
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
@@ -980,20 +981,14 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
             {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
             {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
             {w.type === HeaderWidgetType.THEME_TOGGLE && (
-              <HeaderThemeToggle
-                mode={theme.mode}
-                onSwitch={onModeSwitch}
-              />
+              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} />
             )}
             {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
             {w.type === HeaderWidgetType.LOGO && <HeaderLogo url={w.url} />}
             {isEditMode && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUpdate({ widgets: widgets.filter(v => v.id !== w.id) });
-                }}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error)] text-white rounded flex items-center justify-center hover:opacity-90 shadow-lg transition-colors z-30"
+                onClick={() => onUpdate({ widgets: widgets.filter((item) => item.id !== w.id) })}
+                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -1012,11 +1007,8 @@ const App: React.FC = () => {
     () => getInitialProjectsState().activeProjectId,
   );
 
-  const currentProject =
-    projects.find((p) => p.id === activeProjectId) || projects[0];
-  const currentPage =
-    currentProject?.pages?.find((p) => p.id === currentProject.activePageId) ||
-    currentProject?.pages?.[0];
+  const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+  const currentPage = currentProject?.pages?.find((p) => p.id === currentProject.activePageId) || currentProject?.pages?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -1052,49 +1044,64 @@ const App: React.FC = () => {
     [activeProjectId],
   );
 
-  // --- [SIOT Onboarding] Initialize projects from assets if localStorage is empty ---
+  // Consolidated Hydration & Onboarding
   useEffect(() => {
-    const bootstrapInitialProjects = async () => {
-      // Check if project data exists in storage (IndexedDB fallback via localStorage flag)
-      const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
-      if (!projectsRaw) {
-        const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
-        const loadedProjects: Project[] = [];
-        const loadedLayouts: LayoutStore = {};
+    let cancelled = false;
+    const hydrateAndOnboard = async () => {
+      try {
+        const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
+        const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
 
-        for (const url of zipUrls) {
-          try {
-            const res = await fetch(url);
-            if (!res.ok) continue;
-            const blob = await res.blob();
-            // Convert to File for existing import logic
-            const file = new File([blob], "initial_project.zip", { type: "application/zip" });
-            const { project, layoutPositions } = await importProjectFromZip(file);
-            
-            loadedProjects.push(project);
-            loadedLayouts[project.id] = layoutPositions;
-          } catch (e) {
-            console.error("[Onboarding] Failed to auto-import project asset:", url, e);
+        if (!cancelled && saved?.projects?.length > 0) {
+          const migratedProjects: Project[] = saved.projects.map((p) => ({
+            ...p,
+            theme: { ...DEFAULT_THEME, ...p.theme },
+            pages: (p.pages || []).map((pg) => ({
+              ...pg,
+              layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
+              header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
+            })),
+          }));
+          setProjects(migratedProjects);
+          if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
+        } else if (!cancelled && !projectsRaw) {
+          const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
+          const loadedProjects: Project[] = [];
+          const loadedLayouts: LayoutStore = {};
+
+          for (const url of zipUrls) {
+            try {
+              const res = await fetch(url);
+              if (!res.ok) continue;
+              const blob = await res.blob();
+              const file = new File([blob], "initial_project.zip", { type: "application/zip" });
+              const { project, layoutPositions } = await importProjectFromZip(file);
+              loadedProjects.push(project);
+              loadedLayouts[project.id] = layoutPositions;
+            } catch (e) {
+              console.error("[SIOT] Onboarding asset load failed:", url, e);
+            }
+          }
+
+          if (loadedProjects.length > 0 && !cancelled) {
+            setProjects(loadedProjects);
+            setActiveProjectId(loadedProjects[0].id);
+            setLayoutStore(prev => ({ ...prev, ...loadedLayouts }));
+            saveProjectsState(loadedProjects, loadedProjects[0].id);
+            saveLayoutStore(loadedLayouts);
           }
         }
-
-        if (loadedProjects.length > 0) {
-          setProjects(loadedProjects);
-          setActiveProjectId(loadedProjects[0].id);
-          setLayoutStore(prev => {
-            const next = { ...prev, ...loadedLayouts };
-            layoutStoreRef.current = next;
-            saveLayoutStore(next);
-            return next;
-          });
-          // Persist current project state to avoid duplicate onboarding
-          saveProjectsState(loadedProjects, loadedProjects[0].id);
+        const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
+        if (!cancelled && savedLayout && typeof savedLayout === "object") {
+          setLayoutStore(prev => ({ ...prev, ...savedLayout }));
         }
+      } catch (err) {
+        console.error("[SIOT] Initialization error:", err);
       }
     };
-    bootstrapInitialProjects();
+    hydrateAndOnboard();
+    return () => { cancelled = true; };
   }, []);
-  // ----------------------------------------------------------------------------
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
@@ -1134,7 +1141,7 @@ const App: React.FC = () => {
   const handleDragStart = (e: React.MouseEvent) => {
     setIsDraggingPanel(true);
     dragStartOffset.current = {
-      x: e.clientX + panelPos.x, // right position
+      x: e.clientX + panelPos.x,
       y: e.clientY - panelPos.y
     };
   };
@@ -1163,6 +1170,15 @@ const App: React.FC = () => {
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
   const [capturingForExport, setCapturingForExport] = useState(false);
   const [exportPhase, setExportPhase] = useState<"waiting" | "capturing" | "packing" | null>(null);
@@ -1211,45 +1227,6 @@ const App: React.FC = () => {
     }, 2500);
     return () => clearTimeout(waitTimer);
   }, [capturingForExport, isPreviewMode, currentProject, layoutStore, activeProjectId]);
-
-  // ── IndexedDB hydration (최초 마운트 시 비동기 로드) ──
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      // 프로젝트 데이터
-      const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
-      if (!cancelled && saved?.projects?.length) {
-        // 스키마 마이그레이션: IndexedDB 데이터도 새 필드 누락 방지
-        const migratedProjects: Project[] = saved.projects.map((p) => ({
-          ...p,
-          theme: { ...DEFAULT_THEME, ...p.theme },
-          pages: (p.pages || []).map((pg) => ({
-            ...pg,
-            layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-            header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
-          })),
-        }));
-        setProjects(migratedProjects);
-        if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
-      }
-      // 레이아웃 데이터
-      const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
-      if (!cancelled && savedLayout && typeof savedLayout === "object") {
-        setLayoutStore(savedLayout);
-      }
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
-  const showToast = (
-    message: string,
-    type: "success" | "error" = "success",
-  ) => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
   const { theme } = currentProject ?? { theme: DEFAULT_THEME };

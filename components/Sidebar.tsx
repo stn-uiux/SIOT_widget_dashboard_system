@@ -487,8 +487,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-      <section className="space-y-4 p-4">
+      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <section className="space-y-4">
         <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
           <Layers className="w-4 h-4" /> Visualization
         </label>

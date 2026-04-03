@@ -12,8 +12,9 @@ import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 import { ThemeMode, DashboardTheme } from '../types';
 
-import logoB from '../assets/logo-b-1 1.png';
-import logoW from '../assets/logo-w-1 1.png';
+// Use safe relative path references for assets to prevent Vite from treating them as modules
+const logoB = new URL("../assets/logo-b-1 1.png", import.meta.url).href;
+const logoW = new URL("../assets/logo-w-1 1.png", import.meta.url).href;
 
 interface DesignDocsProps {
     theme: DashboardTheme;
