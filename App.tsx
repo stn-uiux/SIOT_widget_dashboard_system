@@ -63,6 +63,8 @@ import GlobeBackground from "./components/GlobeBackground";
 import FloatingAssistantButton from "./components/FloatingAssistantButton";
 import { dbSave, dbLoad } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
+import logoB from "./assets/logo-b-1 1.png";
+import logoW from "./assets/logo-w-1 1.png";
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
@@ -1856,7 +1858,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <img 
-                src={theme.mode === ThemeMode.DARK ? "/assets/logo-w-1%201.png" : "/assets/logo-b-1%201.png"} 
+                src={theme.mode === ThemeMode.DARK ? logoW : logoB} 
                 className="h-7 w-auto object-contain" 
                 alt="STN Logo" 
               />

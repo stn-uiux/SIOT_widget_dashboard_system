@@ -12,6 +12,9 @@ import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 import { ThemeMode, DashboardTheme } from '../types';
 
+import logoB from '../assets/logo-b-1 1.png';
+import logoW from '../assets/logo-w-1 1.png';
+
 interface DesignDocsProps {
     theme: DashboardTheme;
     onClose: () => void;
@@ -50,7 +53,7 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ theme, onClose }) => {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <img 
-                      src={theme.mode === ThemeMode.DARK ? "/assets/logo-w-1%201.png" : "/assets/logo-b-1%201.png"} 
+                      src={theme.mode === ThemeMode.DARK ? logoW : logoB} 
                       className="h-8 w-auto object-contain" 
                       alt="STN Logo" 
                     />
