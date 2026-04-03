@@ -116,7 +116,7 @@ export function buildFigmaVariablesFromTokens(): FigmaExportPayload {
   const brandColors = brand?.brand;
   if (brandColors && typeof brandColors === 'object') {
     const variables: FigmaVariableSpec[] = [];
-    const names = ['primary', 'secondary', 'neon_cyan', 'neon_blue', 'premium_start', 'premium_end'] as const;
+    const names = ['primary', 'secondary', 'premium_start', 'premium_end'] as const;
     for (const name of names) {
       const val = getValue(brandColors[name]);
       const figmaColor = val ? parseColorToFigma(val) : null;

@@ -38,83 +38,88 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // 1. Initial Setup: Create static elements once
   useEffect(() => {
-    if (!svgRef.current || !worldData) return;
-    const getVar = (name: string) =>
-      typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() : '';
-
+    if (!svgRef.current) return;
     const { width, height } = dimensions;
-    const baseRadius = Math.min(width, height) / 2.2;
-    const currentRadius = baseRadius * zoom;
-    const l = isLight ? 'light' : 'dark';
-
-    const globeGlowFill = getVar(`--globe-glow-fill-${l}`);
-    const globeRingStroke = getVar(`--globe-ring-stroke-${l}`);
-    const globeBlurOuter = getVar('--globe-blur-outer') || '80px';
-    const globeBlurInner = getVar('--globe-blur-inner') || '4px';
-    const globeSphereFill = getVar(`--globe-sphere-fill-${l}`);
-    const globeSphereStroke = getVar(`--globe-sphere-stroke-${l}`);
-    const globeGraticuleStroke = getVar(`--globe-graticule-stroke-${l}`);
-    const globeLandFill = getVar(`--globe-land-fill-${l}`);
-    const globeLandStroke = getVar(`--globe-land-stroke-${l}`);
-
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     svg.attr('shape-rendering', 'geometricPrecision');
 
-    const projection = d3
-      .geoOrthographic()
+    const mainGroup = svg.append('g').attr('class', 'globe-group');
+    
+    // Add layers back to front
+    mainGroup.append('circle').attr('class', 'outer-glow');
+    mainGroup.append('circle').attr('class', 'inner-ring');
+    mainGroup.append('circle').attr('class', 'sphere');
+    mainGroup.append('path').attr('class', 'graticule');
+    mainGroup.append('path').attr('class', 'land');
+  }, [dimensions]);
+
+  // 2. Continuous Update: Update attributes only (No DOM creation/deletion)
+  useEffect(() => {
+    if (!svgRef.current || !worldData) return;
+    const { width, height } = dimensions;
+    const baseRadius = Math.min(width, height) / 2.2;
+    const currentRadius = baseRadius * zoom;
+    const l = isLight ? 'light' : 'dark';
+    const getVar = (name: string) =>
+      typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() : '';
+
+    const projection = d3.geoOrthographic()
       .scale(currentRadius)
       .translate([width / 2, height / 2])
       .rotate(rotation);
 
     const path = d3.geoPath().projection(projection);
-    const mainGroup = svg.append('g');
+    const svg = d3.select(svgRef.current);
+    const mainGroup = svg.select('.globe-group');
 
-    mainGroup
-      .append('circle')
+    // Update Outer Glow
+    mainGroup.select('.outer-glow')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.35)
-      .attr('fill', globeGlowFill)
-      .style('filter', `blur(${globeBlurOuter})`)
+      .attr('fill', getVar(`--globe-glow-fill-${l}`))
+      .style('filter', `blur(${getVar('--globe-blur-outer') || '80px'})`)
       .style('opacity', isLight ? 0.3 : 0.12);
 
-    mainGroup
-      .append('circle')
+    // Update Inner Ring
+    mainGroup.select('.inner-ring')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 1.08)
       .attr('fill', 'none')
-      .attr('stroke', globeRingStroke)
+      .attr('stroke', getVar(`--globe-ring-stroke-${l}`))
       .attr('stroke-width', 2)
-      .style('filter', `blur(${globeBlurInner})`);
+      .style('filter', `blur(${getVar('--globe-blur-inner') || '4px'})`);
 
-    mainGroup
-      .append('circle')
+    // Update Sphere
+    mainGroup.select('.sphere')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', currentRadius * 0.98)
-      .attr('fill', globeSphereFill)
-      .attr('stroke', globeSphereStroke);
+      .attr('fill', getVar(`--globe-sphere-fill-${l}`))
+      .attr('stroke', getVar(`--globe-sphere-stroke-${l}`));
 
+    // Update Graticule
     const graticule = d3.geoGraticule();
-    mainGroup
-      .append('path')
+    mainGroup.select('.graticule')
       .datum(graticule())
       .attr('d', path as unknown as string)
       .attr('fill', 'none')
-      .attr('stroke', globeGraticuleStroke)
+      .attr('stroke', getVar(`--globe-graticule-stroke-${l}`))
       .attr('stroke-width', 0.5);
 
-    mainGroup
-      .append('path')
+    // Update Land
+    mainGroup.select('.land')
       .datum(worldData)
       .attr('d', path as unknown as string)
-      .attr('fill', globeLandFill)
-      .attr('stroke', globeLandStroke)
+      .attr('fill', getVar(`--globe-land-fill-${l}`))
+      .attr('stroke', getVar(`--globe-land-stroke-${l}`))
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
+
   }, [rotation, zoom, dimensions, worldData, isLight]);
 
   const applyInertia = () => {

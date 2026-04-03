@@ -4,7 +4,7 @@
 
 프로젝트 루트의 **`design-tokens.json`** 이 디자인 시스템 토큰의 단일 소스입니다.
 
-- **colors**: brand(primary, primary_scale, secondary, gradient 등), status, semantic(light/dark/cyber)
+- **colors**: brand(primary, primary_scale, secondary, gradient), status, semantic(light/dark)
 - **layout**: borderRadius, spacing, dashboardPadding, shadow, widgetBorderWidth (아래 [Layout 토큰] 참고)
 - **typography**: titleSize, titleWeight, contentSize, textTiny ~ textHero
 - **components**: button, widget_card 등 (추후 CSS/컴포넌트에서 직접 참조 가능)

@@ -119,15 +119,7 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest pl-1">High-Tech (Cyber) Tokens</h3>
-                                    <div className="docs-grid">
-                                        <ColorSwatch name="Neon Cyan" variable="--primary-color" description="Active in Cyber mode" />
-                                        <ColorSwatch name="Deep Background" variable="--background" description="Active in Cyber mode" />
-                                        <ColorSwatch name="Cyber Surface" variable="--surface" description="Glassmorphism surface" />
-                                        <ColorSwatch name="Accent Border" variable="--border-strong" description="Neon accent color" />
-                                    </div>
-                                </div>
+
 
                                 <div>
                                     <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest pl-1">Borders</h3>

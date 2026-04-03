@@ -61,15 +61,6 @@
                     "type": "color",
                     "description": "Primary와 구분되는 악센트(틸)"
                 },
-                "neon_cyan": {
-                    "value": "#00e5ff",
-                    "type": "color",
-                    "description": "High-tech highlight color with glow capability"
-                },
-                "neon_blue": {
-                    "value": "#008cff",
-                    "type": "color"
-                },
                 "primary_subtle": {
                     "value": "rgba(59, 130, 246, 0.1)",
                     "type": "color"
@@ -185,20 +176,6 @@
                     },
                     "surface_elevated": {
                         "value": "#1e293b",
-                        "type": "color"
-                    }
-                },
-                "cyber": {
-                    "background": {
-                        "value": "#02040a",
-                        "type": "color"
-                    },
-                    "surface": {
-                        "value": "rgba(13, 15, 41, 0.7)",
-                        "type": "color"
-                    },
-                    "accent": {
-                        "value": "#00e5ff",
                         "type": "color"
                     }
                 }
@@ -365,29 +342,6 @@
                 "icon_only_radius": {
                     "value": "12px",
                     "type": "dimension"
-                }
-            },
-            "premium_mode_toggle": {
-                "width": {
-                    "value": "64px",
-                    "type": "dimension"
-                },
-                "height": {
-                    "value": "34px",
-                    "type": "dimension"
-                },
-                "thumb_size": {
-                    "value": "26px",
-                    "type": "dimension"
-                },
-                "glow_color": {
-                    "value": "rgba(0, 229, 255, 0.5)",
-                    "type": "color"
-                },
-                "animation": {
-                    "value": "4.0s",
-                    "type": "duration",
-                    "description": "Rotation speed for glow effect"
                 }
             },
             "widget_card": {

@@ -47,7 +47,6 @@ export enum WidgetType {
 export enum ThemeMode {
   LIGHT = "light",
   DARK = "dark",
-  CYBER = "cyber",
 }
 
 export enum ChartLibrary {
@@ -228,7 +227,6 @@ export interface DashboardTheme {
   modeStyles?: {
     light?: Partial<DashboardTheme>;
     dark?: Partial<DashboardTheme>;
-    cyber?: Partial<DashboardTheme>;
   };
   showPageTabs?: boolean;
   /** 프로젝트별 커스텀 차트 팔레트(hex). 생키/파이 등에서 theme.primaryColor 대신 사용 */
@@ -254,8 +252,7 @@ export interface LayoutConfig {
   backgroundImageLight?: string;
   /** 다크 모드 전용 배경 이미지 URL */
   backgroundImageDark?: string;
-  /** 배경 이미지 위에 네온 불빛 번쩍임 효과 */
-  backgroundFlicker?: boolean;
+
   /** 지구(Globe) 배경 사용 — 마우스 드래그로 회전 */
   backgroundGlobe?: boolean;
   /** project2 등 위젯 카드를 글래스모피즘(반투명·블러·테두리) 스타일로 표시 */

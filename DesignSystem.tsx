@@ -64,7 +64,7 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         type GlassVariant = { background?: TokenObj; border?: TokenObj; shadow?: TokenObj };
         const components = (designTokens as { tokens?: { components?: { glassmorphism?: { blur?: TokenObj; light?: GlassVariant; dark?: GlassVariant } } } }).tokens?.components;
         const glass = components?.glassmorphism;
-        const isDark = theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER;
+        const isDark = theme.mode === ThemeMode.DARK;
         const variant: GlassVariant | undefined = glass && isDark ? glass.dark : glass?.light;
         const blur = glass?.blur?.value ?? '12px';
         const defBgKey = isDark ? '--glass-default-bg-dark' : '--glass-default-bg-light';
@@ -86,8 +86,8 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         root.style.setProperty('--glass-blur', blur);
 
         // Mode Classes (on the same element we're theming)
-        root.classList.remove('dark', 'cyber', 'midnight-pro');
-        if (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER) {
+        root.classList.remove('dark', 'midnight-pro');
+        if (theme.mode === ThemeMode.DARK) {
             root.classList.add('dark');
         }
     }, [theme, targetRef]);

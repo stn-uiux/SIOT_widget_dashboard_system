@@ -877,7 +877,9 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
       const { width } = entries[0]?.contentRect ?? {};
-      if (typeof width === "number" && width > 0) setContainerWidth(width);
+      if (typeof width === "number" && width > 0) {
+        setContainerWidth(prev => (Math.abs(prev - width) < 0.1 ? prev : width));
+      }
     });
     ro.observe(el);
     const w = el.getBoundingClientRect().width;
@@ -1054,7 +1056,9 @@ const App: React.FC = () => {
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
       const { height } = entries[0]?.contentRect ?? {};
-      if (typeof height === "number" && height > 0) setMainAreaHeight(height);
+      if (typeof height === "number" && height > 0) {
+        setMainAreaHeight(prev => (Math.abs(prev - height) < 0.1 ? prev : height));
+      }
     });
     ro.observe(el);
     const h = el.getBoundingClientRect().height;
@@ -1525,16 +1529,41 @@ const App: React.FC = () => {
     const usePixelGrid = layout.useGrid === false;
     const roundSize = (v: number) => (usePixelGrid ? v : Math.round(v));
     const cols = Math.max(1, layout.columns);
-    if (saved.length === 0)
-      return computeInitialLayout(widgets, cols);
+
+    if (saved.length === 0) return computeInitialLayout(widgets, cols);
+
+    // Some widgets have saved positions, others might not. 
+    // We need to keep saved ones and place the rest without overlapping (simple flow).
+    let nextX = 0;
+    let nextY = 0;
+    let maxHInRow = 0;
+
+    // Find the current "bottom" to avoid placing new items on top of old ones if possible
+    // simplified: just find max Y + H
+    saved.forEach(l => {
+      const bottom = (Number(l.y) || 0) + (Number(l.h) || 0);
+      if (bottom > nextY) nextY = bottom;
+    });
+
     return widgets.map((w): LayoutItem => {
       const s = savedMap.get(w.id);
       const wVal = sane(roundSize(Number(w.colSpan)), 4);
       const hVal = sane(roundSize(Number(w.rowSpan)), 4);
-      const xVal = s ? sane(Number(s.x), 0) : 0;
-      const yVal = s ? sane(Number(s.y), 0) : 0;
-      if (s) return { i: s.i, x: xVal, y: yVal, w: wVal, h: hVal };
-      return { i: w.id, x: 0, y: 0, w: wVal, h: hVal };
+      
+      if (s) {
+        return { i: s.i, x: sane(Number(s.x), 0), y: sane(Number(s.y), 0), w: wVal, h: hVal };
+      }
+
+      // Fallback for new widgets: Flow positioning
+      if (nextX + wVal > cols) {
+        nextX = 0;
+        nextY += maxHInRow || hVal;
+        maxHInRow = 0;
+      }
+      const item = { i: w.id, x: nextX, y: nextY, w: wVal, h: hVal };
+      nextX += wVal;
+      maxHInRow = Math.max(maxHInRow, hVal);
+      return item;
     });
   }, [rglLayouts, currentPage.id, widgets, layout.columns, layout.useGrid]);
 
@@ -2077,7 +2106,7 @@ const App: React.FC = () => {
             {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
             {pageBgUrl && (
               <div
-                className={`absolute inset-0 z-0 ${layout?.backgroundFlicker ? "bg-neon-flicker" : ""}`}
+                className="absolute inset-0 z-0"
                 style={{
                   backgroundImage: `url(${pageBgUrl})`,
                   backgroundSize: "cover",
@@ -2203,7 +2232,7 @@ const App: React.FC = () => {
               ref={mainAreaRef}
               className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
               style={layout?.glassmorphism ? (() => {
-                const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK || theme.mode === ThemeMode.CYBER ? 35 : 55)) / 100;
+                const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK ? 35 : 55)) / 100;
                 const alpha = Math.pow(p, 0.72);
                 const blurPx = Math.round(alpha * 12);
                 return {

@@ -56,7 +56,7 @@ export function tokensToDashboardTheme(
   overrides: Partial<DashboardTheme> = {}
 ): DashboardTheme {
   const t = tokens.tokens;
-  const isDark = mode === ThemeMode.DARK || mode === ThemeMode.CYBER;
+  const isDark = mode === ThemeMode.DARK;
   const semantic = semanticForMode(t, isDark ? 'dark' : 'light');
 
   const primaryHex = getValue(t.colors?.brand?.primary as TokenObj) || '#3b82f6';

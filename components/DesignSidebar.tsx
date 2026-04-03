@@ -700,7 +700,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
                   <Image className="w-3.5 h-3.5" /> Background Image
                 </h3>
-                {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundImageLight || currentPage.layout?.backgroundImageDark || currentPage.layout?.backgroundFlicker) && (
+                {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundImageLight || currentPage.layout?.backgroundImageDark) && (
                   <button
                     type="button"
                     onClick={() => onUpdatePage({
@@ -709,7 +709,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         backgroundImage: undefined,
                         backgroundImageLight: undefined,
                         backgroundImageDark: undefined,
-                        backgroundFlicker: false,
                       },
                     })}
                     className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-caption font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
@@ -791,15 +790,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
               />
 
-              {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundImageLight || currentPage.layout?.backgroundImageDark) && (
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-caption font-bold uppercase text-muted">Neon flicker</span>
-                  <Switch
-                    checked={currentPage.layout?.backgroundFlicker ?? false}
-                    onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundFlicker: checked } })}
-                  />
-                </div>
-              )}
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
                 <span className="text-caption font-bold uppercase text-muted">지구 배경 (Globe)</span>
                 <Switch
