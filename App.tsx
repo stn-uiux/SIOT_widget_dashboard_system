@@ -66,6 +66,11 @@ import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 import logoB from "./assets/logo-b-1 1.png";
 import logoW from "./assets/logo-w-1 1.png";
 
+import proj1Zip from "./assets/New_Project_1_2026-03-11.zip";
+import proj2Zip from "./assets/new_project_2_2026-03-11.zip";
+import proj3Zip from "./assets/New_Project_3_2026-03-11.zip";
+import proj4Zip from "./assets/New_Project_4_2026-03-15.zip";
+
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
 
@@ -1046,6 +1051,50 @@ const App: React.FC = () => {
     },
     [activeProjectId],
   );
+
+  // --- [SIOT Onboarding] Initialize projects from assets if localStorage is empty ---
+  useEffect(() => {
+    const bootstrapInitialProjects = async () => {
+      // Check if project data exists in storage (IndexedDB fallback via localStorage flag)
+      const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
+      if (!projectsRaw) {
+        const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
+        const loadedProjects: Project[] = [];
+        const loadedLayouts: LayoutStore = {};
+
+        for (const url of zipUrls) {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            // Convert to File for existing import logic
+            const file = new File([blob], "initial_project.zip", { type: "application/zip" });
+            const { project, layoutPositions } = await importProjectFromZip(file);
+            
+            loadedProjects.push(project);
+            loadedLayouts[project.id] = layoutPositions;
+          } catch (e) {
+            console.error("[Onboarding] Failed to auto-import project asset:", url, e);
+          }
+        }
+
+        if (loadedProjects.length > 0) {
+          setProjects(loadedProjects);
+          setActiveProjectId(loadedProjects[0].id);
+          setLayoutStore(prev => {
+            const next = { ...prev, ...loadedLayouts };
+            layoutStoreRef.current = next;
+            saveLayoutStore(next);
+            return next;
+          });
+          // Persist current project state to avoid duplicate onboarding
+          saveProjectsState(loadedProjects, loadedProjects[0].id);
+        }
+      }
+    };
+    bootstrapInitialProjects();
+  }, []);
+  // ----------------------------------------------------------------------------
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
