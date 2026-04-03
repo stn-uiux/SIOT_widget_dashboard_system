@@ -63,8 +63,8 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
     const baseRadius = Math.min(width, height) / 2.2;
     const currentRadius = baseRadius * zoom;
     const l = isLight ? 'light' : 'dark';
-    const getVar = (name: string) =>
-      typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue(name).trim() : '';
+    const styles = typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null;
+    const getVar = (name: string) => styles ? styles.getPropertyValue(name).trim() : '';
 
     const projection = d3.geoOrthographic()
       .scale(currentRadius)
@@ -75,32 +75,46 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
     const svg = d3.select(svgRef.current);
     const mainGroup = svg.select('.globe-group');
 
+    // Pre-calculate common style variables to avoid repeating DOM queries
+    const outerRadius = currentRadius * 1.35;
+    const innerRadius = currentRadius * 1.08;
+    const sphereRadius = currentRadius * 0.98;
+    const outerGlowFill = getVar(`--globe-glow-fill-${l}`);
+    const outerBlurVal = getVar('--globe-blur-outer') || '80px';
+    const ringStroke = getVar(`--globe-ring-stroke-${l}`);
+    const ringBlurVal = getVar('--globe-blur-inner') || '4px';
+    const sphereFill = getVar(`--globe-sphere-fill-${l}`);
+    const sphereStroke = getVar(`--globe-sphere-stroke-${l}`);
+    const graticuleStroke = getVar(`--globe-graticule-stroke-${l}`);
+    const landFill = getVar(`--globe-land-fill-${l}`);
+    const landStroke = getVar(`--globe-land-stroke-${l}`);
+
     // Update Outer Glow
     mainGroup.select('.outer-glow')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
-      .attr('r', currentRadius * 1.35)
-      .attr('fill', getVar(`--globe-glow-fill-${l}`))
-      .style('filter', `blur(${getVar('--globe-blur-outer') || '80px'})`)
+      .attr('r', outerRadius)
+      .attr('fill', outerGlowFill)
+      .style('filter', `blur(${outerBlurVal})`)
       .style('opacity', isLight ? 0.3 : 0.12);
 
     // Update Inner Ring
     mainGroup.select('.inner-ring')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
-      .attr('r', currentRadius * 1.08)
+      .attr('r', innerRadius)
       .attr('fill', 'none')
-      .attr('stroke', getVar(`--globe-ring-stroke-${l}`))
+      .attr('stroke', ringStroke)
       .attr('stroke-width', 2)
-      .style('filter', `blur(${getVar('--globe-blur-inner') || '4px'})`);
+      .style('filter', `blur(${ringBlurVal})`);
 
     // Update Sphere
     mainGroup.select('.sphere')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
-      .attr('r', currentRadius * 0.98)
-      .attr('fill', getVar(`--globe-sphere-fill-${l}`))
-      .attr('stroke', getVar(`--globe-sphere-stroke-${l}`));
+      .attr('r', sphereRadius)
+      .attr('fill', sphereFill)
+      .attr('stroke', sphereStroke);
 
     // Update Graticule
     const graticule = d3.geoGraticule();
@@ -108,15 +122,15 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .datum(graticule())
       .attr('d', path as unknown as string)
       .attr('fill', 'none')
-      .attr('stroke', getVar(`--globe-graticule-stroke-${l}`))
+      .attr('stroke', graticuleStroke)
       .attr('stroke-width', 0.5);
 
     // Update Land
     mainGroup.select('.land')
       .datum(worldData)
       .attr('d', path as unknown as string)
-      .attr('fill', getVar(`--globe-land-fill-${l}`))
-      .attr('stroke', getVar(`--globe-land-stroke-${l}`))
+      .attr('fill', landFill)
+      .attr('stroke', landStroke)
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
 

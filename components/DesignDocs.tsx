@@ -10,13 +10,14 @@ import {
 import './DesignDocs.css';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
-import { ThemeMode } from '../types';
+import { ThemeMode, DashboardTheme } from '../types';
 
 interface DesignDocsProps {
+    theme: DashboardTheme;
     onClose: () => void;
 }
 
-const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
+const DesignDocs: React.FC<DesignDocsProps> = ({ theme, onClose }) => {
     const [activeTab, setActiveTab] = useState<'tokens' | 'components' | 'icons'>('tokens');
     const [activeSubTab, setActiveSubTab] = useState<'buttons' | 'forms' | 'cards'>('buttons');
 
@@ -48,8 +49,13 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ onClose }) => {
                     <button onClick={onClose} className="p-2 hover:bg-[var(--border-muted)] rounded-full transition-colors text-muted">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
+                    <img 
+                      src={theme.mode === ThemeMode.DARK ? "/assets/logo-w-1%201.png" : "/assets/logo-b-1%201.png"} 
+                      className="h-8 w-auto object-contain" 
+                      alt="STN Logo" 
+                    />
                     <div>
-                        <h1 className="text-xl font-black tracking-tight text-main">Design System Documentation</h1>
+                        <h1 className="text-xl font-black tracking-tight text-main">STN Design System Documentation</h1>
                         <p className="text-xs font-bold text-muted uppercase tracking-tighter">A Comprehensive Guide to Our Brand & Product UI</p>
                     </div>
                 </div>

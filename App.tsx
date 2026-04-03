@@ -60,6 +60,7 @@ import DesignSystem from "./DesignSystem";
 import WidgetPicker from "./components/WidgetPicker";
 import ModeToggle from "./components/ModeToggle";
 import GlobeBackground from "./components/GlobeBackground";
+import FloatingAssistantButton from "./components/FloatingAssistantButton";
 import { dbSave, dbLoad } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 
@@ -1073,6 +1074,7 @@ const App: React.FC = () => {
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
+  const [isFloatingGnbOpen, setIsFloatingGnbOpen] = useState(false);
 
   const [panelPos, setPanelPos] = useState({ x: 20, y: 100 });
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -1810,21 +1812,55 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Exit Preview — Premium Floating Icon Button */}
+      {isPreviewMode && (
+        <button
+          onClick={() => setIsPreviewMode(false)}
+          className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-2xl group"
+          style={{ 
+            bottom: 'var(--spacing-xl)', 
+            right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
+            width: 'var(--ai-fab-size)',
+            height: 'var(--ai-fab-size)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: '9999px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}
+          title="Exit Preview"
+        >
+          <div className="absolute inset-0 bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
+          <EyeOff 
+            className="w-7 h-7 text-white drop-shadow-lg" 
+          />
+        </button>
+      )}
+
+      {/* Floating GNB Capsule (Triggered by AI FAB) */}
       {!isPreviewMode && (
-        <header
-          className="z-50 px-6 py-3 flex items-center justify-between shrink-0 transition-all duration-500 border-b backdrop-blur-md bg-[var(--surface)]/80 border-[var(--border-base)]"
+        <div 
+          className={`fixed z-[99] transition-all duration-500 flex items-center ${isFloatingGnbOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
+          style={{ 
+            bottom: 'var(--spacing-xl)', 
+            right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
+            height: 'var(--ai-fab-size)',
+            backgroundColor: 'rgba(var(--surface-rgb), 0.8)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: '9999px',
+            padding: '0 24px',
+            border: '1px solid var(--border-base)',
+            boxShadow: 'var(--shadow-premium), 0 10px 40px rgba(0,0,0,0.2)',
+          }}
         >
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
-              <IsometricLogo
-                isDark={theme.mode !== ThemeMode.LIGHT}
-                primaryColor={theme.primaryColor}
+              <img 
+                src={theme.mode === ThemeMode.DARK ? "/assets/logo-w-1%201.png" : "/assets/logo-b-1%201.png"} 
+                className="h-7 w-auto object-contain" 
+                alt="STN Logo" 
               />
-              <div>
-                <h1 className="font-bold leading-tight flex items-center text-main">
-                  Widget Dashboard{" "}
-                  <span className="badge-pro">PRO</span>
-                </h1>
+              <div className="flex items-center gap-4">
                 <div className="relative">
                   <button
                     onClick={() =>
@@ -1832,7 +1868,7 @@ const App: React.FC = () => {
                     }
                     className="flex items-center gap-1.5 group"
                   >
-                    <span className="uppercase font-bold transition-colors text-muted group-hover:text-primary" style={{ fontSize: 'var(--text-caption)' }}>
+                    <span className="uppercase font-bold transition-colors text-muted group-hover:text-primary whitespace-nowrap" style={{ fontSize: 'var(--text-caption)' }}>
                       {currentProject.name}
                     </span>
                     <ChevronDown
@@ -1847,7 +1883,8 @@ const App: React.FC = () => {
                         onClick={() => setIsProjectDropdownOpen(false)}
                       />
                       <div
-                        className="absolute top-full left-0 mt-2 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] rounded"
+                        className="absolute bottom-full left-0 mb-4 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
+                        style={{ borderRadius: 'var(--radius-panel)' }}
                       >
                         <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
                           <p className="uppercase font-bold text-muted tracking-widest" style={{ fontSize: 'var(--text-caption)' }}>
@@ -1865,68 +1902,16 @@ const App: React.FC = () => {
                                   setActiveProjectId(p.id);
                                   setIsProjectDropdownOpen(false);
                                 }}
-                                className="flex-1 min-w-0 text-left flex items-center gap-2"
+                                className="flex-1 min-w-0 text-left"
                               >
-                                {editingProjectId === p.id ? (
-                                  <input
-                                    type="text"
-                                    value={editingProjectName}
-                                    onChange={(e) => setEditingProjectName(e.target.value)}
-                                    onBlur={() => renameProject(p.id, editingProjectName)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") renameProject(p.id, editingProjectName);
-                                      if (e.key === "Escape") {
-                                        setEditingProjectId(null);
-                                        setEditingProjectName("");
-                                      }
-                                    }}
-                                    className="flex-1 min-w-0 px-2 py-1 text-xs font-bold bg-[var(--surface)] border border-[var(--border-base)] rounded focus:ring-2 focus:ring-[var(--primary-color)] outline-none"
-                                    autoFocus
-                                    onClick={(e) => e.stopPropagation()}
-                                  />
-                                ) : (
-                                  <>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-bold text-xs uppercase tracking-tight truncate">
-                                        {p.name}
-                                      </p>
-                                      <p className="text-muted uppercase font-bold" style={{ fontSize: 'var(--text-nano)' }}>
-                                        {p.pages.length} Pages
-                                      </p>
-                                    </div>
-                                    {activeProjectId === p.id && (
-                                      <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
-                                    )}
-                                  </>
-                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                    {p.name}
+                                  </p>
+                                </div>
                               </button>
-                              {editingProjectId !== p.id && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingProjectId(p.id);
-                                      setEditingProjectName(p.name);
-                                    }}
-                                    className="p-1.5 rounded hover:bg-[var(--border-muted)] text-muted hover:text-primary shrink-0"
-                                    title="프로젝트 이름 수정"
-                                  >
-                                    <Edit3 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteProjectId(p.id);
-                                    }}
-                                    className="p-1.5 rounded hover:bg-[var(--action-danger-hover-bg)] text-muted hover:text-[var(--error)] shrink-0"
-                                    title="프로젝트 삭제"
-                                    disabled={projects.length <= 1}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </>
+                              {activeProjectId === p.id && (
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
                               )}
                             </div>
                           ))}
@@ -1939,7 +1924,7 @@ const App: React.FC = () => {
                           >
                             <Upload className="w-4 h-4 shrink-0" />
                             <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                              내보내기
+                              Export
                             </span>
                           </button>
                           <button
@@ -1948,16 +1933,9 @@ const App: React.FC = () => {
                           >
                             <Download className="w-4 h-4 shrink-0" />
                             <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                              내려받기
+                              Import
                             </span>
                           </button>
-                          <input
-                            ref={importInputRef}
-                            type="file"
-                            accept=".zip"
-                            className="hidden"
-                            onChange={handleImportChange}
-                          />
                           <button
                             onClick={addProject}
                             className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm"
@@ -1976,25 +1954,24 @@ const App: React.FC = () => {
             </div>
           </div>
 
+          <div className="h-6 w-px bg-[var(--border-base)] mx-4" />
+
           <div className="flex items-center gap-2">
             <div className="relative">
               <button
                 onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
-                className={`btn-base btn-surface ${isLibraryDropdownOpen ? "active" : ""}`}
+                className={`btn-base btn-surface h-10 px-4 rounded-full ${isLibraryDropdownOpen ? "active" : ""}`}
               >
                 <div
                   className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
                   style={{ backgroundColor: `color-mix(in srgb, var(${currentLibrary.colorVar}) 12%, transparent)`, color: `var(${currentLibrary.colorVar})` }}
                 >
                   <currentLibrary.icon
-                    className="w-3.5 h-3.5 underline-offset-2"
-                    style={{ color: `var(${currentLibrary.colorVar})` }}
+                    className="w-3.5 h-3.5"
                   />
                 </div>
-                <span>{currentLibrary.label}</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-300 opacity-50 ${isLibraryDropdownOpen ? "rotate-180" : ""}`}
-                />
+                <span className="text-xs font-bold">{currentLibrary.label}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-muted/60 group-hover:text-primary`} />
               </button>
 
               {isLibraryDropdownOpen && (
@@ -2004,16 +1981,9 @@ const App: React.FC = () => {
                     onClick={() => setIsLibraryDropdownOpen(false)}
                   />
                   <div
-                    className="absolute top-full right-0 mt-2 w-52 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 bg-[var(--surface)] border border-[var(--border-base)] rounded shadow-premium"
+                    className="absolute bottom-full right-0 mb-4 w-52 p-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow shadow-premium"
+                    style={{ borderRadius: 'var(--radius-panel)' }}
                   >
-                    <div className="px-3 py-2 mb-1">
-                      <p
-                        className="uppercase font-bold tracking-widest text-muted"
-                        style={{ fontSize: 'var(--text-caption)' }}
-                      >
-                        Select Engine
-                      </p>
-                    </div>
                     {libraryOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -2027,24 +1997,9 @@ const App: React.FC = () => {
                         className={`w-full justify-between px-3 py-2.5 flex items-center transition-all btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`}
                       >
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
-                            style={{ backgroundColor: `color-mix(in srgb, var(${opt.colorVar}) 12%, transparent)` }}
-                          >
-                            <opt.icon
-                              className="w-4 h-4"
-                              style={{ color: `var(${opt.colorVar})` }}
-                            />
-                          </div>
-                          <span className="font-bold text-xs uppercase tracking-tight">
-                            {opt.label}
-                          </span>
+                          <opt.icon className="w-4 h-4" style={{ color: `var(${opt.colorVar})` }} />
+                          <span className="font-bold text-xs uppercase tracking-tight">{opt.label}</span>
                         </div>
-                        {theme.chartLibrary === opt.value && (
-                          <CheckCircle2
-                            className="w-4 h-4 text-primary"
-                          />
-                        )}
                       </button>
                     ))}
                   </div>
@@ -2052,13 +2007,11 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="h-6 w-px bg-[var(--border-base)] mx-1" />
-
             <button
               onClick={handleToggleDesignSidebar}
-              className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
+              className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
             >
-              <Palette className="w-4 h-4" /> <span>Design</span>
+              <Palette className="w-4 h-4" /> <span className="text-xs">Design</span>
             </button>
             <button
               onClick={() => {
@@ -2066,27 +2019,37 @@ const App: React.FC = () => {
                 setSelectedWidgetId(null);
                 setIsDesignSidebarOpen(false);
               }}
-              className={`btn-base btn-surface ${isLayoutSidebarOpen ? "active" : ""}`}
+              className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
             >
-              <LayoutGrid className="w-4 h-4" /> <span>Layout</span>
+              <LayoutGrid className="w-4 h-4" /> <span className="text-xs">Layout</span>
             </button>
             <button
               onClick={handleProjectSave}
-              className={`btn-base btn-surface ${isEditMode ? "active" : ""}`}
+              className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
             >
-              <Edit3 className="w-4 h-4" />{" "}
-              <span>Edit Project</span>
+              <Edit3 className="w-4 h-4" /> <span className="text-xs">Edit</span>
             </button>
             <button
               disabled={isEditMode}
-              onClick={() => setIsPreviewMode(true)}
-              className={`btn-base btn-surface ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+              onClick={() => {
+                setIsPreviewMode(true);
+                setIsFloatingGnbOpen(false);
+              }}
+              className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
             >
-              <Eye className="w-4 h-4" /> <span>Preview</span>
+              <Eye className="w-4 h-4" /> <span className="text-xs">Preview</span>
             </button>
           </div>
-        </header>
+        </div>
       )}
+
+      <input
+        type="file"
+        ref={importInputRef}
+        onChange={handleImportChange}
+        style={{ display: "none" }}
+        accept=".zip"
+      />
 
       {/* Main Workspace — sidebars are OUTSIDE the project theme scope now */}
       <div className="flex-1 flex overflow-hidden relative transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)]">
@@ -2209,13 +2172,8 @@ const App: React.FC = () => {
                         : ""
                         } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
                     >
-                      {header.logo && (
-                        <img
-                          src={header.logo}
-                          alt="Logo"
-                          className="h-6 w-auto object-contain"
-                        />
-                      )}
+                      {/* Logo removed as requested to restore layout */}
+
                       <h2 className="text-lg font-black tracking-tighter whitespace-nowrap">
                         {header.title}
                       </h2>
@@ -2275,7 +2233,7 @@ const App: React.FC = () => {
               cursor: isDraggingPanel ? 'move' : 'default'
             }}
           >
-            <div className="pointer-events-auto overflow-hidden rounded">
+            <div className={`pointer-events-auto overflow-hidden shadow-2xl floating-panel-glow`} style={{ borderRadius: 'var(--radius-panel)' }}>
               {isDesignSidebarOpen ? (
                 <DesignSidebar
                   theme={theme}
@@ -2339,16 +2297,6 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Exit Preview — shown in both project_1 and project_2 */}
-      {isPreviewMode && (
-        <button
-          onClick={() => setIsPreviewMode(false)}
-          className="fixed bottom-8 right-8 z-50 btn-base btn-surface active px-8 py-4 rounded shadow-premium hover:scale-105 transition-transform"
-        >
-          <EyeOff className="w-5 h-5" /> Exit Preview
-        </button>
-      )}
-
       {/* Excel Integration Modal */}
       <ExcelModal
         isOpen={excelWidgetId !== null}
@@ -2409,7 +2357,7 @@ const App: React.FC = () => {
       )}
 
       {isDesignDocsOpen && (
-        <DesignDocs onClose={() => setIsDesignDocsOpen(false)} />
+        <DesignDocs theme={theme} onClose={() => setIsDesignDocsOpen(false)} />
       )}
 
       <WidgetPicker
@@ -2418,6 +2366,8 @@ const App: React.FC = () => {
         onSelect={addWidgetWithType}
         isDark={true}
       />
+
+      <FloatingAssistantButton onClick={() => setIsFloatingGnbOpen(!isFloatingGnbOpen)} />
     </div>
   );
 };

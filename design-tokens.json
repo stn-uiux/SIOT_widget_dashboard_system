@@ -454,6 +454,29 @@
                         "description": "Dark mode glass shadow"
                     }
                 }
+            },
+            "ai_fab": {
+                "size": {
+                    "value": "72px",
+                    "type": "dimension",
+                    "description": "AI Assistant FAB size"
+                },
+                "gradient": {
+                    "value": "linear-gradient(135deg, #00f2ff, #7000ff, #00f2ff)",
+                    "type": "string"
+                },
+                "glow": {
+                    "value": "0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2)",
+                    "type": "string"
+                },
+                "inner_glow": {
+                    "value": "inset 0 0 15px rgba(255, 255, 255, 0.3)",
+                    "type": "string"
+                },
+                "blur": {
+                    "value": "12px",
+                    "type": "dimension"
+                }
             }
         },
         "icons": {

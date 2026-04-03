@@ -83,7 +83,8 @@ export const DEFAULT_HEADER: HeaderConfig = {
   backgroundColor: 'var(--background)',
   textColor: 'var(--text-main)',
   textAlignment: TextAlignment.LEFT,
-  title: 'My Custom Dashboard',
+  title: 'My Dashboard',
+  logo: '',
   showDivider: true,
   widgets: [],
 };

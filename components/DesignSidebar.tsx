@@ -98,40 +98,41 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
   ];
 
   return (
-    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
-      theme.mode === ThemeMode.LIGHT 
-        ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
-    }`}>
-      <div className={`flex items-center justify-between p-6 border-b cursor-move ${
-        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]"
-      }`} onMouseDown={onDragStart}>
-        <div className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 text-gray-300" />
+    <div className={`w-80 max-h-[85vh] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
+      theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+    }`} style={{
+      borderRadius: 'var(--radius-panel)',
+      border: 'var(--floating-panel-border)',
+    }}>
+      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
+        <div className="flex items-center gap-3">
+          <GripVertical className="w-4 h-4 text-muted/30" />
           <Palette className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-bold tracking-tighter">
-            Design System
-          </h2>
+          <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Design System</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onOpenDocs}
-            className="p-1.5 rounded transition-colors hover:bg-[var(--border-muted)] text-muted hover:text-primary"
-            title="Open Documentation"
-          >
-            <BookOpen className="w-4 h-4" />
-          </button>
-          <button onClick={onSave} className="p-1 rounded transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
+        <div className="flex items-center gap-1.5">
+          {onOpenDocs && (
+            <button
+              onClick={onOpenDocs}
+              className="p-1.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-main"
+            >
+              <BookOpen className="w-4 h-4" />
+            </button>
+          )}
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
             <Check className="w-4 h-4" />
           </button>
-          <button onClick={onClose} className="p-1 rounded-full opacity-60 transition-colors btn-ghost">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tab Navigation */}
-      <div className="flex shrink-0 border-b border-[var(--border-base)] bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="flex shrink-0 border-b border-[var(--border-base)] bg-transparent">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -144,9 +145,9 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {activeTab === 'mode' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="space-y-4 animate-in fade-in duration-300">
             <section className="space-y-3">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Select Mode</h3>
               <div className="grid grid-cols-1 gap-3">
@@ -154,10 +155,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <button
                     key={preset.id}
                     onClick={() => onApplyPreset(preset)}
-                    className={`group relative p-4 rounded-2xl border transition-all text-left overflow-hidden ${
+                    className={`group relative p-4 rounded-2xl border transition-all text-left overflow-hidden glass-item ${
                       theme.name === preset.name 
                         ? 'border-primary ring-2 ring-primary/20 bg-primary/5' 
-                        : 'border-[var(--border-base)] hover:border-primary bg-gray-50 dark:bg-gray-800/50'
+                        : 'hover:border-primary'
                     }`}
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform" />
@@ -180,22 +181,24 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         )}
 
         {activeTab === 'global' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-5 animate-in fade-in duration-300">
             <section className="space-y-3">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Brand Primary Color</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {BRAND_COLORS.map(color => (
+              <div className="flex flex-wrap items-center gap-2.5 py-2">
+                {['#3b82f6', '#6366f1', '#a855f7', '#10b981', '#f59e0b', '#ef4444', '#64748b'].map((color) => (
                   <button
-                    key={color.hex}
-                    onClick={() => updateTheme({ primaryColor: color.hex })}
-                    className="w-full aspect-square rounded-full border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-all flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: color.hex }}
+                    key={color}
+                    onClick={() => updateTheme({ primaryColor: color })}
+                    className={`w-8 h-8 shrink-0 rounded-[6px] flex items-center justify-center transition-all ${
+                      theme.primaryColor === color ? 'ring-2 ring-[var(--primary-color)] ring-offset-2 ring-offset-[#040610] scale-110 shadow-[0_0_12px_rgba(var(--primary-rgb),0.3)]' : 'opacity-80 hover:opacity-100 hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: color }}
                   >
-                    {theme.primaryColor === color.hex && <CheckCircle2 className="w-4 h-4 text-white drop-shadow-md" />}
+                    {theme.primaryColor === color && <Check className="w-3.5 h-3.5 text-white drop-shadow-sm" />}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-[var(--border-base)] mt-1">
+              <div className="flex items-center justify-between p-2.5 rounded-xl mt-1 glass-item">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: theme.primaryColor }} />
                   <input
@@ -230,7 +233,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-3">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Grid & Radius</h3>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -298,7 +301,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Typography Scale</h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[
                   { label: 'Title Size', key: 'titleSize', min: 12, max: 32 },
                   { label: 'Content (Base)', key: 'contentSize', min: 8, max: 24 },
@@ -317,7 +320,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       type="range" min={item.min} max={item.max} step="1"
                       value={(theme as any)[item.key]}
                       onChange={(e) => updateTheme({ [item.key]: parseInt(e.target.value) })}
-                      className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                      className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                     />
                   </div>
                 ))}
@@ -327,7 +330,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         )}
 
         {activeTab === 'header' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-5 animate-in fade-in duration-300">
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Dashboard Header</h3>
@@ -338,20 +341,20 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
 
               {header.show && (
-                <div className="space-y-6 pt-4 border-t border-[var(--border-base)] animate-in slide-in-from-top-2 duration-200">
+                <div className="space-y-5 pt-4 border-t border-[var(--border-base)] animate-in slide-in-from-top-2 duration-200">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <span className="text-caption uppercase font-bold text-muted">Position</span>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           onClick={() => updateHeader({ position: HeaderPosition.TOP })}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all ${header.position === HeaderPosition.TOP ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
+                          className={`p-2 rounded-lg border text-xs font-bold transition-all glass-item ${header.position === HeaderPosition.TOP ? 'bg-[var(--primary-color)]/10 border-[var(--primary-color)] text-[var(--primary-color)] shadow-[0_0_12px_rgba(var(--primary-rgb),0.1)]' : 'border-[var(--border-base)] text-muted hover:border-primary/50'}`}
                         >
                           Top
                         </button>
                         <button
                           onClick={() => updateHeader({ position: HeaderPosition.LEFT })}
-                          className={`p-2 rounded-lg border text-xs font-bold transition-all ${header.position === HeaderPosition.LEFT ? 'bg-primary/5 border-primary text-primary' : 'bg-gray-50 dark:bg-gray-800 border-[var(--border-base)] text-muted hover:border-primary/50'}`}
+                          className={`p-2 rounded-lg border text-xs font-bold transition-all glass-item ${header.position === HeaderPosition.LEFT ? 'bg-[var(--primary-color)]/10 border-[var(--primary-color)] text-[var(--primary-color)] shadow-[0_0_12px_rgba(var(--primary-rgb),0.1)]' : 'border-[var(--border-base)] text-muted hover:border-primary/50'}`}
                         >
                           Left
                         </button>
@@ -371,7 +374,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         type="range" min="40" max={header.position === HeaderPosition.TOP ? 120 : 400} step="4"
                         value={header.position === HeaderPosition.TOP ? header.height : header.width}
                         onChange={(e) => updateHeader(header.position === HeaderPosition.TOP ? { height: parseInt(e.target.value) } : { width: parseInt(e.target.value) })}
-                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                        className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                       />
                     </div>
                   </div>
@@ -379,7 +382,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <span className="text-caption uppercase font-bold text-muted">Appearance</span>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
+                      <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
                         <span className="text-caption font-bold text-muted uppercase">
                           Show {header.position === HeaderPosition.TOP ? 'Bottom' : 'Right'} Line
                         </span>
@@ -396,17 +399,17 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         type="text"
                         value={header.title}
                         onChange={(e) => updateHeader({ title: e.target.value })}
-                        className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
+                        className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                       />
                     </div>
                     <div className="space-y-2">
                       <span className="text-caption uppercase font-bold text-muted">Alignment</span>
-                      <div className="flex bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-[var(--border-base)]">
+                      <div className="flex items-center gap-1.5 p-1.5 bg-transparent rounded-2xl border border-[var(--border-base)] glass-item w-fit">
                         {[TextAlignment.LEFT, TextAlignment.CENTER, TextAlignment.RIGHT].map((align) => (
                           <button
                             key={align}
                             onClick={() => updateHeader({ textAlignment: align })}
-                            className={`flex-1 py-1.5 rounded transition-all flex justify-center ${header.textAlignment === align ? 'bg-[var(--surface)] text-primary shadow-sm font-bold' : 'text-muted hover:text-main'}`}
+                            className={`w-9 h-8 rounded-lg transition-all flex items-center justify-center ${header.textAlignment === align ? 'bg-[var(--primary-color)]/20 text-[var(--primary-color)] border border-[var(--primary-color)] shadow-sm font-bold' : 'text-muted hover:text-main hover:bg-white/5'}`}
                           >
                             {align === TextAlignment.LEFT && <AlignLeft className="w-4 h-4" />}
                             {align === TextAlignment.CENTER && <AlignCenter className="w-4 h-4" />}
@@ -428,7 +431,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         />
                       </label>
                     </div>
-                    <div className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] ${header.backgroundColor === 'transparent' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                    <div className={`flex items-center justify-between p-3 rounded-2xl glass-item ${header.backgroundColor === 'transparent' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.backgroundColor }} />
                         <input
@@ -440,7 +443,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                               updateHeader({ backgroundColor: val });
                             }
                           }}
-                          className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                          className="w-20 bg-transparent border-none p-0 text-xs font-bold uppercase text-main outline-none focus:ring-0"
                           title="HEX Color Code"
                         />
                       </div>
@@ -480,7 +483,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         <span className="absolute bottom-1 left-2 text-nano font-bold text-white/80 uppercase tracking-widest drop-shadow">Preview</span>
                       </div>
                     )}
-                    <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
+                    <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
@@ -507,13 +510,13 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                       placeholder="URL (예: /assets/header-bg.png)"
                       value={header.backgroundImage?.startsWith('data:') ? '' : (header.backgroundImage ?? '')}
                       onChange={(e) => updateHeader({ backgroundImage: e.target.value.trim() || undefined })}
-                      className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+                      className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <span className="text-caption uppercase font-bold text-muted">Text Color</span>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
+                    <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColor }} />
                         <input
@@ -614,7 +617,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         )}
 
         {activeTab === 'advanced' && (
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-5 animate-in fade-in duration-300">
             <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-center justify-between">
               <div>
                 <p className="text-caption font-bold uppercase text-primary tracking-widest leading-none mb-1">Design Mode</p>
@@ -631,7 +634,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
+                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.backgroundColor }} />
                       <input
@@ -652,7 +655,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     />
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
+                <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.surfaceColor }} />
                     <input
@@ -672,7 +675,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                   />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-[var(--border-base)]">
+                <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
                     <input
@@ -721,7 +724,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
 
               <div className="space-y-3">
                 <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
-                <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
+                <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
@@ -746,13 +749,13 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   placeholder="라이트 모드 URL (예: /assets/bg-light.png)"
                   value={currentPage.layout?.backgroundImageLight?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageLight ?? '')}
                   onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageLight: e.target.value.trim() || undefined } })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+                  className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
                 />
               </div>
 
               <div className="space-y-3">
                 <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> 다크 모드 배경</p>
-                <div className="p-3 rounded-xl border border-[var(--border-base)] bg-[var(--surface-muted)] flex items-center gap-3">
+                <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
@@ -777,7 +780,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   placeholder="다크 모드 URL (예: /assets/bg-dark.png)"
                   value={currentPage.layout?.backgroundImageDark?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageDark ?? '')}
                   onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageDark: e.target.value.trim() || undefined } })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+                  className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
                 />
               </div>
 
@@ -787,7 +790,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 placeholder="/assets/bg-project2.png 또는 URL"
                 value={currentPage.layout?.backgroundImage?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImage ?? '')}
                 onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImage: e.target.value.trim() || undefined } })}
-                className="w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
+                className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
               />
 
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
@@ -820,7 +823,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     max={100}
                     value={currentPage.layout?.glassmorphismOpacity ?? (theme.mode === ThemeMode.LIGHT ? 55 : 35)}
                     onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphismOpacity: Number(e.target.value) } })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-[var(--surface-muted)] accent-[var(--primary-color)]"
+                    className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                   />
                   <p className="text-micro text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
                 </div>
@@ -831,7 +834,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         )}
       </div>
 
-      <div className="p-6 border-t border-[var(--border-base)] bg-gray-50 dark:bg-gray-900/50">
+      <div className="p-4 border-t border-[var(--border-base)] bg-transparent">
         <div className="flex items-center justify-between text-caption text-muted font-bold uppercase">
           <span>Current Active Style</span>
           <span className="text-primary">{theme.name || 'Custom'}</span>

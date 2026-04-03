@@ -126,14 +126,70 @@
     --success-button-bg: rgba(16, 185, 129, 0.2);
     --success-button-glow: 0 0 15px rgba(16, 185, 129, 0.4);
     --chart-gradient-multi: linear-gradient(to right, #4ac0ef 0%, #648be3 30%, #8777e3 50%, #a864e3 70%, #e3649b 100%);
-    --glass-default-bg-light: rgba(255, 255, 255, 0.55);
-    --glass-default-border-light: 1px solid rgba(255, 255, 255, 0.6);
-    --glass-default-shadow-light: 0 8px 32px rgba(0, 0, 0, 0.08);
-    --glass-default-bg-dark: rgba(15, 23, 42, 0.35);
-    --glass-default-border-dark: 1px solid rgba(255, 255, 255, 0.12);
-    --glass-default-shadow-dark: 0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    --marker-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    --floating-panel-bg: rgba(255, 255, 255, 0.35);
+    --floating-panel-blur: 12px;
+    --floating-panel-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    --floating-panel-border: 1px solid rgba(255, 255, 255, 0.2);
+    --radius-panel: 10px;
+}
 
+.dark {
+    --floating-panel-bg: rgba(0, 0, 0, 0.15); /* Restored original high transparency with blackish tint */
+    --floating-panel-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 210, 255, 0.15);
+    --floating-panel-border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Floating Panel Aurora Rim Light — Double Blue Lights (Top & Bottom) */
+.floating-panel-glow {
+    position: relative;
+    background: var(--floating-panel-bg) !important;
+    backdrop-filter: blur(var(--floating-panel-blur)) !important;
+    border: var(--floating-panel-border) !important;
+    box-shadow: var(--floating-panel-shadow) !important;
+    overflow: hidden !important; 
+}
+
+/* Top Blue Rim & Glow */
+.floating-panel-glow::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px; /* Intensified blue glass light */
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #00d2ff 25%, 
+        #3a7bd5 50%, 
+        #00d2ff 75%, 
+        transparent 100%);
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.6); /* Vibrant blue glow on top */
+    z-index: 10;
+    pointer-events: none;
+    border-radius: inherit; /* Dynamic radius to support rounded-full */
+}
+
+/* Bottom Blue Rim — Consistent with bottom aurora line */
+.floating-panel-glow::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #00d2ff 30%, 
+        #3a7bd5 50%, 
+        #00d2ff 70%, 
+        transparent 100%);
+    opacity: 0.8;
+    z-index: 10;
+    pointer-events: none;
+    border-radius: inherit; /* Dynamic radius to support rounded-full */
+}
+
+:root {
     /* Globe (decorative background) */
     --globe-glow-fill-light: #bae6fd;
     --globe-glow-fill-dark: #0ea5e9;
@@ -194,6 +250,54 @@
     --text-md: 18px;
     --text-lg: 30px;
     --text-hero: 48px;
+    
+    /* AI Assistant FAB */
+    --ai-fab-size: 72px;
+    --ai-fab-gradient: linear-gradient(135deg, #00f2ff 0%, #7000ff 50%, #00f2ff 100%);
+    --ai-fab-glow: 0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2);
+    --ai-fab-inner-glow: inset 0 0 20px rgba(255, 255, 255, 0.2);
+    --ai-fab-blur: 12px;
+}
+
+/* Panel Spacing Utilities (Aurora Refinement) */
+:root {
+    --panel-bg-color: 255, 255, 255; /* White for light */
+    --floating-panel-bg: linear-gradient(165deg, rgba(var(--panel-bg-color), 0.8) 0%, rgba(var(--panel-bg-color), 0.6) 100%);
+    --floating-panel-border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+    --floating-panel-shadow: var(--shadow-premium), 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    --floating-panel-blur: 32px;
+    --panel-item-bg: rgba(var(--panel-bg-color), 0.08);
+    --panel-item-bg-hover: rgba(var(--panel-bg-color), 0.15);
+    --radius-panel: 10px;
+}
+
+/* Highly transparent items for use inside Glass Panels */
+.glass-item {
+    background-color: var(--panel-item-bg) !important;
+    border: 1px solid var(--border-base);
+    transition: all 0.2s ease;
+}
+
+.glass-item:hover {
+    background-color: var(--panel-item-bg-hover) !important;
+}
+
+.panel-inner-container {
+    display: flex;
+    flex-direction: column;
+    /* Gap is removed from the structural wrapper to allow header/tabs to be flush */
+}
+
+/* Removed margin-bottom to allow elements like Tabs to sit right under the header border */
+.panel-header-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-base);
 }
 
 /* Typography utility (token-based) */
@@ -203,6 +307,10 @@
 
 /* Dark Mode Overrides */
 .dark {
+    --panel-bg-color: 0, 0, 0; /* Pure Black base */
+    --floating-panel-bg: linear-gradient(165deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.55) 100%);
+    --panel-item-bg: transparent; /* Background removed as requested */
+    --panel-item-bg-hover: rgba(255, 255, 255, 0.05); /* Very subtle white hover hint */
     --background: #020617;
     --surface: #0f172a;
     --surface-elevated: #1e293b;
@@ -231,7 +339,45 @@
     --shadow-light-text: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
+/* Deep Glass Panel with Dual Rim Light (Bottom Blue + Top Mint) */
+[style*="var(--floating-panel-bg)"] {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+}
 
+[style*="var(--floating-panel-bg)"]::before {
+  content: '';
+  position: absolute;
+  top: -25px;
+  left: -25px;
+  width: 150px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(59, 130, 246, 0.2) 60%, transparent 100%);
+  filter: blur(30px);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[style*="var(--floating-panel-bg)"]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), var(--primary-color), rgba(56, 189, 248, 0.5), transparent);
+  filter: blur(1px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Ensure content stays above the spotlight blur */
+[style*="var(--floating-panel-bg)"] > * {
+  position: relative;
+  z-index: 1;
+}
 
 .glass-enabled .bg-surface,
 .glass-enabled .btn-surface:not(.active) {

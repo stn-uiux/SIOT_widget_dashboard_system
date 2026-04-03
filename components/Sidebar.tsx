@@ -29,32 +29,33 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
   if (!selectedWidget) return (
-    <div className={`w-80 max-h-[85vh] flex flex-col p-6 space-y-8 overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
-      theme.mode === ThemeMode.LIGHT 
-        ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
-    }`}>
-      <div className={`flex items-center justify-between mb-4 border-b cursor-default pb-4 ${
-        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]/30"
-      }`} onMouseDown={onDragStart}>
-        <div className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 text-gray-300" />
-          <h2 className="text-xl font-bold tracking-tighter">
-            Layout Settings
-          </h2>
+    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 border ${
+      theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+    }`} style={{
+      borderRadius: 'var(--radius-panel)',
+      border: 'var(--floating-panel-border)',
+    }}>
+      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0" onMouseDown={onDragStart}>
+        <div className="flex items-center gap-3">
+          <GripVertical className="w-4 h-4 text-muted/30" />
+          <LayoutGrid className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Layout Settings</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={onSave} className="p-1 rounded transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
+        <div className="flex items-center gap-1.5">
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
             <Check className="w-4 h-4" />
           </button>
-          <button onClick={onClose} className="p-1 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
-      </div>
-      <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar pr-1">
+      </header>
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
         <div className="space-y-4">
-          <label className="text-sm font-semibold text-muted uppercase flex items-center gap-2">
+          <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
             <LayoutGrid className="w-4 h-4" /> Layout Config
           </label>
           <div className="grid grid-cols-2 gap-4">
@@ -67,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 type="number" min="1" max="96"
                 value={layout.columns}
                 onChange={(e) => onUpdateLayout({ columns: parseInt(e.target.value) || 1 })}
-                className={`w-full p-2 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)]`}
+                className={`w-full p-2 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)] glass-item`}
               />
             </div>
             <div className="space-y-1">
@@ -79,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 type="number" min="1" max="200"
                 value={layout.rows}
                 onChange={(e) => onUpdateLayout({ rows: parseInt(e.target.value) || 1 })}
-                className={`w-full p-2 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)]`}
+                className={`w-full p-2 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)] glass-item`}
               />
             </div>
           </div>
@@ -97,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               step="5"
               value={layout.defaultRowHeight}
               onChange={(e) => onUpdateLayout({ defaultRowHeight: Math.max(10, parseInt(e.target.value, 10) || 20) })}
-              className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)]`}
+              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)] glass-item`}
             />
           </div>
 
@@ -114,17 +115,17 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 step={1}
                 value={theme.spacing ?? 16}
                 onChange={(e) => onUpdateTheme({ spacing: Math.max(0, Math.min(40, parseInt(e.target.value, 10) || 0)) })}
-                className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)]`}
+                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)] glass-item`}
               />
             </div>
           )}
 
           {/* 그리드 사용 */}
           <div
-            className="flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-xl)] transition-all cursor-pointer hover:bg-[var(--border-muted)]"
+            className="flex items-center justify-between px-4 py-3 border border-[var(--border-base)] rounded-[var(--radius-xl)] transition-all cursor-pointer glass-item"
           >
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.useGrid !== false ? '칸 단위 스냅' : '픽셀 자유'}>
+              <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.useGrid !== false ? '칸 단위 스냅' : '픽셀 자유'}>
                 {layout.useGrid !== false ? (
                   <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/></svg>
                 ) : (
@@ -141,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
           {/* 위젯 일괄 적용 (Grid Only) */}
           {layout.useGrid !== false && (
-            <div className={`p-4 mt-2 space-y-4 rounded-[1.25rem] border overflow-hidden relative group transition-all duration-300 bg-gradient-to-br from-[var(--primary-subtle)] to-[var(--surface-muted)] border-[var(--primary-color)]/10 shadow-sm`}>
+            <div className={`p-4 mt-2 space-y-4 rounded-[1.25rem] border overflow-hidden relative group transition-all duration-300 bg-transparent border-[var(--primary-color)]/10 shadow-sm glass-item`}>
               {/* Subtle accent line */}
               <div className={`absolute top-0 left-0 w-1 h-full bg-[var(--primary-color)]/40`} />
 
@@ -152,12 +153,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   </div>
                   <span className={`text-caption font-black uppercase tracking-[0.15em] text-primary`}>Batch Size Sync</span>
                 </div>
-                <div className={`px-1.5 py-0.5 rounded text-nano font-bold uppercase tracking-tight bg-gray-100 text-gray-500`}>
+                <div className={`px-1.5 py-0.5 rounded text-nano font-bold uppercase tracking-tight glass-item`}>
                   Grid Only
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/5">
+              <div className="flex items-center gap-2 p-1 bg-transparent rounded-xl border border-white/10 glass-item">
                 {/* Width Input Group */}
                 <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
                   <span className="text-nano font-black text-muted uppercase tracking-widest pl-0.5">Width (Cols)</span>
@@ -246,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 
   const isSec = false;
@@ -460,14 +461,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
 
   return (
-    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 rounded shadow-2xl border ${
-      theme.mode === ThemeMode.LIGHT 
-        ? "bg-white border-gray-200 text-slate-800" 
-        : "bg-[var(--surface)] border-[var(--border-base)] text-slate-50"
-    }`}>
-      <div className={`flex items-center justify-between p-6 border-b cursor-move pb-4 ${
-        theme.mode === ThemeMode.LIGHT ? "border-[var(--border-muted)]" : "border-[var(--border-base)]/30"
-      }`} onMouseDown={onDragStart}>
+    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 border ${
+      theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+    }`} style={{
+      background: 'var(--floating-panel-bg)',
+      backdropFilter: 'blur(var(--floating-panel-blur))',
+      boxShadow: 'var(--floating-panel-shadow)',
+      borderRadius: 'var(--radius-panel)',
+      border: 'var(--floating-panel-border)',
+    }}>
+      <div className="panel-header-block pb-2 px-4 transition-all">
         <div className="flex items-center gap-2">
           <GripVertical className={`w-4 h-4 text-gray-300`} />
           <h2 className={`text-xl font-bold tracking-tighter`}>
@@ -484,8 +487,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-8 custom-scrollbar">
-      <section className="space-y-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <section className="space-y-4 p-4">
         <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
           <Layers className="w-4 h-4" /> Visualization
         </label>
@@ -496,9 +499,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border ${currentType === id
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
-                    : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
+                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
@@ -520,9 +523,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border ${currentType === id
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
-                    : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
+                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
@@ -544,9 +547,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <button
                 key={id}
                 onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all ${currentType === id
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-600 shadow-sm'
-                  : 'bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] text-gray-400 hover:border-gray-300'
+                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all glass-item ${currentType === id
+                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                  : 'border-[var(--border-base)] text-muted hover:border-primary/50'
                   }`}
               >
                 <meta.icon className="w-4 h-4" />
@@ -572,7 +575,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={96}
                   value={selectedWidget.titleSize ?? 48}
                   onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                 />
               </div>
               <div>
@@ -582,7 +585,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
                     onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                    className="w-full p-2.5 pl-9 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold"
+                    className="w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
                     placeholder="e.g. group, monitoring, star"
                   />
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
@@ -687,7 +690,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={96}
                   value={selectedWidget.titleSize ?? 48}
                   onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                 />
               </div>
               <div className="space-y-1">
@@ -696,7 +699,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={selectedWidget.comparisonText ?? ''}
                   onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
                   placeholder="Compared of $11,750 last year"
                 />
               </div>
@@ -707,7 +710,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="number"
                     value={selectedWidget.trendPercent ?? 21}
                     onChange={(e) => updateCurrentWidget({ trendPercent: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm"
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
@@ -732,7 +735,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], label: e.target.value };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="flex-1 min-w-0 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="flex-1 min-w-0 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
                       placeholder="Label"
                     />
                     <input
@@ -746,7 +749,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], value: parseInt(e.target.value, 10) || 0 };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="w-14 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="w-14 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
                     />
                     <input
                       type="text"
@@ -757,7 +760,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], color: e.target.value || undefined };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="w-20 p-1.5 text-sm rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="w-20 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
                       placeholder="Color"
                     />
                   </div>
@@ -779,7 +782,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <select
                 value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
                 onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
               >
                 {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -872,7 +875,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         );
                         onUpdateWidget(selectedWidget.id, { navItems: next });
                       }}
-                      className="flex-1 min-w-0 p-2 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] text-sm outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+                      className="flex-1 min-w-0 p-2 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] text-xs outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
                       placeholder="메뉴 이름"
                     />
                   </div>
@@ -908,7 +911,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
+                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
                   />
                 </div>
               </div>
@@ -920,7 +923,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentMainValue || ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -932,7 +935,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentSubValue || ''}
                   onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
                   placeholder="Image description..."
                 />
               </div>
@@ -1029,7 +1032,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   onClick={() => toggleConfig(option.key as any)}
                   className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
                 >
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                     {option.label}
                   </span>
                   <div className="pointer-events-none">
@@ -1095,7 +1098,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <button
                       disabled={idx === (currentConfig.series?.length || 0) - 1}
                       onClick={() => moveSeries(idx, 'down')}
-                      className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-0 transition-all"
+                      className="p-0.5 rounded hover:bg-white/10 disabled:opacity-0 transition-all glass-item"
                     >
                       <ChevronDown className="w-3 h-3 text-gray-500" />
                     </button>
@@ -1147,7 +1150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={s.label}
                     onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
-                    className="flex-1 bg-transparent border-none p-0 text-sm font-bold focus:ring-0 outline-none dark:text-white"
+                    className="flex-1 bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
                   />
                   <button
                     onClick={() => handleRemoveSeries(s.key)}
@@ -1162,35 +1165,35 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         )
       }
 
-      <section className="space-y-4 border-t dark:border-gray-800 pt-6">
-        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+      <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+        <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
           <Database className="w-4 h-4" /> Data Config
         </label>
 
         <div className="space-y-3">
           {!isSummary && (
             <div className="space-y-1">
-              <span className="text-caption uppercase font-bold text-gray-400 ml-1">Header (Axis Label)</span>
+              <span className="text-caption uppercase font-bold text-muted ml-1">Header (Axis Label)</span>
               <div className="relative group">
                 <input
                   type="text"
                   value={currentConfig.xAxisLabel || ''}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
-                  className={`w-full p-2.5 pl-9 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
                   placeholder="e.g. Month, Project Name"
                 />
-                <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500" />
+                <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary" />
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <span className="text-caption uppercase font-bold text-gray-400 ml-1">Unit</span>
+            <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
             <input
               type="text"
               value={currentConfig.unit || ''}
               onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
+              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               placeholder="e.g. 명, $, %"
             />
           </div>
@@ -1206,7 +1209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     max={96}
                     value={selectedWidget.titleSize ?? 48}
                     onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                    className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                   />
                 </div>
               )}
@@ -1217,7 +1220,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={currentMainValue || ''}
                     onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono font-bold"
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono font-bold glass-item"
                   />
                 </div>
               )}
@@ -1228,7 +1231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="text"
                     value={currentSubValue || ''}
                     onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all glass-item"
                   />
                 </div>
               )}
@@ -1242,7 +1245,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               const isSankey = currentType === WidgetType.CHART_SANKEY;
 
               return (
-                <div key={idx} className="p-3 bg-white dark:bg-gray-800 rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all">
+                <div key={idx} className="p-3 bg-transparent rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all glass-item">
                   <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
                     <div className="w-full flex items-center gap-2">
                       {/* Primary Label (Source for Sankey) */}
@@ -1289,7 +1292,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         type="number"
                         value={item[s.key] ?? 0}
                         onChange={(e) => handleDataChange(idx, s.key, parseFloat(e.target.value) || 0)}
-                        className="w-20 p-1 bg-gray-50 dark:bg-gray-900 border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white"
+                        className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white glass-item"
                       />
                     </div>
                   ))}
@@ -1303,17 +1306,17 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         )}
       </section>
 
-      <section className="space-y-4 border-t dark:border-gray-800 pt-6">
-        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
+      <section className="space-y-4 border-t border-[var(--border-base)] p-4">
+        <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
             <select
               value={selectedWidget.colSpan}
               onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })}
-              className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer`}
+              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
             >
-              {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val}>{val} Cols</option>))}
+              {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Cols</option>))}
             </select>
           </div>
           <div className="space-y-1">
@@ -1321,9 +1324,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             <select
               value={selectedWidget.rowSpan}
               onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })}
-              className={`w-full p-2.5 bg-[var(--surface-muted)] text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer`}
+              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
             >
-              {[1, 2, 3, 4].map(val => (<option key={val} value={val}>{val} Rows</option>))}
+              {[1, 2, 3, 4].map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Rows</option>))}
             </select>
           </div>
         </div>
