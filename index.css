@@ -298,6 +298,7 @@
     padding-top: var(--spacing-md);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--border-base);
+    cursor: move;
 }
 
 /* Typography utility (token-based) */

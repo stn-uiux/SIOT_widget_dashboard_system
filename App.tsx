@@ -1923,23 +1923,63 @@ const App: React.FC = () => {
                           {projects.map((p) => (
                             <div
                               key={p.id}
-                              className={`flex items-center gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                              className={`flex items-center group/proj gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
                             >
-                              <button
-                                onClick={() => {
-                                  setActiveProjectId(p.id);
-                                  setIsProjectDropdownOpen(false);
-                                }}
-                                className="flex-1 min-w-0 text-left"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-xs uppercase tracking-tight truncate">
-                                    {p.name}
-                                  </p>
+                              {editingProjectId === p.id ? (
+                                <div className="flex-1 flex items-center gap-2 min-w-0">
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    value={editingProjectName}
+                                    onChange={(e) => setEditingProjectName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") renameProject(p.id, editingProjectName);
+                                      if (e.key === "Escape") setEditingProjectId(null);
+                                    }}
+                                    onBlur={() => renameProject(p.id, editingProjectName)}
+                                    className="flex-1 min-w-0 bg-transparent border-b border-[var(--primary-color)] text-xs font-bold outline-none uppercase tracking-tight text-[var(--text-main)] w-full"
+                                  />
                                 </div>
-                              </button>
-                              {activeProjectId === p.id && (
-                                <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setActiveProjectId(p.id);
+                                    setIsProjectDropdownOpen(false);
+                                  }}
+                                  className="flex-1 min-w-0 text-left"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                      {p.name}
+                                    </p>
+                                  </div>
+                                </button>
+                              )}
+                              
+                              <div className="hidden group-hover/proj:flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingProjectId(p.id);
+                                    setEditingProjectName(p.name);
+                                  }}
+                                  className="p-1 text-muted hover:text-[var(--primary-color)] transition-colors inline-block"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteProjectId(p.id);
+                                  }}
+                                  className="p-1 text-muted hover:text-[var(--error)] transition-colors inline-block"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              {activeProjectId === p.id && editingProjectId !== p.id && (
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--primary-color)] group-hover/proj:hidden" />
                               )}
                             </div>
                           ))}

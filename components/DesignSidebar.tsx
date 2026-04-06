@@ -115,16 +115,18 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
             <button
               onClick={onOpenDocs}
               className="p-1.5 rounded-xl transition-all hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-main"
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <BookOpen className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
             <Check className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <X className="w-4 h-4" />
           </button>

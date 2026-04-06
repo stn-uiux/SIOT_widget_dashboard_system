@@ -5,7 +5,7 @@ import {
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
   Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
-  RotateCcw, GripVertical, CheckCircle2, Minus
+  RotateCcw, GripVertical, CheckCircle2, Minus, Settings
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
@@ -461,31 +461,31 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
 
   return (
-    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 border ${
+    <div className={`w-80 max-h-[85vh] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
       theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
     }`} style={{
-      background: 'var(--floating-panel-bg)',
-      backdropFilter: 'blur(var(--floating-panel-blur))',
-      boxShadow: 'var(--floating-panel-shadow)',
       borderRadius: 'var(--radius-panel)',
       border: 'var(--floating-panel-border)',
     }}>
-      <div className="panel-header-block pb-2 px-4 transition-all">
-        <div className="flex items-center gap-2">
-          <GripVertical className={`w-4 h-4 text-gray-300`} />
-          <h2 className={`text-xl font-bold tracking-tighter`}>
-            Widget Settings
-          </h2>
+      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
+        <div className="flex items-center gap-3">
+          <GripVertical className="w-4 h-4 text-muted/30" />
+          <Settings className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Widget Settings</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={onSave} className={`p-1 rounded transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:opacity-90 shadow-lg`} title="저장하기">
+        <div className="flex items-center gap-1.5">
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
             <Check className="w-4 h-4" />
           </button>
-          <button onClick={onClose} className={`p-1 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800`}>
-            <X className="w-5 h-5" />
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
       <section className="space-y-4">
