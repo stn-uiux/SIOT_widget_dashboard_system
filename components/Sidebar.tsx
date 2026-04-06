@@ -11,6 +11,34 @@ import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMod
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import Switch from './Switch';
 
+function shadeColor(hex: string, percent: number): string {
+  if (!hex || !hex.startsWith('#')) return hex;
+  let R = parseInt(hex.slice(1, 3), 16);
+  let G = parseInt(hex.slice(3, 5), 16);
+  let B = parseInt(hex.slice(5, 7), 16);
+  R = Math.min(255, Math.max(0, Math.floor(R * (100 + percent) / 100)));
+  G = Math.min(255, Math.max(0, Math.floor(G * (100 + percent) / 100)));
+  B = Math.min(255, Math.max(0, Math.floor(B * (100 + percent) / 100)));
+  return '#' + [R, G, B].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+const resolveColor = (colorStr: string | undefined, fallback: string, primaryHex?: string) => {
+  if (!colorStr) return fallback;
+  if (colorStr.startsWith('var(')) {
+    const varName = colorStr.match(/var\(([^)]+)\)/)?.[1]?.trim();
+    if (varName && primaryHex && primaryHex.startsWith('#')) {
+      if (varName === '--primary-color') return primaryHex;
+      const primaryShade = varName.match(/^--primary-(\d+)$/)?.[1];
+      if (primaryShade) {
+        const step = parseInt(primaryShade, 10);
+        return shadeColor(primaryHex, (step - 50) * -1.5);
+      }
+    }
+    return primaryHex || fallback;
+  }
+  return colorStr;
+};
+
 interface SidebarProps {
   theme: DashboardTheme;
   selectedWidget: Widget | null;
@@ -72,16 +100,19 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               />
             </div>
             <div className="space-y-1">
-              <span className="text-xs text-muted font-medium flex items-center gap-1.5">
+              <span className="text-xs text-muted font-medium flex items-center gap-1.5 grayscale opacity-50">
                 <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="6" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="11" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
-                Rows
+                Rows (Auto)
               </span>
-              <input
-                type="number" min="1" max="200"
-                value={layout.rows}
-                onChange={(e) => onUpdateLayout({ rows: parseInt(e.target.value) || 1 })}
-                className={`w-full p-2 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)] glass-item`}
-              />
+              <div className="relative group">
+                <input
+                  type="text"
+                  value="AUTO"
+                  disabled
+                  className="w-full p-2 bg-gray-100/50 dark:bg-white/5 text-[var(--text-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] cursor-not-allowed font-bold text-center text-xs tracking-widest opacity-60"
+                />
+                <div className="absolute inset-0 bg-transparent" title="Layout rows are currently calculated automatically." />
+              </div>
             </div>
           </div>
 
@@ -182,7 +213,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <div className="flex items-center gap-1.5">
                     <Layers className="w-3 h-3 text-muted/60" />
                     <input
-                      type="number" min="1" max={layout.rows}
+                      type="number" min="1" max={100}
                       value={batchH}
                       onChange={(e) => setBatchH(parseInt(e.target.value, 10) || 1)}
                       className="w-full bg-transparent text-sm font-mono font-bold text-main outline-none placeholder:text-muted/30"
@@ -1108,12 +1139,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <div className="relative group/picker">
                       <div
                         className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                        style={{ backgroundColor: s.color?.startsWith('var') ? `var(${s.color.match(/var\(([^)]+)\)/)?.[1] || s.color})` : s.color }}
+                        style={{ backgroundColor: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }}
                         title="Start Color"
                       />
                       <input
                         type="color"
-                        value={s.color?.startsWith('var') ? (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '') : s.color || (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '')}
+                        value={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
                         onChange={(e) => handleUpdateSeries(s.key, { color: e.target.value })}
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
@@ -1122,12 +1153,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       <div className="relative group/picker">
                         <div
                           className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                          style={{ backgroundColor: s.endColor?.startsWith('var') ? `var(${s.endColor.match(/var\(([^)]+)\)/)?.[1] || s.endColor})` : s.endColor || s.color }}
+                          style={{ backgroundColor: resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor) }}
                           title="End Color"
                         />
                         <input
                           type="color"
-                          value={s.endColor?.startsWith('var') ? (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '') : s.endColor || s.color || (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() : '')}
+                          value={resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor)}
                           onChange={(e) => handleUpdateSeries(s.key, { endColor: e.target.value })}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                         />

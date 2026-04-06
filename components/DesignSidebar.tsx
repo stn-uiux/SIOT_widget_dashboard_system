@@ -235,6 +235,83 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
             </section>
 
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Custom Colors</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <span className="text-micro font-bold uppercase text-muted tracking-wider ml-1">Dashboard Background</span>
+                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.backgroundColor }} />
+                      <input
+                        type="text"
+                        value={theme.backgroundColor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val.startsWith('#')) updateTheme({ backgroundColor: val });
+                        }}
+                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                      />
+                    </div>
+                    <input
+                      type="color"
+                      value={theme.backgroundColor.startsWith('#') ? theme.backgroundColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim() : '')}
+                      onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
+                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-micro font-bold uppercase text-muted tracking-wider ml-1">Widget Surface</span>
+                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.surfaceColor }} />
+                      <input
+                        type="text"
+                        value={theme.surfaceColor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val.startsWith('#')) updateTheme({ surfaceColor: val });
+                        }}
+                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                      />
+                    </div>
+                    <input
+                      type="color"
+                      value={theme.surfaceColor.startsWith('#') ? theme.surfaceColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() : '')}
+                      onChange={(e) => updateTheme({ surfaceColor: e.target.value })}
+                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-micro font-bold uppercase text-muted tracking-wider ml-1">Text & Titles</span>
+                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
+                      <input
+                        type="text"
+                        value={theme.titleColor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val.startsWith('#')) updateTheme({ titleColor: val });
+                        }}
+                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                      />
+                    </div>
+                    <input
+                      type="color"
+                      value={theme.titleColor.startsWith('#') ? theme.titleColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() : '')}
+                      onChange={(e) => updateTheme({ titleColor: e.target.value })}
+                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="space-y-3">
               <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Grid & Radius</h3>
               <div className="space-y-4">
@@ -630,75 +707,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               </div>
             </div>
 
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Custom Colors</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.backgroundColor }} />
-                      <input
-                        type="text"
-                        value={theme.backgroundColor}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val.startsWith('#')) updateTheme({ backgroundColor: val });
-                        }}
-                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
-                      />
-                    </div>
-                    <input
-                      type="color"
-                      value={theme.backgroundColor.startsWith('#') ? theme.backgroundColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim() : '')}
-                      onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
-                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.surfaceColor }} />
-                    <input
-                      type="text"
-                      value={theme.surfaceColor}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.startsWith('#')) updateTheme({ surfaceColor: val });
-                      }}
-                      className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
-                    />
-                  </div>
-                  <input
-                    type="color"
-                    value={theme.surfaceColor.startsWith('#') ? theme.surfaceColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() : '')}
-                    onChange={(e) => updateTheme({ surfaceColor: e.target.value })}
-                    className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
-                    <input
-                      type="text"
-                      value={theme.titleColor}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.startsWith('#')) updateTheme({ titleColor: val });
-                      }}
-                      className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
-                    />
-                  </div>
-                  <input
-                    type="color"
-                    value={theme.titleColor.startsWith('#') ? theme.titleColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() : '')}
-                    onChange={(e) => updateTheme({ titleColor: e.target.value })}
-                    className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
-                  />
-                </div>
-              </div>
-            </section>
 
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
               <div className="flex items-center justify-between gap-2">
@@ -722,8 +730,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   </button>
                 )}
               </div>
-              <p className="text-caption text-muted uppercase tracking-tight">라이트/다크 모드별로 다른 배경을 넣으면 테마 전환 시 자연스럽게 바뀝니다. (미설정 시 공통 배경 사용)</p>
-
               <div className="space-y-3">
                 <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
@@ -786,7 +792,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 />
               </div>
 
-              <p className="text-caption text-muted uppercase tracking-tight">공통 배경 (라이트/다크 미설정 시 사용)</p>
               <input
                 type="text"
                 placeholder="/assets/bg-project2.png 또는 URL"
@@ -802,7 +807,15 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundGlobe: checked } })}
                 />
               </div>
-              <p className="text-micro text-muted uppercase tracking-tight">대시보드 배경에 회전하는 지구 표시. 빈 곳 드래그하면 지구가 돌아갑니다 (project3 등)</p>
+
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
+                <span className="text-caption font-bold uppercase text-muted">Fade In/Out 배경</span>
+                <Switch
+                  checked={currentPage.layout?.backgroundAnimation ?? false}
+                  onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, backgroundAnimation: checked } })}
+                />
+              </div>
+              
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
                 <span className="text-caption font-bold uppercase text-muted">Glassmorphism</span>
                 <Switch
@@ -810,7 +823,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                   onChange={(checked) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphism: checked } })}
                 />
               </div>
-              <p className="text-micro text-muted uppercase tracking-tight">위젯 카드를 반투명·블러·테두리 스타일로 (project2 등)</p>
+              
               {currentPage.layout?.glassmorphism && (
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between items-center">
@@ -827,10 +840,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, glassmorphismOpacity: Number(e.target.value) } })}
                     className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                   />
-                  <p className="text-micro text-muted uppercase tracking-tight">왼쪽(0)=완전 투명, 오른쪽(100)=불투명. 슬라이더를 왼쪽으로 낮추면 훨씬 더 투명해집니다</p>
                 </div>
               )}
-              <p className="text-micro text-muted uppercase tracking-tight mt-2">해상도별 레이아웃·자유 배치는 <strong>Layout Settings</strong> 패널에서 설정할 수 있습니다.</p>
             </section>
           </div>
         )}

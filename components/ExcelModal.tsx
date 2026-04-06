@@ -20,29 +20,30 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
   if (!isOpen || !widget) return null;
 
   const downloadSample = () => {
-    // Generate headers based on xAxisKey and series
     const xAxis = widget.config.xAxisKey || 'name';
-    const seriesKeys = widget.config.series?.map(s => s.key) || [];
-    const seriesLabels = widget.config.series?.map(s => s.label) || [];
-    
-    // Header Row: Display Labels, but logic will use keys mapping if needed
-    // Actually simpler to just use keys as headers for direct mapping back
-    const headers = [xAxis, ...seriesKeys];
-    const labels = [widget.config.xAxisLabel || 'Label', ...seriesLabels];
+    const xAxisLabel = widget.config.xAxisLabel || xAxis;
+    const seriesKeys = widget.config.series?.map((s) => s.key) || [];
+    const seriesLabels = widget.config.series?.map((s) => s.label) || [];
 
     // Sample data rows
     const dataRows = widget.data.length > 0 ? widget.data : [
       { [xAxis]: 'Item 1', ...seriesKeys.reduce((acc, k) => ({...acc, [k]: 100}), {}) }
     ];
 
-    // Create workbook
-    const ws = XLSX.utils.json_to_sheet(dataRows, { header: headers });
+    // Map internal keys to user-facing labels for the Excel file
+    const exportData = dataRows.map(row => {
+      const newRow: any = { [xAxisLabel]: row[xAxis] };
+      widget.config.series?.forEach(s => {
+        newRow[s.label] = row[s.key];
+      });
+      return newRow;
+    });
+
+    const headers = [xAxisLabel, ...seriesLabels];
+    const ws = XLSX.utils.json_to_sheet(exportData, { header: headers });
     
-    // Adjust headers to labels for better user experience? 
-    // No, keep keys for deterministic parsing. Let's just create a simple sheet.
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data");
-    
     XLSX.writeFile(wb, `${widget.title.replace(/\s+/g, '_')}_Template.xlsx`);
   };
 
@@ -60,7 +61,25 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
         const data = XLSX.utils.sheet_to_json(ws);
 
         if (data && Array.isArray(data) && data.length > 0) {
-          onUpload(widget.id, data);
+          const xAxis = widget.config.xAxisKey || 'name';
+          const xAxisLabel = widget.config.xAxisLabel || xAxis;
+          
+          // Map user-facing labels back to internal keys
+          const importedData = data.map((row: any) => {
+            const newRow: any = { [xAxis]: row[xAxisLabel] !== undefined ? row[xAxisLabel] : row[xAxis] };
+            widget.config.series?.forEach(s => {
+              newRow[s.key] = row[s.label] !== undefined ? row[s.label] : row[s.key];
+            });
+            // Keep any other remaining properties just in case
+            Object.keys(row).forEach(k => {
+              if (k !== xAxisLabel && !widget.config.series?.some(s => s.label === k)) {
+                newRow[k] = row[k];
+              }
+            });
+            return newRow;
+          });
+
+          onUpload(widget.id, importedData);
           setStatus('success');
           setTimeout(onClose, 1500);
         } else {

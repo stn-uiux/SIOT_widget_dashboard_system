@@ -270,4 +270,6 @@ export interface LayoutConfig {
   useGrid?: boolean;
   /** 그리드 미사용 시 리사이즈 단위(px). 예: 5면 5px 간격으로 늘었다 줄었다 */
   resizeStepPx?: number;
+  /** 배경 이미지 숨쉬기(페이드 인/아웃) 애니메이션 설정 */
+  backgroundAnimation?: boolean;
 }

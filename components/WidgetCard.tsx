@@ -2534,7 +2534,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
       case WidgetType.VERTICAL_NAV_CARD: {
         const items = widget.navItems ?? [];
-        const navIndicatorSrc = '/assets/nav-indicator.png';
+        const navIndicatorSrc = new URL('../assets/nav-indicator.png', import.meta.url).href;
         const updateItemLabel = (index: number, label: string) => {
           const next = (widget.navItems ?? []).map((it, j) => (j === index ? { ...it, label } : it));
           onUpdate?.(widget.id, { navItems: next });

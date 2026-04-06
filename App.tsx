@@ -2144,7 +2144,7 @@ const App: React.FC = () => {
             {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
             {pageBgUrl && (
               <div
-                className="absolute inset-0 z-0"
+                className={`absolute inset-0 z-0 ${layout?.backgroundAnimation ? 'animate-pulse' : ''}`}
                 style={{
                   backgroundImage: `url(${pageBgUrl})`,
                   backgroundSize: "cover",

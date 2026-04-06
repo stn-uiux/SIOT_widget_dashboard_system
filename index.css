@@ -208,29 +208,6 @@
     --globe-blur-outer: 80px;
     --globe-blur-inner: 4px;
 
-    /* Vertical nav card: 기본 파랑, 호버 또는 선택 시 주황 */
-    .nav-card-item {
-      flex-shrink: 0;
-      width: 100%;
-      height: var(--nav-card-item-height);
-      min-height: var(--nav-card-item-height);
-      padding: 0;
-      border: 0;
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: transparent !important;
-      background-image: url(/assets/nav-card-bg-blue.png) !important;
-      background-size: cover !important;
-      background-position: center !important;
-      background-repeat: no-repeat;
-      transition: background-image 0.2s;
-    }
-    .nav-card-item:hover,
-    .nav-card-item.nav-card-item--active {
-      background-image: url(/assets/nav-card-bg-orange.png) !important;
-    }
 
     /* Grid & overlay (edit mode) */
     --grid-guide-fill-light: rgba(0, 0, 0, 0.06);
@@ -257,6 +234,35 @@
     --ai-fab-glow: 0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2);
     --ai-fab-inner-glow: inset 0 0 20px rgba(255, 255, 255, 0.2);
     --ai-fab-blur: 12px;
+}
+
+.ds-widget-card {
+  position: relative;
+}
+
+/* Vertical nav card: 기본 파랑, 호버 또는 선택 시 주황 */
+.nav-card-item {
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--nav-card-item-height);
+  min-height: var(--nav-card-item-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent !important;
+  background-image: url(./assets/nav-card-bg-blue.png) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  transition: background-image 0.2s;
+}
+.nav-card-item:hover,
+.nav-card-item.nav-card-item--active,
+.nav-card-item:focus-within {
+  background-image: url(./assets/nav-card-bg-orange.png) !important;
 }
 
 /* Panel Spacing Utilities (Aurora Refinement) */
