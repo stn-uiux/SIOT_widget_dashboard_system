@@ -1046,6 +1046,13 @@ const App: React.FC = () => {
 
   // Consolidated Hydration & Onboarding
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
+      indexedDB.deleteDatabase("siot_dashboard_db");
+      localStorage.clear();
+      window.location.href = window.location.pathname; // 리셋 쿼리스트링 제거 후 재접속
+      return;
+    }
+
     let cancelled = false;
     const hydrateAndOnboard = async () => {
       try {
