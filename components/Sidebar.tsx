@@ -57,15 +57,15 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
   if (!selectedWidget) return (
-    <div className={`w-80 max-h-[85vh] flex flex-col overflow-hidden transition-all duration-500 border ${
+    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col overflow-hidden transition-all duration-500 border ${
       theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
     }`} style={{
       borderRadius: 'var(--radius-panel)',
       border: 'var(--floating-panel-border)',
     }}>
-      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0" onMouseDown={onDragStart}>
+      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
-          <GripVertical className="w-4 h-4 text-muted/30" />
+          <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
           <LayoutGrid className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Layout Settings</h2>
         </div>
@@ -81,7 +81,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </button>
         </div>
       </header>
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
+      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
+      }}>
         <div className="space-y-4">
           <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
             <LayoutGrid className="w-4 h-4" /> Layout Config
@@ -137,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           {onUpdateTheme && (
             <div className="space-y-1 pt-1">
               <span className="text-caption uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
-                Widget Gaps (px)
+                Default Widget Gap (px)
               </span>
               <input
                 type="number"
@@ -243,30 +246,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
           )}
 
-          <div className={`space-y-1 pt-1 transition-opacity ${layout.useGrid !== false ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-            <p className="text-caption text-muted px-1">
-              그리드 OFF일 때 위젯 크기를 <strong>마우스 위치까지</strong> 자유롭게 늘렸다 줄였다 할 수 있습니다.
-            </p>
-          </div>
-
-          {/* 해상도별 레이아웃 (Breakpoints) */}
-          <div
-            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] cursor-pointer hover:bg-[var(--border-muted)] transition-all group rounded-[var(--radius-xl)]`}
-          >
-            <span className="text-xs font-bold text-secondary">해상도별 레이아웃 (BREAKPOINTS)</span>
-            <Switch
-              checked={layout.useResponsive ?? false}
-              onChange={(checked) => onUpdateLayout({ useResponsive: checked })}
-            />
-          </div>
-          <p className="text-caption text-muted px-1">LG(1200px) / MD(996px) / SM(768px) / XS(480px) 구간별로 컬럼·레이아웃 전환</p>
-
           {/* 자유 배치 (Free Position) */}
           <div
-            className={`flex items-center justify-between px-4 py-3 bg-[var(--surface-muted)] border border-[var(--border-base)] cursor-pointer hover:bg-[var(--border-muted)] transition-all group rounded-[var(--radius-xl)]`}
+            className={`flex items-center justify-between px-4 py-3 border border-[var(--border-base)] cursor-pointer transition-all group rounded-[var(--radius-xl)] glass-item`}
           >
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-[var(--background)] border border-[var(--border-muted)] flex items-center justify-center p-1" title="위로 쏠리지 않고 고정">
+              <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title="위로 쏠리지 않고 고정">
                 <svg viewBox="0 0 20 20" className="w-full h-full text-primary/70"><rect x="1" y="2" width="18" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="3" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="11" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/></svg>
               </div>
               <span className="text-xs font-bold text-secondary">자유 배치 (FREE POSITION)</span>
@@ -456,7 +441,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const isTable = currentType === WidgetType.TABLE;
   const isPie = currentType === WidgetType.CHART_PIE;
   const isImage = currentType === WidgetType.IMAGE;
+  const isMap = currentType === WidgetType.MAP || currentType === WidgetType.MAP_GOOGLE || currentType === WidgetType.MAP_NAVER;
+  const isWeather = currentType === WidgetType.WEATHER;
+  
   const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+
+  const hasDataRows = isChart || isSummaryChart || isEarningTrend || isPremiumSummary;
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
@@ -471,7 +461,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
   const isFacility2 = currentType === WidgetType.DASH_FACILITY_2;
-  const isIconResizable = isSummary || isGeneralKpi || isSummaryChart || currentType === WidgetType.DASH_RANK_LIST || isFacility2 || currentType === WidgetType.WEATHER || currentType === WidgetType.DASH_SECURITY_STATUS || currentType === WidgetType.DASH_RESOURCE_USAGE;
+  const isIconResizable = isSummary || isGeneralKpi || isSummaryChart || currentType === WidgetType.DASH_RANK_LIST || isFacility2 || isWeather;
   const isBarResizable = [WidgetType.CHART_BAR, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
 
   const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
@@ -492,7 +482,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
 
   return (
-    <div className={`w-80 max-h-[85vh] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
+    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
       theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
     }`} style={{
       borderRadius: 'var(--radius-panel)',
@@ -500,7 +490,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     }}>
       <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
-          <GripVertical className="w-4 h-4 text-muted/30" />
+          <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
           <Settings className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Widget Settings</h2>
         </div>
@@ -517,8 +507,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </button>
         </div>
       </header>
-
-      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
+      }}>
       <section className="space-y-4">
         <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
           <Layers className="w-4 h-4" /> Visualization
@@ -721,7 +713,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={96}
                   value={selectedWidget.titleSize ?? 48}
                   onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                 />
               </div>
               <div className="space-y-1">
@@ -730,7 +722,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={selectedWidget.comparisonText ?? ''}
                   onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
-                  className="w-full p-2.5 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                   placeholder="Compared of $11,750 last year"
                 />
               </div>
@@ -741,7 +733,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     type="number"
                     value={selectedWidget.trendPercent ?? 21}
                     onChange={(e) => updateCurrentWidget({ trendPercent: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs"
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs glass-item"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-5">
@@ -756,7 +748,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <div className="space-y-2">
                 <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">Category bars</span>
                 {(selectedWidget.categoryItems ?? [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: 'var(--warning)' }, { label: 'Marketing', value: 12 }]).map((item, idx) => (
-                  <div key={idx} className="flex gap-2 items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)]">
+                  <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border border-[var(--border-base)] glass-item">
                     <input
                       type="text"
                       value={item.label}
@@ -766,7 +758,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], label: e.target.value };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="flex-1 min-w-0 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="flex-1 min-w-0 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
                       placeholder="Label"
                     />
                     <input
@@ -780,7 +772,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], value: parseInt(e.target.value, 10) || 0 };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="w-14 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="w-14 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
                     />
                     <input
                       type="text"
@@ -791,7 +783,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         next[idx] = { ...next[idx], color: e.target.value || undefined };
                         updateCurrentWidget({ categoryItems: next });
                       }}
-                      className="w-20 p-1.5 text-xs rounded border border-[var(--border-base)] bg-white dark:bg-gray-900"
+                      className="w-20 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
                       placeholder="Color"
                     />
                   </div>
@@ -813,7 +805,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <select
                 value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
                 onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold"
+                className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold glass-item"
               >
                 {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -836,7 +828,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <div
                   className="inline-flex items-center rounded-[9999px] border border-[var(--border-base)] overflow-hidden"
                   style={{
-                    background: 'var(--surface-muted)',
+                    background: 'transparent',
                     padding: 'var(--spacing-xs) var(--spacing-sm)',
                     gap: 'var(--spacing-sm)',
                   }}
@@ -906,7 +898,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         );
                         onUpdateWidget(selectedWidget.id, { navItems: next });
                       }}
-                      className="flex-1 min-w-0 p-2 bg-[var(--surface-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] text-xs outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+                      className="flex-1 min-w-0 p-2 bg-transparent border border-[var(--border-base)] rounded-[var(--radius-md)] text-xs outline-none focus:ring-1 focus:ring-[var(--primary-color)] glass-item"
                       placeholder="메뉴 이름"
                     />
                   </div>
@@ -942,7 +934,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         reader.readAsDataURL(file);
                       }
                     }}
-                    className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90`}
+                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 glass-item`}
                   />
                 </div>
               </div>
@@ -954,7 +946,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentMainValue || ''}
                   onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -966,7 +958,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentSubValue || ''}
                   onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold`}
+                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
                   placeholder="Image description..."
                 />
               </div>
@@ -1117,12 +1109,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
             <div className="space-y-2">
               {(currentConfig.series || []).map((s, idx) => (
-                <div key={s.key} className={`p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-sm`}>
+                <div key={s.key} className={`p-3 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-[var(--primary-color)]/30 shadow-sm glass-item`}>
                   <div className="flex flex-col gap-0.5 mr-1">
                     <button
                       disabled={idx === 0}
                       onClick={() => moveSeries(idx, 'up')}
-                      className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-0 transition-all"
+                      className="p-0.5 rounded hover:bg-[var(--primary-subtle)] disabled:opacity-0 transition-all"
                     >
                       <ChevronUp className="w-3 h-3 text-gray-500" />
                     </button>
@@ -1202,7 +1194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         </label>
 
         <div className="space-y-3">
-          {!isSummary && (
+          {hasDataRows && !isSummary && !isGeneralKpi && !isEarningProgress && (
             <div className="space-y-1">
               <span className="text-caption uppercase font-bold text-muted ml-1">Header (Axis Label)</span>
               <div className="relative group">
@@ -1210,7 +1202,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentConfig.xAxisLabel || ''}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
-                  className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
+                  className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold glass-item`}
                   placeholder="e.g. Month, Project Name"
                 />
                 <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary" />
@@ -1218,16 +1210,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
           )}
 
-          <div className="space-y-1">
-            <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
-            <input
-              type="text"
-              value={currentConfig.unit || ''}
-              onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-              className={`w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
-              placeholder="e.g. 명, $, %"
-            />
-          </div>
+          {!isImage && !isMap && !isWeather && (
+            <div className="space-y-1">
+              <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
+              <input
+                type="text"
+                value={currentConfig.unit || ''}
+                onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
+                className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all glass-item`}
+                placeholder="e.g. 명, $, %"
+              />
+            </div>
+          )}
 
           {(isSummary || isSummaryChart || isPremiumSummary || isGeneralKpi || isEarningProgress || isEarningTrend) && (
             <>
@@ -1244,7 +1238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
               )}
-              {!isImage && (
+              {!isImage && !isMap && !isWeather && (
                 <div className="space-y-1">
                   <span className="text-caption uppercase font-bold text-gray-400 ml-1">Current Value</span>
                   <input
@@ -1255,7 +1249,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
               )}
-              {!isImage && !isEarningTrend && (
+              {!isImage && !isEarningTrend && !isMap && !isWeather && (
                 <div className="space-y-1">
                   <span className="text-caption uppercase font-bold text-gray-400 ml-1">Description</span>
                   <input
@@ -1270,7 +1264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           )}
         </div>
 
-        {(!isSummary || isPremiumSummary) && (
+        {hasDataRows && (
           <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
             {currentData.map((item, idx) => {
               const isSankey = currentType === WidgetType.CHART_SANKEY;

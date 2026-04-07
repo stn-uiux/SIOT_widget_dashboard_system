@@ -6,9 +6,10 @@ import './ModeToggle.css';
 interface ModeToggleProps {
     mode: ThemeMode;
     onChange: (mode: ThemeMode) => void;
+    disabled?: boolean;
 }
 
-const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
+const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange, disabled }) => {
     const [displayMode, setDisplayMode] = useState(mode);
     useEffect(() => setDisplayMode(mode), [mode]);
 
@@ -16,6 +17,7 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (disabled) return; // Prevent changing theme while in edit mode
         const nextMode = isDark ? ThemeMode.LIGHT : ThemeMode.DARK;
         setDisplayMode(nextMode);
         onChange(nextMode);
@@ -25,8 +27,9 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
         <button
             type="button"
             onClick={handleClick}
-            className={`premium-mode-toggle ${isDark ? 'dark' : 'light'}`}
+            className={`premium-mode-toggle ${isDark ? 'dark' : 'light'} ${disabled ? 'cursor-grab' : ''}`}
             aria-label="Toggle Theme Mode"
+            title={disabled ? "Edit Mode - Drag to move" : "Toggle Theme"}
         >
             <div className="toggle-track">
                 <div className="toggle-thumb">

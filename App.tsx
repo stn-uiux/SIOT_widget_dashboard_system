@@ -850,13 +850,15 @@ const HeaderLogo = ({ url }: { url?: string }) => (
 const HeaderThemeToggle = ({
   mode,
   onSwitch,
+  disabled
 }: {
   mode: ThemeMode;
   onSwitch: (m: ThemeMode) => void;
+  disabled?: boolean;
 }) => {
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <ModeToggle mode={mode} onChange={onSwitch} />
+      <ModeToggle mode={mode} onChange={onSwitch} disabled={disabled} />
     </div>
   );
 };
@@ -977,11 +979,11 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
         onLayoutChange={onLayoutChange}
       >
         {widgets.map((w) => (
-          <div key={w.id} className="relative group flex items-stretch">
+          <div key={w.id} className="relative group flex items-stretch pointer-events-auto">
             {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
             {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
             {w.type === HeaderWidgetType.THEME_TOGGLE && (
-              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} />
+              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} disabled={isEditMode} />
             )}
             {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
             {w.type === HeaderWidgetType.LOGO && <HeaderLogo url={w.url} />}
@@ -1015,6 +1017,8 @@ const App: React.FC = () => {
   const [isDesignSidebarOpen, setIsDesignSidebarOpen] = useState(false);
   const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+  const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
+  const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
 
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
@@ -1390,11 +1394,31 @@ const App: React.FC = () => {
   };
 
   const handleToggleDesignSidebar = () => {
+    if (isEditMode) {
+      // If we are opening, ask for save? Actually let's just toggle normally for now 
+      // but user specifically asked for confirmation when switching.
+      if (!isDesignSidebarOpen && isLayoutSidebarOpen) {
+        setPendingPanelSwitch('design');
+        return;
+      }
+    }
     setIsDesignSidebarOpen(!isDesignSidebarOpen);
+    if (!isDesignSidebarOpen) {
+      setIsLayoutSidebarOpen(false);
+    }
     setSelectedWidgetId(null);
   };
 
-  const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
+  const handleOpenLayoutSidebar = () => {
+    if (isEditMode && !isLayoutSidebarOpen && isDesignSidebarOpen) {
+      setPendingPanelSwitch('layout');
+      return;
+    }
+    setIsLayoutSidebarOpen(true);
+    setIsDesignSidebarOpen(false);
+    setSelectedWidgetId(null);
+  };
+
 
   // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
   useEffect(() => {
@@ -1524,12 +1548,31 @@ const App: React.FC = () => {
       updates.titleColor = getSmartColorForMode(currentTheme.titleColor, mode, "text");
     }
 
+    // Header Mode Sync: If current page has mode-specific header styles, apply them
+    const h = currentPage.header;
+    if (h && h.modeStyles) {
+      const hTarget = h.modeStyles[mode];
+      if (hTarget) {
+        updateHeader(hTarget);
+      } else {
+        // Smart adjust header colors if no snapshot
+        const newHTextColor = getSmartColorForMode(h.textColor, mode, "text");
+        const newHBgColor = h.backgroundColor !== 'transparent' ? getSmartColorForMode(h.backgroundColor, mode, "bg") : 'transparent';
+        updateHeader({ textColor: newHTextColor, backgroundColor: newHBgColor });
+      }
+    } else if (h) {
+      const newHTextColor = getSmartColorForMode(h.textColor, mode, "text");
+      const newHBgColor = h.backgroundColor !== 'transparent' ? getSmartColorForMode(h.backgroundColor, mode, "bg") : 'transparent';
+      updateHeader({ textColor: newHTextColor, backgroundColor: newHBgColor });
+    }
+
     updateProjectTheme(updates);
   };
 
   const handleUpdateLayout = (updates: Partial<LayoutConfig>) => {
     updateCurrentPage({ layout: { ...layout, ...updates } });
   };
+
 
   const handlePageChange = (pageId: string) => {
     setProjects((prev) =>
@@ -1780,11 +1823,25 @@ const App: React.FC = () => {
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id !== activeProjectId) return p;
-        // 현재 활성 페이지의 헤더를 기준으로 병합 (없으면 DEFAULT_HEADER fallback)
+        const mode = p.theme.mode;
+
+        // 현재 페이지 헤더 기준으로 머지
         const effectivePageId = p.activePageId || p.pages[0]?.id;
         const activePage = p.pages.find(pg => pg.id === effectivePageId) || p.pages[0];
         const baseHeader = activePage?.header || DEFAULT_HEADER;
         const mergedHeader = { ...baseHeader, ...newHeader };
+
+        // 라이트/다크 모드별 색상 스냅샷 업데이트 (하나 바꾸면 다 적용되게)
+        if (newHeader.textColor || newHeader.backgroundColor) {
+          mergedHeader.modeStyles = {
+            ...(mergedHeader.modeStyles || {}),
+            [mode]: {
+              textColor: mergedHeader.textColor,
+              backgroundColor: mergedHeader.backgroundColor
+            }
+          };
+        }
+
         return {
           ...p,
           pages: p.pages.map((pg) => ({ ...pg, header: mergedHeader })),
@@ -1851,23 +1908,22 @@ const App: React.FC = () => {
       {isPreviewMode && (
         <button
           onClick={() => setIsPreviewMode(false)}
-          className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-2xl group"
+          className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-premium group border-2 border-[var(--primary-color)]"
           style={{ 
             bottom: 'var(--spacing-xl)', 
-            right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
+            right: 'var(--spacing-xl)',
             width: 'var(--ai-fab-size)',
             height: 'var(--ai-fab-size)',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(16px)',
+            backgroundColor: 'var(--surface)',
+            backdropFilter: 'blur(24px)',
             borderRadius: '9999px',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.3), 0 0 20px var(--primary-color-20)',
           }}
           title="Exit Preview"
         >
-          <div className="absolute inset-0 bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
+          <div className="absolute inset-0 bg-[var(--primary-color)]/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
           <EyeOff 
-            className="w-7 h-7 text-white drop-shadow-lg" 
+            className="w-7 h-7 text-[var(--primary-color)] drop-shadow-md" 
           />
         </button>
       )}
@@ -2089,11 +2145,7 @@ const App: React.FC = () => {
               <Palette className="w-4 h-4" /> <span className="text-xs">Design</span>
             </button>
             <button
-              onClick={() => {
-                setIsLayoutSidebarOpen(true);
-                setSelectedWidgetId(null);
-                setIsDesignSidebarOpen(false);
-              }}
+              onClick={handleOpenLayoutSidebar}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
             >
               <LayoutGrid className="w-4 h-4" /> <span className="text-xs">Layout</span>
@@ -2131,7 +2183,8 @@ const App: React.FC = () => {
         {/* Unified Page Background (Image or Globe) — now placed here to cover both header and main content */}
         {showUnifiedBg && (
           <div
-            className="absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto"
+            key={layout?.backgroundGlobe ? 'bg-globe' : 'bg-image'}
+            className={`absolute inset-0 z-0 overflow-hidden fade-in pointer-events-auto ${layout?.backgroundAnimation ? 'animate-pulse' : ''}`}
             aria-hidden
             onWheel={layout?.backgroundGlobe ? (e) => {
               const main = mainAreaRef.current;
@@ -2144,7 +2197,7 @@ const App: React.FC = () => {
             {layout?.backgroundGlobe ? <GlobeBackground mode={theme.mode} /> : null}
             {pageBgUrl && (
               <div
-                className={`absolute inset-0 z-0 ${layout?.backgroundAnimation ? 'animate-pulse' : ''}`}
+                className="absolute inset-0 z-0"
                 style={{
                   backgroundImage: `url(${pageBgUrl})`,
                   backgroundSize: "cover",
@@ -2166,10 +2219,27 @@ const App: React.FC = () => {
               padding: `${header.padding}px`,
               margin: `${header.margin}px`,
               position: 'relative',
-              ...(header.backgroundImage ? { backgroundImage: `url(${header.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}),
+              overflow: 'visible',
             }}
             className={`flex flex-col transition-all h-full shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-r border-[var(--border-base)]" : ""}`}
           >
+            {(() => {
+              const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
+              if (!hBg) return null;
+              return (
+                <div 
+                  className="absolute inset-0 z-0 pointer-events-none"
+                  style={{
+                    backgroundImage: `url(${hBg})`,
+                    backgroundPosition: 'top left',
+                    backgroundSize: 'cover',
+                    backgroundRepeat: 'no-repeat',
+                    width: '200%',
+                    height: '100%',
+                  }}
+                />
+              );
+            })()}
             <HeaderWidgetLayer
               header={header}
               isEditMode={isEditMode}
@@ -2204,7 +2274,7 @@ const App: React.FC = () => {
             // @ts-ignore
             exportPreviewRef.current = el;
           }}
-          className={`flex-1 flex flex-col relative overflow-hidden text-[var(--text-main)] transition-colors duration-300 ${
+          className={`flex-1 flex flex-col relative text-[var(--text-main)] transition-colors duration-300 ${
             showUnifiedBg ? "bg-transparent" : "bg-[var(--background)]"
           } ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
         >
@@ -2218,10 +2288,21 @@ const App: React.FC = () => {
                   padding: `0 ${header.padding}px`,
                   margin: `${header.margin}px`,
                   position: 'relative',
-                  ...(header.backgroundImage ? { backgroundImage: `url(${header.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}),
+                  overflow: 'visible',
                 }}
-                className={`flex items-center transition-all shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
+                className={`flex items-center transition-all shrink-0 z-30 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
               >
+                {(() => {
+                  const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
+                  if (!hBg) return null;
+                  return (
+                    <img 
+                      src={hBg}
+                      className="absolute top-0 left-0 w-full h-auto z-0 pointer-events-none"
+                      alt="Header Background"
+                    />
+                  );
+                })()}
                 <HeaderWidgetLayer
                   header={header}
                   isEditMode={isEditMode}
@@ -2249,7 +2330,10 @@ const App: React.FC = () => {
                     >
                       {/* Logo removed as requested to restore layout */}
 
-                      <h2 className="text-lg font-black tracking-tighter whitespace-nowrap">
+                      <h2 
+                        className="text-lg font-black tracking-tighter whitespace-nowrap"
+                        style={{ color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor) }}
+                      >
                         {header.title}
                       </h2>
                     </div>
@@ -2304,7 +2388,7 @@ const App: React.FC = () => {
             style={{ 
               top: `${panelPos.y}px`, 
               right: `${panelPos.x}px`,
-              width: 'var(--panel-min-width)',
+              width: 'var(--panel-width)',
               cursor: isDraggingPanel ? 'move' : 'default'
             }}
           >
@@ -2400,7 +2484,40 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteProject}
         onCancel={() => setDeleteProjectId(null)}
-        isDark={true}
+        isDark={theme.mode === ThemeMode.DARK}
+      />
+
+      {/* 패널 전환 저장 확인 모달 */}
+      <ConfirmModal
+        isOpen={pendingPanelSwitch !== null}
+        title="변경 사항 저장"
+        message="다른 패널로 전환하기 전에 지금까지의 변경 사항을 저장하시겠습니까?"
+        confirmText="저장 후 전환"
+        cancelText="그냥 전환"
+        onConfirm={async () => {
+          await persistActiveProject();
+          if (pendingPanelSwitch === 'design') {
+            setIsDesignSidebarOpen(true);
+            setIsLayoutSidebarOpen(false);
+          } else if (pendingPanelSwitch === 'layout') {
+            setIsLayoutSidebarOpen(true);
+            setIsDesignSidebarOpen(false);
+          }
+          setPendingPanelSwitch(null);
+          setSelectedWidgetId(null);
+        }}
+        onCancel={() => {
+          if (pendingPanelSwitch === 'design') {
+            setIsDesignSidebarOpen(true);
+            setIsLayoutSidebarOpen(false);
+          } else if (pendingPanelSwitch === 'layout') {
+            setIsLayoutSidebarOpen(true);
+            setIsDesignSidebarOpen(false);
+          }
+          setPendingPanelSwitch(null);
+          setSelectedWidgetId(null);
+        }}
+        isDark={theme.mode === ThemeMode.DARK}
       />
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -2442,7 +2559,9 @@ const App: React.FC = () => {
         isDark={true}
       />
 
-      <FloatingAssistantButton onClick={() => setIsFloatingGnbOpen(!isFloatingGnbOpen)} />
+      {!isPreviewMode && (
+        <FloatingAssistantButton onClick={() => setIsFloatingGnbOpen(!isFloatingGnbOpen)} />
+      )}
     </div>
   );
 };

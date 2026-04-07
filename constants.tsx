@@ -86,6 +86,9 @@ export const DEFAULT_HEADER: HeaderConfig = {
   title: 'My Dashboard',
   logo: '',
   showDivider: true,
+  backgroundImage: undefined,
+  backgroundImageLight: undefined,
+  backgroundImageDark: undefined,
   widgets: [],
 };
 

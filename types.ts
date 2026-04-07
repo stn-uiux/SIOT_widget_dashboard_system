@@ -165,14 +165,25 @@ export interface HeaderConfig {
   padding: number;
   backgroundColor: string;
   textColor: string;
+  textColorLight?: string;
+  textColorDark?: string;
   textAlignment: TextAlignment;
   title: string;
   logo?: string;
   showDivider?: boolean;
-  /** 헤더 배경 이미지 URL 또는 data URI */
+  /** 헤더 배경 이미지 URL 또는 data URI (공통/Fallback) */
   backgroundImage?: string;
+  /** 라이트 모드 전용 헤더 배경 이미지 */
+  backgroundImageLight?: string;
+  /** 다크 모드 전용 헤더 배경 이미지 */
+  backgroundImageDark?: string;
   /** 헤더 내부에 배치된 위젯들 */
   widgets?: HeaderWidget[];
+  /** 라이트/다크 개별 디자인 설정 */
+  modeStyles?: {
+    [ThemeMode.LIGHT]?: { textColor: string; backgroundColor: string; };
+    [ThemeMode.DARK]?: { textColor: string; backgroundColor: string; };
+  };
 }
 
 export interface TabConfig {

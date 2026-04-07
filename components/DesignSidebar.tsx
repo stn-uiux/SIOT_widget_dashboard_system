@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
+import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image as ImageIcon, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, HeaderWidgetType, HeaderWidget } from '../types';
 import { BRAND_COLORS } from '../constants';
 import Switch from './Switch';
@@ -535,87 +535,156 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     </div>
                   </div>
 
-                  {/* Header Background Image */}
-                  <div className="space-y-2 pt-2">
+                  {/* Header Background Image (Unified Style) */}
+                  <div className="space-y-4 pt-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-caption uppercase font-bold text-muted flex items-center gap-1.5">
-                        <Image className="w-3.5 h-3.5" /> Background Image
+                      <span className="text-nano uppercase font-black text-muted flex items-center gap-1.5 tracking-widest">
+                        <ImageIcon className="w-3.5 h-3.5" /> Background Image
                       </span>
-                      {header.backgroundImage && (
+                      {(header.backgroundImage || header.backgroundImageLight || header.backgroundImageDark) && (
                         <button
                           type="button"
-                          onClick={() => updateHeader({ backgroundImage: undefined })}
-                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-micro font-bold uppercase tracking-wider hover:bg-[var(--border-muted)] transition-colors"
+                          onClick={() => updateHeader({ 
+                            backgroundImage: undefined, 
+                            backgroundImageLight: undefined, 
+                            backgroundImageDark: undefined 
+                          })}
+                          className="px-2 py-1 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-nano font-black uppercase tracking-widest hover:bg-[var(--border-muted)] transition-colors"
                         >
-                          리셋
+                          Reset
                         </button>
                       )}
                     </div>
-                    {header.backgroundImage && (
-                      <div className="relative w-full h-16 rounded-xl overflow-hidden border border-[var(--border-base)]">
+
+                    {/* Preview (if any) */}
+                    {(header.backgroundImage || header.backgroundImageLight || header.backgroundImageDark) && (
+                      <div className="relative w-full h-14 rounded-xl overflow-hidden border border-[var(--border-base)] shadow-sm">
                         <img
-                          src={header.backgroundImage}
+                          src={header.backgroundImageLight || header.backgroundImageDark || header.backgroundImage}
                           alt="Header BG"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
-                        <span className="absolute bottom-1 left-2 text-nano font-bold text-white/80 uppercase tracking-widest drop-shadow">Preview</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-end p-2">
+                          <span className="text-nano font-black text-white uppercase tracking-widest opacity-80">Preview</span>
+                        </div>
                       </div>
                     )}
-                    <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                        className="hidden"
-                        id="header-bg-image-file"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            updateHeader({ backgroundImage: reader.result as string });
-                          };
-                          reader.readAsDataURL(file);
-                          e.target.value = '';
-                        }}
-                      />
-                      <label htmlFor="header-bg-image-file" className="shrink-0 px-4 py-2 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-xs font-bold cursor-pointer hover:bg-[var(--border-muted)] transition-colors">파일 선택</label>
-                      <span className={`text-xs truncate ${header.backgroundImage ? 'text-[var(--success)]' : 'text-muted'}`}>
-                        {header.backgroundImage ? '이미지 적용됨' : '선택된 파일 없음'}
-                      </span>
+
+
+                    {/* Light Mode Specific */}
+                    <div className="space-y-2">
+                      <p className="text-nano font-black uppercase text-muted flex items-center gap-1.5 text-amber-600/80 dark:text-amber-500/60 tracking-widest">
+                        <Sun className="w-3 h-3" /> Light Mode Background
+                      </p>
+                      <div className="p-2.5 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="header-bg-light-file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            compressImageToDataUrl(file).then(dataUrl => {
+                              updateHeader({ backgroundImageLight: dataUrl });
+                            });
+                            e.target.value = '';
+                          }}
+                        />
+                        <label htmlFor="header-bg-light-file" className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-nano font-black uppercase tracking-widest cursor-pointer hover:bg-[var(--border-muted)] transition-colors">Select File</label>
+                        <span className={`text-nano font-bold truncate tracking-tight ${header.backgroundImageLight ? 'text-[var(--primary-color)]' : 'text-muted/40'}`}>
+                          {header.backgroundImageLight ? 'APPLIED' : 'NO FILE SELECTED'}
+                        </span>
+                      </div>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="URL (예: /assets/header-bg.png)"
-                      value={header.backgroundImage?.startsWith('data:') ? '' : (header.backgroundImage ?? '')}
-                      onChange={(e) => updateHeader({ backgroundImage: e.target.value.trim() || undefined })}
-                      className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
-                    />
+
+                    {/* Dark Mode Specific */}
+                    <div className="space-y-2">
+                      <p className="text-nano font-black uppercase text-muted flex items-center gap-1.5 text-blue-600/80 dark:text-blue-500/60 tracking-widest">
+                        <Moon className="w-3 h-3" /> Dark Mode Background
+                      </p>
+                      <div className="p-2.5 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="header-bg-dark-file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            compressImageToDataUrl(file).then(dataUrl => {
+                              updateHeader({ backgroundImageDark: dataUrl });
+                            });
+                            e.target.value = '';
+                          }}
+                        />
+                        <label htmlFor="header-bg-dark-file" className="shrink-0 px-3 py-1.5 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-main)] text-nano font-black uppercase tracking-widest cursor-pointer hover:bg-[var(--border-muted)] transition-colors">Select File</label>
+                        <span className={`text-nano font-bold truncate tracking-tight ${header.backgroundImageDark ? 'text-[var(--primary-color)]' : 'text-muted/40'}`}>
+                          {header.backgroundImageDark ? 'APPLIED' : 'NO FILE SELECTED'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <span className="text-caption uppercase font-bold text-muted">Text Color</span>
-                    <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColor }} />
+                  <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+                    <span className="text-nano uppercase font-black text-muted tracking-widest flex items-center gap-1.5"><Box className="w-3.5 h-3.5" /> Text Colors</span>
+                    
+                    {/* Light Mode Color */}
+                    <div className="space-y-2">
+                      <span className="text-nano font-black text-muted/50 uppercase tracking-widest px-1 flex items-center gap-1.5 text-amber-600/80">
+                        <Sun className="w-3 h-3" /> Light Mode Text Color
+                      </span>
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl glass-item border border-[var(--border-base)] shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColorLight || (theme.mode === ThemeMode.LIGHT ? header.textColor : '#000000') }} />
+                          <input
+                            type="text"
+                            value={header.textColorLight || (theme.mode === ThemeMode.LIGHT ? header.textColor : '#000000')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val.startsWith('#')) {
+                                updateHeader({ textColorLight: val });
+                              }
+                            }}
+                            className="w-20 bg-transparent border-none p-0 text-nano font-black uppercase text-main outline-none focus:ring-0 tracking-widest"
+                          />
+                        </div>
                         <input
-                          type="text"
-                          value={header.textColor}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val.startsWith('#')) {
-                              updateHeader({ textColor: val });
-                            }
-                          }}
-                          className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                          type="color"
+                          value={header.textColorLight || (theme.mode === ThemeMode.LIGHT ? header.textColor : '#000000')}
+                          onChange={(e) => updateHeader({ textColorLight: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
                         />
                       </div>
-                      <input
-                        type="color"
-                        value={header.textColor}
-                        onChange={(e) => updateHeader({ textColor: e.target.value })}
-                        className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
-                      />
+                    </div>
+
+                    {/* Dark Mode Color */}
+                    <div className="space-y-2">
+                      <span className="text-nano font-black text-muted/50 uppercase tracking-widest px-1 flex items-center gap-1.5 text-blue-600/80">
+                        <Moon className="w-3 h-3" /> Dark Mode Text Color
+                      </span>
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl glass-item border border-[var(--border-base)] shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: header.textColorDark || (theme.mode === ThemeMode.DARK ? header.textColor : '#ffffff') }} />
+                          <input
+                            type="text"
+                            value={header.textColorDark || (theme.mode === ThemeMode.DARK ? header.textColor : '#ffffff')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val.startsWith('#')) {
+                                updateHeader({ textColorDark: val });
+                              }
+                            }}
+                            className="w-20 bg-transparent border-none p-0 text-nano font-black uppercase text-main outline-none focus:ring-0 tracking-widest"
+                          />
+                        </div>
+                        <input
+                          type="color"
+                          value={header.textColorDark || (theme.mode === ThemeMode.DARK ? header.textColor : '#ffffff')}
+                          onChange={(e) => updateHeader({ textColorDark: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -711,7 +780,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
             <section className="space-y-4 pt-4 border-t border-[var(--border-base)]">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">
-                  <Image className="w-3.5 h-3.5" /> Background Image
+                  <ImageIcon className="w-3.5 h-3.5" /> Background Image
                 </h3>
                 {(currentPage.layout?.backgroundImage || currentPage.layout?.backgroundImageLight || currentPage.layout?.backgroundImageDark) && (
                   <button
@@ -731,7 +800,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                 )}
               </div>
               <div className="space-y-3">
-                <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Sun className="w-3 h-3" /> 라이트 모드 배경</p>
+                <p className="text-nano font-black uppercase text-muted flex items-center gap-1.5 tracking-widest"><Sun className="w-3 h-3 text-amber-500/80" /> Light Mode Background</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
                   <input
                     type="file"
@@ -752,17 +821,10 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     {currentPage.layout?.backgroundImageLight ? '이미지 적용됨' : '선택된 파일 없음'}
                   </span>
                 </div>
-                <input
-                  type="text"
-                  placeholder="라이트 모드 URL (예: /assets/bg-light.png)"
-                  value={currentPage.layout?.backgroundImageLight?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageLight ?? '')}
-                  onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageLight: e.target.value.trim() || undefined } })}
-                  className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
-                />
               </div>
 
               <div className="space-y-3">
-                <p className="text-caption font-bold uppercase text-muted flex items-center gap-1.5"><Moon className="w-3 h-3" /> 다크 모드 배경</p>
+                <p className="text-nano font-black uppercase text-muted flex items-center gap-1.5 tracking-widest"><Moon className="w-3 h-3 text-blue-500/80" /> Dark Mode Background</p>
                 <div className="p-3 rounded-xl border border-[var(--border-base)] glass-item flex items-center gap-3">
                   <input
                     type="file"
@@ -783,22 +845,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     {currentPage.layout?.backgroundImageDark ? '이미지 적용됨' : '선택된 파일 없음'}
                   </span>
                 </div>
-                <input
-                  type="text"
-                  placeholder="다크 모드 URL (예: /assets/bg-dark.png)"
-                  value={currentPage.layout?.backgroundImageDark?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImageDark ?? '')}
-                  onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImageDark: e.target.value.trim() || undefined } })}
-                  className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
-                />
               </div>
 
-              <input
-                type="text"
-                placeholder="/assets/bg-project2.png 또는 URL"
-                value={currentPage.layout?.backgroundImage?.startsWith('data:') ? '' : (currentPage.layout?.backgroundImage ?? '')}
-                onChange={(e) => onUpdatePage({ layout: { ...currentPage.layout, backgroundImage: e.target.value.trim() || undefined } })}
-                className="w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)] rounded-xl placeholder:text-muted"
-              />
 
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-base)] mt-3">
                 <span className="text-caption font-bold uppercase text-muted">지구 배경 (Globe)</span>

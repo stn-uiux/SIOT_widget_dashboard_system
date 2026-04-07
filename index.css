@@ -126,17 +126,32 @@
     --success-button-bg: rgba(16, 185, 129, 0.2);
     --success-button-glow: 0 0 15px rgba(16, 185, 129, 0.4);
     --chart-gradient-multi: linear-gradient(to right, #4ac0ef 0%, #648be3 30%, #8777e3 50%, #a864e3 70%, #e3649b 100%);
+    
+    /* Global Panel Tokens (Unified Source of Truth) */
+    --panel-width: 320px;
+    --panel-max-height: 85vh;
+    --panel-header-height: 68px;
+    --panel-radius: var(--border-radius, 16px);
+    
     --floating-panel-bg: rgba(255, 255, 255, 0.35);
-    --floating-panel-blur: 12px;
-    --floating-panel-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-    --floating-panel-border: 1px solid rgba(255, 255, 255, 0.2);
-    --radius-panel: 10px;
+    --floating-panel-blur: 16px;
+    --floating-panel-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15), 0 0 30px rgba(var(--primary-color-rgb), 0.05);
+    --floating-panel-border: 1px solid rgba(255, 255, 255, 0.4);
+    --radius-panel: var(--panel-radius);
+
+    /* Scrollbar Design Tokens */
+    --scrollbar-width: 6px;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: var(--black-alpha-10);
+    --scrollbar-thumb-hover: var(--black-alpha-20);
 }
 
 .dark {
-    --floating-panel-bg: rgba(0, 0, 0, 0.15); /* Restored original high transparency with blackish tint */
-    --floating-panel-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 210, 255, 0.15);
+    --floating-panel-bg: rgba(0, 0, 0, 0.15); 
+    --floating-panel-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 25px rgba(var(--primary-color-rgb), 0.1);
     --floating-panel-border: 1px solid rgba(255, 255, 255, 0.12);
+    --scrollbar-thumb: var(--white-alpha-10);
+    --scrollbar-thumb-hover: var(--white-alpha-20);
 }
 
 /* Floating Panel Aurora Rim Light — Double Blue Lights (Top & Bottom) */
@@ -1087,3 +1102,67 @@ body {
 .z-\[100\] {
     z-index: 100 !important;
 }
+
+/* ─── Global Animation Utilities (Premium Dashboard) ──────────────────── */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+@keyframes slideInFromBottom {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+    from { transform: translateY(-8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Tailwind-style animation classes used in App.tsx */
+.fade-in {
+    animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-pulse {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* General entry animation utility */
+.animate-in {
+    animation-duration: 400ms;
+    animation-fill-mode: forwards;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-in.fade-in {
+    animation-name: fadeIn;
+}
+
+.animate-in.slide-in-from-bottom-2 {
+    animation-name: slideInFromBottom;
+}
+
+.animate-in.slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+}
+
+.duration-200 { animation-duration: 200ms; }
+.duration-300 { animation-duration: 300ms; }
+.duration-500 { animation-duration: 500ms; }
+.duration-700 { animation-duration: 700ms; }
