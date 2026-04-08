@@ -50,12 +50,15 @@
     --warning: #f59e0b;
     --warning-rgb: 245, 158, 11;
     --info: #3b82f6;
+    --action-danger: var(--error);
+    --action-danger-subtle: rgba(239, 68, 68, 0.1);
     --nav-active-bg: var(--warning);
     --nav-active-shadow: 0 0 20px rgba(var(--warning-rgb), 0.3);
     --nav-indicator-fill: rgba(var(--primary-color-rgb, 59, 130, 246), 0.25);
     --nav-indicator-glow: 0 0 18px rgba(var(--primary-color-rgb, 59, 130, 246), 0.35);
     --nav-card-gap: 8px;
-    --nav-card-item-height: 48px;
+    --nav-card-item-height: 36px;
+    --nav-card-gap: 8px;
 
     /* Semantic Colors */
     --background: #f8fafc;
@@ -249,6 +252,9 @@
     --ai-fab-glow: 0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2);
     --ai-fab-inner-glow: inset 0 0 20px rgba(255, 255, 255, 0.2);
     --ai-fab-blur: 12px;
+
+    /* GNB Capsule */
+    --gnb-project-name: var(--text-main); /* amCharts/Design 등 버튼 글자색과 동일 */
 }
 
 .ds-widget-card {
@@ -256,28 +262,73 @@
 }
 
 /* Vertical nav card: 기본 파랑, 호버 또는 선택 시 주황 */
+/* Vertical nav card: Pixel-Perfect restoration using CSS layers */
 .nav-card-item {
   flex-shrink: 0;
-  width: 100%;
+  width: 80px;
   height: var(--nav-card-item-height);
   min-height: var(--nav-card-item-height);
   padding: 0;
-  border: 0;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: transparent !important;
-  background-image: url(./assets/nav-card-bg-blue.png) !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  transition: background-image 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Refined Glassy Blue (Default) */
+  background: linear-gradient(180deg, 
+    rgba(14, 165, 233, 0.25) 0%, 
+    rgba(14, 165, 233, 0.15) 100%
+  ) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* Inner lighting to match original PNG highlight */
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.2), 
+    inset 0 0 10px rgba(14, 165, 233, 0.1),
+    0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+
 .nav-card-item:hover,
 .nav-card-item.nav-card-item--active,
 .nav-card-item:focus-within {
-  background-image: url(./assets/nav-card-bg-orange.png) !important;
+  /* Ultra-transparent active state with a very thin, bright orange border */
+  background: rgba(251, 146, 60, 0.08) !important;
+  border: 1px solid #fb923c !important;
+  
+  /* Subtle light orange glow */
+  box-shadow: 
+    0 0 12px rgba(251, 146, 60, 0.2),
+    inset 0 0 8px rgba(251, 146, 60, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Maintain active glow animation */
+.nav-card-item.nav-card-item--active::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Force high contrast text on saturated backgrounds, or orange for outline style */
+.nav-card-item:hover *,
+.nav-card-item.nav-card-item--active * {
+  color: #fb923c !important; /* Brighter orange to match the thin border */
+  text-shadow: 0 0 8px rgba(251, 146, 60, 0.15);
+  font-weight: 800 !important;
 }
 
 /* Panel Spacing Utilities (Aurora Refinement) */

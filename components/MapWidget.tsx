@@ -31,6 +31,7 @@ interface MapWidgetProps {
     lng: number;
     zoom?: number;
     provider?: 'osm' | 'google' | 'naver';
+    isDark?: boolean;
 }
 
 // Component to update map view when props change
@@ -112,7 +113,11 @@ function MapControls({ onLocationFound }: { onLocationFound: (pos: [number, numb
     );
 }
 
-const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = 'osm' }) => {
+const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = 'osm', isDark = false }) => {
+    // Carto tile URLs — no API key required
+    const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const tileUrl = isDark ? TILE_DARK : TILE_LIGHT;
     const [currentPos, setCurrentPos] = useState<[number, number] | null>(null);
     const [isHovered, setIsHovered] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -175,7 +180,10 @@ const MapWidget: React.FC<MapWidgetProps> = ({ lat, lng, zoom = 13, provider = '
                 attributionControl={false}
             >
                 <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    key={tileUrl}
+                    url={tileUrl}
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    subdomains={['a', 'b', 'c', 'd']}
                 />
                 <Marker position={[lat, lng]}>
                     <Popup>

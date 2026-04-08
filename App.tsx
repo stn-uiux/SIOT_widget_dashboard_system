@@ -116,11 +116,18 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
     // ── 스키마 마이그레이션: 저장된 데이터에 없는 새 필드를 기본값으로 채움 ──
     // 이렇게 하면 새 테마 필드 추가 시 저장된 데이터가 undefined로 남아 리셋되는 현상을 방지
     const migratedProjects: Project[] = parsed.projects.map((p) => {
-      const mappedPages = (p.pages || []).map((pg) => ({
-        ...pg,
-        layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-        header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
-      }));
+      const mappedPages = (p.pages || []).map((pg) => {
+        const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
+        // 마이그레이션: 예전 기본값 'var(--background)'는 투명으로 교정
+        if (mergedHeader.backgroundColor === 'var(--background)') {
+          mergedHeader.backgroundColor = 'transparent';
+        }
+        return {
+          ...pg,
+          layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
+          header: mergedHeader,
+        };
+      });
       // 페이지가 하나도 없으면 기본 페이지 하나 생성 (빈 화면 방지)
       const pages = mappedPages.length > 0
         ? mappedPages
@@ -357,7 +364,7 @@ const DashboardGrid: React.FC<{
 
   const hasLayoutBackground = !!(layout?.backgroundGlobe || layout?.backgroundImage || layout?.backgroundImageLight || layout?.backgroundImageDark);
   const gridAreaBg = hasLayoutBackground
-    ? (theme.mode === ThemeMode.LIGHT ? "var(--grid-area-overlay-light)" : "transparent")
+    ? "transparent"
     : "var(--background)";
   return (
     <div
@@ -1067,14 +1074,36 @@ const App: React.FC = () => {
           const migratedProjects: Project[] = saved.projects.map((p) => ({
             ...p,
             theme: { ...DEFAULT_THEME, ...p.theme },
-            pages: (p.pages || []).map((pg) => ({
-              ...pg,
-              layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-              header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
-            })),
+            pages: (p.pages || []).map((pg) => {
+              const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
+              // 마이그레이션: 예전 기본값 'var(--background)'는 투명으로 교정
+              if (mergedHeader.backgroundColor === 'var(--background)') {
+                mergedHeader.backgroundColor = 'transparent';
+              }
+              // modeStyles 에 저장된 예전 backgroundColor도 교정
+              if (mergedHeader.modeStyles) {
+                const cleaned: typeof mergedHeader.modeStyles = {};
+                for (const [modeKey, modeVal] of Object.entries(mergedHeader.modeStyles)) {
+                  if (modeVal) {
+                    cleaned[modeKey as keyof typeof mergedHeader.modeStyles] = {
+                      ...modeVal,
+                      backgroundColor: modeVal.backgroundColor === 'var(--background)' ? 'transparent' : modeVal.backgroundColor,
+                    };
+                  }
+                }
+                mergedHeader.modeStyles = cleaned;
+              }
+              return {
+                ...pg,
+                layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
+                header: mergedHeader,
+              };
+            }),
           }));
+          // IndexedDB가 source of truth — 항상 적용 (배경 이미지 등 대용량 데이터는 localStorage에 못 들어가므로)
           setProjects(migratedProjects);
           if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
+
         } else if (!cancelled && !projectsRaw) {
           const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
           const loadedProjects: Project[] = [];
@@ -1832,12 +1861,13 @@ const App: React.FC = () => {
         const mergedHeader = { ...baseHeader, ...newHeader };
 
         // 라이트/다크 모드별 색상 스냅샷 업데이트 (하나 바꾸면 다 적용되게)
-        if (newHeader.textColor || newHeader.backgroundColor) {
+        // 단, backgroundColor가 transparent면 modeStyles에 저장하지 않음 (나중에 덮어쓰는 버그 방지)
+        if (newHeader.textColor || (newHeader.backgroundColor && newHeader.backgroundColor !== 'transparent')) {
           mergedHeader.modeStyles = {
             ...(mergedHeader.modeStyles || {}),
             [mode]: {
               textColor: mergedHeader.textColor,
-              backgroundColor: mergedHeader.backgroundColor
+              backgroundColor: mergedHeader.backgroundColor === 'transparent' ? 'transparent' : mergedHeader.backgroundColor
             }
           };
         }
@@ -1851,6 +1881,63 @@ const App: React.FC = () => {
   };
 
   const handleExcelUpload = (id: string, newData: any[]) => {
+    const widget = widgets.find(w => w.id === id);
+    if (!widget) {
+      updateWidget(id, { data: newData });
+      return;
+    }
+
+    // Smart Series Detection: If uploaded Excel has new numeric columns, add them to series config
+    if (newData.length > 0 && widget.config) {
+      const firstRow = newData[0];
+      const xAxisKey = widget.config.xAxisKey || 'name';
+      const currentSeries = widget.config.series || [];
+      const currentKeys = new Set(currentSeries.map(s => s.key));
+      const newSeriesList = [...currentSeries];
+      let hasNewColumns = false;
+
+      Object.keys(firstRow).forEach(key => {
+        if (key !== xAxisKey && !currentKeys.has(key)) {
+          let val = firstRow[key];
+          // Try to treat string as number if possible
+          if (typeof val === 'string' && !Number.isNaN(parseFloat(val))) {
+            val = parseFloat(val);
+          }
+
+          // Add numeric columns that are not already tracked
+          if (typeof val === 'number' && !Number.isNaN(val)) {
+            // Case: If there's exactly one existing series and it's unmapped (empty in first row),
+            // maybe the user renamed it. Let's update that series instead of adding a new one.
+            if (currentSeries.length === 1 && (firstRow[currentSeries[0].label] === undefined && firstRow[currentSeries[0].key] === undefined)) {
+              newSeriesList[0] = {
+                ...newSeriesList[0],
+                key: key,
+                label: key
+              };
+              currentKeys.add(key); // prevent adding it again
+              hasNewColumns = true;
+            } else {
+              newSeriesList.push({
+                key: key,
+                label: key,
+                color: `var(--chart-palette-${(newSeriesList.length % 6) + 1})` || 'var(--primary-color)'
+              });
+              hasNewColumns = true;
+            }
+          }
+        }
+      });
+
+      if (hasNewColumns) {
+        updateWidget(id, { 
+          data: newData, 
+          config: { ...widget.config, series: newSeriesList } 
+        });
+        showToast("New columns detected and added to chart configuration.");
+        return;
+      }
+    }
+
     updateWidget(id, { data: newData });
   };
 
@@ -1959,7 +2046,7 @@ const App: React.FC = () => {
                     }
                     className="flex items-center gap-1.5 group"
                   >
-                    <span className="uppercase font-bold transition-colors text-muted group-hover:text-primary whitespace-nowrap" style={{ fontSize: 'var(--text-caption)' }}>
+                    <span className="uppercase font-bold transition-colors whitespace-nowrap" style={{ fontSize: 'var(--text-caption)', color: theme.titleColor }}>
                       {currentProject.name}
                     </span>
                     <ChevronDown
@@ -2179,7 +2266,7 @@ const App: React.FC = () => {
       />
 
       {/* Main Workspace — sidebars are OUTSIDE the project theme scope now */}
-      <div className="flex-1 flex overflow-hidden relative transition-colors duration-300 bg-[var(--background)] text-[var(--text-main)]">
+      <div className={`flex-1 flex overflow-hidden relative transition-colors duration-300 ${showUnifiedBg ? 'bg-transparent' : 'bg-[var(--background)]'} text-[var(--text-main)]`}>
         {/* Unified Page Background (Image or Globe) — now placed here to cover both header and main content */}
         {showUnifiedBg && (
           <div
@@ -2214,14 +2301,14 @@ const App: React.FC = () => {
           <aside
             style={{
               width: `${header.width}px`,
-              backgroundColor: header.backgroundColor === 'transparent' ? 'transparent' : header.backgroundColor,
+              backgroundColor: (theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage)) ? 'transparent' : (header.backgroundColor === 'transparent' || (showUnifiedBg && header.backgroundColor === 'var(--background)') ? 'transparent' : header.backgroundColor),
               color: header.textColor,
               padding: `${header.padding}px`,
               margin: `${header.margin}px`,
               position: 'relative',
               overflow: 'visible',
             }}
-            className={`flex flex-col transition-all h-full shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-r border-[var(--border-base)]" : ""}`}
+            className={`flex flex-col transition-all h-full shrink-0 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-r border-[var(--border-base)]" : ""}`}
           >
             {(() => {
               const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
@@ -2283,14 +2370,14 @@ const App: React.FC = () => {
               <header
                 style={{
                   height: `${header.height}px`,
-                  backgroundColor: header.backgroundColor === 'transparent' ? 'transparent' : header.backgroundColor,
+                  backgroundColor: (theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage)) ? 'transparent' : (header.backgroundColor === 'transparent' || (showUnifiedBg && header.backgroundColor === 'var(--background)') ? 'transparent' : header.backgroundColor),
                   color: header.textColor,
                   padding: `0 ${header.padding}px`,
                   margin: `${header.margin}px`,
                   position: 'relative',
                   overflow: 'visible',
                 }}
-                className={`flex items-center transition-all shrink-0 z-30 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
+                className={`flex items-center transition-all shrink-0 z-30 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
               >
                 {(() => {
                   const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);

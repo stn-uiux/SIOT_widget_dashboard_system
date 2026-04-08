@@ -7,7 +7,7 @@ import {
   Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
   RotateCcw, GripVertical, CheckCircle2, Minus, Settings
 } from 'lucide-react';
-import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode } from '../types';
+import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import Switch from './Switch';
 
@@ -459,6 +459,23 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     WidgetType.DASH_NET_TRAFFIC
   ].includes(currentType);
 
+  // amCharts를 전용으로 사용하거나, 현재 라이브러리 설정상 amCharts로 렌더링되는 경우
+  const isReallyAmCharts = [
+    WidgetType.CHART_PIE,
+    WidgetType.CHART_RADAR,
+    WidgetType.CHART_SANKEY,
+    WidgetType.DASH_TRAFFIC_STATUS,
+    WidgetType.DASH_FAILURE_STATS,
+    WidgetType.DASH_NET_TRAFFIC,
+    WidgetType.DASH_RANK_LIST
+  ].includes(currentType as WidgetType) || (theme.chartLibrary === ChartLibrary.AMCHARTS && [
+    WidgetType.CHART_BAR,
+    WidgetType.CHART_BAR_HORIZONTAL,
+    WidgetType.CHART_LINE,
+    WidgetType.CHART_AREA,
+    WidgetType.CHART_COMPOSED
+  ].includes(currentType as WidgetType));
+
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
   const isFacility2 = currentType === WidgetType.DASH_FACILITY_2;
   const isIconResizable = isSummary || isGeneralKpi || isSummaryChart || currentType === WidgetType.DASH_RANK_LIST || isFacility2 || isWeather;
@@ -474,7 +491,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     { key: 'showGrid', label: 'Show Grid Lines', visible: isGridChart },
     { key: 'showXAxis', label: 'Show X-Axis', visible: isAxisChart },
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
-    { key: 'useGradient', label: 'Gradient Fill', visible: isAxisChart || currentType === WidgetType.SUMMARY },
+    { key: 'useGradient', label: 'Gradient Fill', visible: (isAxisChart || currentType === WidgetType.SUMMARY) && !isReallyAmCharts },
     { key: 'hideHeader', label: 'Hide Header', visible: true },
     { key: 'noBorder', label: 'No Border', visible: true },
     { key: 'noBezel', label: 'No Bezel (Hide Card)', visible: true },
@@ -1141,7 +1158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
                     </div>
-                    {currentConfig.useGradient && (
+                    {currentConfig.useGradient && !isReallyAmCharts && (
                       <div className="relative group/picker">
                         <div
                           className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
@@ -1169,17 +1186,21 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     />
                   </div>
 
-                  <input
-                    type="text"
-                    value={s.label}
-                    onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
-                    className="flex-1 bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
-                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={s.label}
+                      onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
+                      className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
+                    />
+                  </div>
+
                   <button
                     onClick={() => handleRemoveSeries(s.key)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity ml-1"
+                    className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-1"
+                    title="계열 삭제"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -1288,7 +1309,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       </div>
 
                       {/* Secondary Label (Target for Sankey) */}
-                      {(isSankey || (currentConfig.yAxisKey && !currentConfig.series?.some(s => s.key === currentConfig.yAxisKey))) && (
+                      {isSankey && (
                         <>
                           <span className="text-gray-400">→</span>
                           <div className="flex-1">
@@ -1306,7 +1327,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         </>
                       )}
                     </div>
-                    <button onClick={() => removeDataRow(idx)} className="opacity-0 group-hover/row:opacity-100 text-red-400 hover:text-red-500 transition-opacity ml-2"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button 
+                      onClick={() => removeDataRow(idx)} 
+                      className="flex shrink-0 items-center justify-center w-7 h-7 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-2" 
+                      title="데이터 행 삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Series Values */}
@@ -1361,4 +1388,4 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   );
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);

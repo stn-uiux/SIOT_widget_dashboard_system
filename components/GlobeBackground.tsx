@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 
 /** Natural Earth 110m — GeoJSON (topojson-client 불필요) */
@@ -22,6 +22,25 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
   const inertiaFrame = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const l = isLight ? 'light' : 'dark';
+
+  // Optimization: Cache styles outside of the main effects to avoid repeated DOM queries
+  const themeStyles = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const s = getComputedStyle(document.documentElement);
+    return {
+        glow: s.getPropertyValue(`--globe-glow-fill-${l}`).trim(),
+        ring: s.getPropertyValue(`--globe-ring-stroke-${l}`).trim(),
+        sphere: s.getPropertyValue(`--globe-sphere-fill-${l}`).trim(),
+        sphereStroke: s.getPropertyValue(`--globe-sphere-stroke-${l}`).trim(),
+        graticule: s.getPropertyValue(`--globe-graticule-stroke-${l}`).trim(),
+        land: s.getPropertyValue(`--globe-land-fill-${l}`).trim(),
+        landStroke: s.getPropertyValue(`--globe-land-stroke-${l}`).trim(),
+        blurOuter: s.getPropertyValue('--globe-blur-outer').trim() || '80px',
+        blurInner: s.getPropertyValue('--globe-blur-inner').trim() || '4px'
+    };
+  }, [l]);
+
   useEffect(() => {
     d3.json(WORLD_GEOJSON_URL).then((data: unknown) => {
       if (data && typeof data === 'object' && 'type' in data && (data as GeoJSON.FeatureCollection).type === 'FeatureCollection')
@@ -41,7 +60,6 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
   // 1. Initial Setup: Create static elements once
   useEffect(() => {
     if (!svgRef.current) return;
-    const { width, height } = dimensions;
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     svg.attr('shape-rendering', 'geometricPrecision');
@@ -58,13 +76,10 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
 
   // 2. Continuous Update: Update attributes only (No DOM creation/deletion)
   useEffect(() => {
-    if (!svgRef.current || !worldData) return;
+    if (!svgRef.current || !worldData || !themeStyles) return;
     const { width, height } = dimensions;
     const baseRadius = Math.min(width, height) / 2.2;
     const currentRadius = baseRadius * zoom;
-    const l = isLight ? 'light' : 'dark';
-    const styles = typeof document !== 'undefined' ? getComputedStyle(document.documentElement) : null;
-    const getVar = (name: string) => styles ? styles.getPropertyValue(name).trim() : '';
 
     const projection = d3.geoOrthographic()
       .scale(currentRadius)
@@ -75,27 +90,18 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
     const svg = d3.select(svgRef.current);
     const mainGroup = svg.select('.globe-group');
 
-    // Pre-calculate common style variables to avoid repeating DOM queries
+    // Radii
     const outerRadius = currentRadius * 1.35;
     const innerRadius = currentRadius * 1.08;
     const sphereRadius = currentRadius * 0.98;
-    const outerGlowFill = getVar(`--globe-glow-fill-${l}`);
-    const outerBlurVal = getVar('--globe-blur-outer') || '80px';
-    const ringStroke = getVar(`--globe-ring-stroke-${l}`);
-    const ringBlurVal = getVar('--globe-blur-inner') || '4px';
-    const sphereFill = getVar(`--globe-sphere-fill-${l}`);
-    const sphereStroke = getVar(`--globe-sphere-stroke-${l}`);
-    const graticuleStroke = getVar(`--globe-graticule-stroke-${l}`);
-    const landFill = getVar(`--globe-land-fill-${l}`);
-    const landStroke = getVar(`--globe-land-stroke-${l}`);
 
     // Update Outer Glow
     mainGroup.select('.outer-glow')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', outerRadius)
-      .attr('fill', outerGlowFill)
-      .style('filter', `blur(${outerBlurVal})`)
+      .attr('fill', themeStyles.glow)
+      .style('filter', `blur(${themeStyles.blurOuter})`)
       .style('opacity', isLight ? 0.3 : 0.12);
 
     // Update Inner Ring
@@ -104,17 +110,17 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .attr('cy', height / 2)
       .attr('r', innerRadius)
       .attr('fill', 'none')
-      .attr('stroke', ringStroke)
+      .attr('stroke', themeStyles.ring)
       .attr('stroke-width', 2)
-      .style('filter', `blur(${ringBlurVal})`);
+      .style('filter', `blur(${themeStyles.blurInner})`);
 
     // Update Sphere
     mainGroup.select('.sphere')
       .attr('cx', width / 2)
       .attr('cy', height / 2)
       .attr('r', sphereRadius)
-      .attr('fill', sphereFill)
-      .attr('stroke', sphereStroke);
+      .attr('fill', themeStyles.sphere)
+      .attr('stroke', themeStyles.sphereStroke);
 
     // Update Graticule
     const graticule = d3.geoGraticule();
@@ -122,19 +128,19 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
       .datum(graticule())
       .attr('d', path as unknown as string)
       .attr('fill', 'none')
-      .attr('stroke', graticuleStroke)
+      .attr('stroke', themeStyles.graticule)
       .attr('stroke-width', 0.5);
 
     // Update Land
     mainGroup.select('.land')
       .datum(worldData)
       .attr('d', path as unknown as string)
-      .attr('fill', landFill)
-      .attr('stroke', landStroke)
+      .attr('fill', themeStyles.land)
+      .attr('stroke', themeStyles.landStroke)
       .attr('stroke-width', 0.5)
       .attr('stroke-linejoin', 'round');
 
-  }, [rotation, zoom, dimensions, worldData, isLight]);
+  }, [rotation, zoom, dimensions, worldData, isLight, themeStyles]);
 
   const applyInertia = () => {
     const friction = 0.95;
@@ -196,4 +202,4 @@ const GlobeBackground: React.FC<{ mode: ThemeMode }> = ({ mode }) => {
   );
 };
 
-export default GlobeBackground;
+export default React.memo(GlobeBackground);

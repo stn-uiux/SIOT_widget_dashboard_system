@@ -18,8 +18,9 @@ function shadeColor(hex: string, percent: number): string {
   return '#' + [R, G, B].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
-/** 배경 이미지: 화질 유지 위해 리사이즈만 하고 JPEG 품질 최대(0.98). 원본에 가깝게 저장 */
+/** 배경 이미지: 투명도가 있는 PNG는 PNG 유지 (단, 최대 1920px로 제한), 그 외는 JPEG 압축 */
 const MAX_BG_DIMENSION = 3840;
+const MAX_PNG_DIMENSION = 1920; // PNG는 용량이 크므로 해상도 제한
 const JPEG_QUALITY = 0.98;
 function compressImageToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -29,7 +30,9 @@ function compressImageToDataUrl(file: File): Promise<string> {
       URL.revokeObjectURL(url);
       const w = img.naturalWidth;
       const h = img.naturalHeight;
-      const scale = Math.min(1, MAX_BG_DIMENSION / Math.max(w, h));
+      const isPng = file.type === 'image/png';
+      const maxDim = isPng ? MAX_PNG_DIMENSION : MAX_BG_DIMENSION;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
       const cw = Math.round(w * scale);
       const ch = Math.round(h * scale);
       const canvas = document.createElement('canvas');
@@ -42,7 +45,10 @@ function compressImageToDataUrl(file: File): Promise<string> {
       }
       ctx.drawImage(img, 0, 0, cw, ch);
       try {
-        const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+        // PNG는 투명도 보존, 나머지는 JPEG 압축
+        const format = isPng ? 'image/png' : 'image/jpeg';
+        const quality = isPng ? undefined : JPEG_QUALITY;
+        const dataUrl = canvas.toDataURL(format, quality);
         resolve(dataUrl);
       } catch (e) {
         reject(e);
@@ -286,27 +292,61 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <span className="text-micro font-bold uppercase text-muted tracking-wider ml-1">Text & Titles</span>
-                  <div className="flex items-center justify-between p-3 rounded-2xl glass-item">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
+                <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
+                  <span className="text-micro font-bold uppercase text-muted tracking-wider ml-1">Typography Colors</span>
+                  
+                  {/* Title Color Section */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[10px] font-bold uppercase text-muted tracking-widest opacity-70">Main Title Color</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 px-3 rounded-xl glass-item border border-[var(--border-base)]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-md shadow-sm border border-white/20" style={{ backgroundColor: theme.titleColor }} />
+                        <input
+                          type="text"
+                          value={theme.titleColor}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.startsWith('#')) updateTheme({ titleColor: val });
+                          }}
+                          className="w-16 bg-transparent border-none p-0 text-[11px] font-bold uppercase text-main outline-none focus:ring-0"
+                        />
+                      </div>
                       <input
-                        type="text"
-                        value={theme.titleColor}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val.startsWith('#')) updateTheme({ titleColor: val });
-                        }}
-                        className="w-20 bg-transparent border-none p-0 text-caption font-bold uppercase text-main outline-none focus:ring-0"
+                        type="color"
+                        value={theme.titleColor.startsWith('#') ? theme.titleColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() : '')}
+                        onChange={(e) => updateTheme({ titleColor: e.target.value })}
+                        className="w-6 h-6 rounded-md cursor-pointer bg-transparent border-none appearance-none"
                       />
                     </div>
-                    <input
-                      type="color"
-                      value={theme.titleColor.startsWith('#') ? theme.titleColor : (typeof document !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() : '')}
-                      onChange={(e) => updateTheme({ titleColor: e.target.value })}
-                      className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none appearance-none"
-                    />
+                  </div>
+
+                  {/* Body Color Section */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[10px] font-bold uppercase text-muted tracking-widest opacity-70">Body / Description Color</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 px-3 rounded-xl glass-item border border-[var(--border-base)]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-md shadow-sm border border-white/20" style={{ backgroundColor: theme.textColor }} />
+                        <input
+                          type="text"
+                          value={theme.textColor}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.startsWith('#')) updateTheme({ textColor: val });
+                          }}
+                          className="w-16 bg-transparent border-none p-0 text-[11px] font-bold uppercase text-main outline-none focus:ring-0"
+                        />
+                      </div>
+                      <input
+                        type="color"
+                        value={theme.textColor.startsWith('#') ? theme.textColor : (typeof document?.documentElement !== 'undefined' ? getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() : '')}
+                        onChange={(e) => updateTheme({ textColor: e.target.value })}
+                        className="w-6 h-6 rounded-md cursor-pointer bg-transparent border-none appearance-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

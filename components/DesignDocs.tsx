@@ -143,7 +143,9 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ theme, onClose }) => {
                                         <ColorSwatch name="Selected Overlay" variable="--selected-overlay-bg" description="Primary glass overlay" />
                                         <ColorSwatch name="Inner Glow" variable="--selected-inner-glow" description="Primary inner depth highlight" />
                                         <ColorSwatch name="Action Hover" variable="--action-hover-text" description="Hover color for widget buttons" />
+                                        <ColorSwatch name="Action Danger" variable="--action-danger" description="Destructive action color" />
                                         <ColorSwatch name="Danger Hover" variable="--action-danger-hover-text" description="Hover color for delete buttons" />
+                                        <ColorSwatch name="Danger Subtle" variable="--action-danger-subtle" description="Subtle danger background" />
                                     </div>
                                 </div>
 

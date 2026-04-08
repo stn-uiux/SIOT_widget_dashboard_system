@@ -100,6 +100,16 @@
                 "info": {
                     "value": "#3b82f6",
                     "type": "color"
+                },
+                "action_danger": {
+                    "value": "#ef4444",
+                    "type": "color",
+                    "description": "Semantic color for destructive actions"
+                },
+                "action_danger_subtle": {
+                    "value": "rgba(239, 68, 68, 0.1)",
+                    "type": "color",
+                    "description": "Subtle background for destructive actions"
                 }
             },
             "semantic": {
@@ -453,6 +463,13 @@
                         "type": "string",
                         "description": "Dark mode glass shadow"
                     }
+                }
+            },
+            "gnb_capsule": {
+                "project_name_color": {
+                    "value": "var(--text-main)",
+                    "type": "color",
+                    "description": "GNB 캡슐 내 프로젝트 이름 텍스트 색상 — amCharts/Design 등 버튼 글자색과 동일"
                 }
             },
             "ai_fab": {

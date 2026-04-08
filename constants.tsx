@@ -80,7 +80,7 @@ export const DEFAULT_HEADER: HeaderConfig = {
   width: 240,
   margin: 0,
   padding: 16,
-  backgroundColor: 'var(--background)',
+  backgroundColor: 'transparent',
   textColor: 'var(--text-main)',
   textAlignment: TextAlignment.LEFT,
   title: 'My Dashboard',
