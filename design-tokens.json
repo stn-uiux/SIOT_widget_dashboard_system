@@ -465,11 +465,20 @@
                     }
                 }
             },
-            "gnb_capsule": {
+            "header": {
+                "title_size": {
+                    "value": "18px",
+                    "type": "dimension",
+                    "description": "Default font size for the project title in the dashboard header"
+                },
                 "project_name_color": {
                     "value": "var(--text-main)",
                     "type": "color",
-                    "description": "GNB 캡슐 내 프로젝트 이름 텍스트 색상 — amCharts/Design 등 버튼 글자색과 동일"
+                    "description": "GNB 캡슐 내 프로젝트 이름 텍스트 색상"
+                },
+                "height": {
+                    "value": "64px",
+                    "type": "dimension"
                 }
             },
             "ai_fab": {

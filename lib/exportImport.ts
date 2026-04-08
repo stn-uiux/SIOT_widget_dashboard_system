@@ -52,28 +52,43 @@ function getExtensionFromMime(mime: string): string {
   return "png";
 }
 
-/** 프로젝트/페이지/헤더에서 이미지 URL 수집 (중복 제거, 순서 유지) */
+/** 프로젝트/페이지/헤더 등 전체 객체에서 이미지 (Data URL 또는 이미지 경로) 수집 */
 function collectImageUrls(project: Project): string[] {
   const set = new Set<string>();
   const list: string[] = [];
-  function add(url: string | undefined) {
-    if (!url || set.has(url)) return;
-    set.add(url);
-    list.push(url);
-  }
-  for (const page of project.pages) {
-    const l = page.layout as LayoutConfig | undefined;
-    if (l) {
-      add(l.backgroundImage);
-      add(l.backgroundImageLight);
-      add(l.backgroundImageDark);
+  
+  function scan(obj: any) {
+    if (!obj || typeof obj !== "object") {
+      if (typeof obj === "string" && (obj.startsWith("data:image") || obj.startsWith("images/"))) {
+        if (!set.has(obj)) {
+          set.add(obj);
+          list.push(obj);
+        }
+      }
+      return;
     }
-    const h = page.header as HeaderConfig | undefined;
-    if (h) {
-      add(h.backgroundImage);
-      add(h.logo);
+    
+    if (Array.isArray(obj)) {
+      obj.forEach(scan);
+    } else {
+      for (const key in obj) {
+        // 배경 이미지, 로고, 아이콘 등 이미지 관련 키 명시적 체크 (권장) + 일반 문자열 스캔
+        const val = obj[key];
+        if (typeof val === "string") {
+          if (val.startsWith("data:image") || val.startsWith("blob:") || (typeof val === 'string' && val.includes('base64'))) {
+            if (!set.has(val)) {
+              set.add(val);
+              list.push(val);
+            }
+          }
+        } else if (typeof val === "object") {
+          scan(val);
+        }
+      }
     }
   }
+
+  scan(project);
   return list;
 }
 
@@ -96,13 +111,17 @@ async function cloneProjectAndCollectImages(
     idx++;
   }
 
-  function replaceUrl(obj: unknown): unknown {
+  function replaceUrl(obj: any): any {
     if (obj === null || obj === undefined) return obj;
-    if (typeof obj === "string" && imageMap[obj]) return imageMap[obj];
+    if (typeof obj === "string") {
+      return imageMap[obj] ?? obj;
+    }
     if (Array.isArray(obj)) return obj.map(replaceUrl);
     if (typeof obj === "object") {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(obj)) out[k] = replaceUrl(v);
+      const out: Record<string, any> = {};
+      for (const key in obj) {
+        out[key] = replaceUrl(obj[key]);
+      }
       return out;
     }
     return obj;

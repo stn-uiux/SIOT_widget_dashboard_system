@@ -67,10 +67,10 @@ import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 const logoB = new URL("./assets/logo-b-1 1.png", import.meta.url).href;
 const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
 
-const proj1Zip = new URL("./assets/New_Project_1_2026-03-11.zip", import.meta.url).href;
-const proj2Zip = new URL("./assets/new_project_2_2026-03-11.zip", import.meta.url).href;
-const proj3Zip = new URL("./assets/New_Project_3_2026-03-11.zip", import.meta.url).href;
-const proj4Zip = new URL("./assets/New_Project_4_2026-03-15.zip", import.meta.url).href;
+const proj1Zip = new URL("./assets/New_Project_1_2026-04-08.zip", import.meta.url).href;
+const proj2Zip = new URL("./assets/new_project_2_2026-04-08.zip", import.meta.url).href;
+const proj3Zip = new URL("./assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
+const proj4Zip = new URL("./assets/New_Project_4_2026-04-08.zip", import.meta.url).href;
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
@@ -2344,7 +2344,7 @@ const App: React.FC = () => {
                   className="h-8 w-auto mb-4 object-contain"
                 />
               )}
-              <h2 className="font-black tracking-tighter uppercase" style={{ fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : '1.125rem' }}>
+              <h2 className="font-black tracking-tighter uppercase" style={{ fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : `${DEFAULT_HEADER.headerTitleSize}px` }}>
                 {header.title}
               </h2>
             </div>
@@ -2420,7 +2420,7 @@ const App: React.FC = () => {
                       <h2 
                         className="font-black tracking-tighter whitespace-nowrap"
                         style={{ 
-                          fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : '1.125rem',
+                          fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : `${DEFAULT_HEADER.headerTitleSize}px`,
                           color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor) 
                         }}
                       >

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Palette, Sparkles, Moon, Sun, CheckCircle2, BookOpen, Heading, Box, AlignLeft, AlignCenter, AlignRight, Layout, Image as ImageIcon, Clock, Activity, ToggleLeft, GripVertical, Check } from 'lucide-react';
 import { DashboardTheme, ThemeMode, HeaderConfig, HeaderPosition, TextAlignment, DashboardPage, ThemePreset, HeaderWidgetType, HeaderWidget } from '../types';
-import { BRAND_COLORS } from '../constants';
+import { BRAND_COLORS, DEFAULT_HEADER } from '../constants';
 import Switch from './Switch';
 import ModeToggle from './ModeToggle';
 
@@ -500,11 +500,11 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-caption uppercase font-bold text-muted">Title Font Size</span>
-                        <span className="text-xs font-mono text-primary font-bold">{header.headerTitleSize || 18}px</span>
+                        <span className="text-xs font-mono text-primary font-bold">{(header.headerTitleSize || DEFAULT_HEADER.headerTitleSize)}px</span>
                       </div>
                       <input
                         type="range" min="12" max="48" step="1"
-                        value={header.headerTitleSize || 18}
+                        value={header.headerTitleSize || DEFAULT_HEADER.headerTitleSize}
                         onChange={(e) => updateHeader({ headerTitleSize: parseInt(e.target.value) })}
                         className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                       />

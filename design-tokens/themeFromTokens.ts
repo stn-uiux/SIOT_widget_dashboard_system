@@ -100,6 +100,18 @@ export function tokensToDashboardTheme(
 }
 
 /**
+ * design-tokens.json에서 헤더 관련 기본 설정을 가져옵니다.
+ */
+export function getHeaderDefaultsFromTokens() {
+  const t = (designTokens as any).tokens;
+  const header = t.components?.header;
+  return {
+    titleSize: parsePx(getValue(header?.title_size)) || 18,
+    height: parsePx(getValue(header?.height)) || 64,
+  };
+}
+
+/**
  * 앱 기본 테마 (Dark). design-tokens.json 기준.
  */
 export function getDefaultThemeFromTokens(overrides: Partial<DashboardTheme> = {}): DashboardTheme {

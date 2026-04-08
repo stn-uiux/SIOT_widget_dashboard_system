@@ -67,7 +67,7 @@ DesignSystem.tsx
 
 ## 매핑 (themeFromTokens.ts)
 
-| JSON 경로 | DashboardTheme 필드 |
+| JSON 경로 | DashboardTheme / Config 필드 |
 |-----------|---------------------|
 | colors.brand.primary.value | primaryColor |
 | colors.semantic.{light,dark}.* | backgroundColor, surfaceColor, titleColor, textColor, borderColor |
@@ -76,6 +76,8 @@ DesignSystem.tsx
 | layout.dashboardPadding | dashboardPadding |
 | layout.shadowBaseDark / shadowBaseLight | cardShadow |
 | layout.widgetBorderWidth | borderWidth |
+| components.header.title_size | HeaderConfig.headerTitleSize |
+| components.header.height | HeaderConfig.height |
 | typography.* | titleSize, titleWeight, contentSize, textTiny ~ textHero |
 
 앱 전용 필드(`chartLibrary`, `mode`, `showPageTabs` 등)는 코드에서 기본값으로 채웁니다.

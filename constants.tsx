@@ -1,5 +1,5 @@
 import { WidgetType, ThemeMode, ChartLibrary, DashboardTheme, ThemePreset, LayoutConfig, Project, DashboardPage, HeaderConfig, HeaderPosition, TextAlignment, Widget } from './types';
-import { getDefaultThemeFromTokens, getLightThemeFromTokens } from './design-tokens/themeFromTokens';
+import { getDefaultThemeFromTokens, getLightThemeFromTokens, getHeaderDefaultsFromTokens } from './design-tokens/themeFromTokens';
 
 export const MOCK_CHART_DATA = [
   { name: 'Jan', value: 400, secondary: 240 },
@@ -73,10 +73,12 @@ export const PROJECT2_CUSTOM_THEME: DashboardTheme = (() => {
   };
 })();
 
+const headerDefaults = getHeaderDefaultsFromTokens();
+
 export const DEFAULT_HEADER: HeaderConfig = {
   show: true,
   position: HeaderPosition.TOP,
-  height: 64,
+  height: headerDefaults.height,
   width: 240,
   margin: 0,
   padding: 16,
@@ -90,6 +92,7 @@ export const DEFAULT_HEADER: HeaderConfig = {
   backgroundImageLight: undefined,
   backgroundImageDark: undefined,
   widgets: [],
+  headerTitleSize: headerDefaults.titleSize,
 };
 
 export const DEFAULT_PAGE: DashboardPage = {
