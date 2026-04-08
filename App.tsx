@@ -2679,7 +2679,7 @@ const App: React.FC = () => {
         isOpen={isWidgetPickerOpen}
         onClose={() => setIsWidgetPickerOpen(false)}
         onSelect={addWidgetWithType}
-        isDark={true}
+        isDark={theme.mode === 'dark'}
       />
 
       {!isPreviewMode && (

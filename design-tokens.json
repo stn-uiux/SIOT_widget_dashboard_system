@@ -219,6 +219,10 @@
                 }
             },
             "spacing": {
+                "nano": {
+                    "value": "2px",
+                    "type": "dimension"
+                },
                 "xs": {
                     "value": "4px",
                     "type": "dimension"
@@ -256,6 +260,10 @@
                 "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
                 "type": "string"
             },
+            "radiusModal": {
+                "value": "32px",
+                "type": "dimension"
+            },
             "widgetBorderWidth": {
                 "value": "1px",
                 "type": "dimension"
@@ -268,6 +276,18 @@
             },
             "titleWeight": {
                 "value": "700",
+                "type": "string"
+            },
+            "fontWeightLight": {
+                "value": "300",
+                "type": "string"
+            },
+            "fontWeightMedium": {
+                "value": "500",
+                "type": "string"
+            },
+            "fontWeightSemibold": {
+                "value": "600",
                 "type": "string"
             },
             "contentSize": {
@@ -297,6 +317,60 @@
             "textHero": {
                 "value": "34px",
                 "type": "dimension"
+            },
+            "textUltraHeading": {
+                "value": "15px",
+                "type": "dimension"
+            },
+            "textUltraTitle": {
+                "value": "13px",
+                "type": "dimension"
+            },
+            "textUltraLabel": {
+                "value": "11px",
+                "type": "dimension"
+            },
+            "textUltraBase": {
+                "value": "10px",
+                "type": "dimension"
+            },
+            "textUltraTiny": {
+                "value": "8px",
+                "type": "dimension"
+            },
+            "textCompactHeading": {
+                "value": "18px",
+                "type": "dimension"
+            },
+            "textCompactTitle": {
+                "value": "16px",
+                "type": "dimension"
+            },
+            "textCompactLabel": {
+                "value": "13px",
+                "type": "dimension"
+            },
+            "textCompactBase": {
+                "value": "12px",
+                "type": "dimension"
+            },
+            "textCompactTiny": {
+                "value": "9px",
+                "type": "dimension"
+            },
+            "fontWeight": {
+                "regular": { "value": "400", "type": "string" },
+                "medium": { "value": "500", "type": "string" },
+                "semibold": { "value": "600", "type": "string" },
+                "bold": { "value": "700", "type": "string" },
+                "black": { "value": "900", "type": "string" }
+            },
+            "letterSpacing": {
+                "tight": { "value": "-0.02em", "type": "string" },
+                "normal": { "value": "0em", "type": "string" },
+                "wide": { "value": "0.05em", "type": "string" },
+                "widest": { "value": "0.1em", "type": "string" },
+                "tech": { "value": "0.2em", "type": "string", "description": "Reduced from 0.4em for better readability" }
             }
         },
         "components": {

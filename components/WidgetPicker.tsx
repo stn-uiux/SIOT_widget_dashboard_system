@@ -1,9 +1,11 @@
 import React from 'react';
 import {
-    X, BarChart3, Database, LayoutGrid, ChevronRight, Layers
+    X, BarChart3, Database, LayoutGrid, ChevronRight, Layers,
+    BarChartHorizontal, LineChart, AreaChart, PieChart, Hexagon,
+    Workflow, Activity, Monitor, Image as ImageIcon, MapPin,
+    CloudSun, TrendingUp, Type
 } from 'lucide-react';
 import { WidgetType } from '../types';
-import { WIDGET_METADATA } from '../constants';
 
 interface WidgetPickerProps {
     isOpen: boolean;
@@ -12,33 +14,72 @@ interface WidgetPickerProps {
     isDark: boolean;
 }
 
+// Preview Assets Configuration
+const PREVIEW_ASSETS = {
+    BAR_CHART: {
+        light: '/assets/widget/light/graph/bar_graph_light.png',
+        dark: '/assets/widget/dark/graph/bar_graph_dark.png'
+    }
+};
+
 const CATEGORIES = [
     {
         id: 'viz',
         label: '시각화 차트',
-        description: '데이터를 직관적으로 분석하기 위한 기본 차트들입니다.',
+        description: '데이터 분석용 기본 차트',
         icon: BarChart3,
-        items: Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'viz')
-            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
+        items: [
+            { 
+                id: 'BAR_CHART', 
+                icon: BarChart3, 
+                label: '세로 막대',
+                preview: PREVIEW_ASSETS.BAR_CHART
+            },
+            { id: 'HORIZONTAL_BAR', icon: BarChartHorizontal, label: '가로 막대' },
+            { id: 'LINE_CHART', icon: LineChart, label: '선형 차트' },
+            { id: 'AREA_CHART', icon: AreaChart, label: '영역 차트' },
+            { id: 'PIE_CHART', icon: PieChart, label: '파이 차트' },
+            { id: 'RADAR_CHART', icon: Hexagon, label: '방사형 차트' },
+            { id: 'COMPOSED_CHART', icon: Layers, label: '혼합형 차트' },
+            { id: 'SANKEY_CHART', icon: Workflow, label: '생키 다이어그램' }
+        ]
     },
     {
         id: 'premium',
         label: '프리미엄 템플릿',
-        description: '특수 목적을 위해 디자인된 고급 통계 및 분석 템플릿입니다.',
+        description: '고용량 데이터 최적화 템플릿',
         icon: LayoutGrid,
-        items: Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'premium')
-            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
+        items: [
+            { id: 'SINGLE_STAT', icon: Database, label: '단일 수치 (STAT)' },
+            { id: 'TREND_SUMMARY', icon: Activity, label: '트렌드 요약' },
+            { id: 'ISSUE_KPI', icon: Activity, label: '장애 현황 (KPI)' },
+            { id: 'ISSUE_STATS', icon: AreaChart, label: '장애 통계 (STATS)' },
+            { id: 'NETWORK_TRAFFIC', icon: Activity, label: '네트워크 트래픽' },
+            { id: 'SECURITY_DETECT', icon: Hexagon, label: '보안 탐지 현황' },
+            { id: 'RESOURCE_USAGE', icon: BarChart3, label: '리소스 사용률' },
+            { id: 'FACILITY_DB', icon: Database, label: '시설 현황' },
+            { id: 'FACILITY_MONITOR', icon: Monitor, label: '시설 상태' },
+            { id: 'RANK_LIST', icon: BarChartHorizontal, label: '순위 리스트' },
+            { id: 'WORK_SESS', icon: Activity, label: '업무망 상태' },
+            { id: 'VDI_STATUS', icon: LayoutGrid, label: 'VDI 접속 현황' }
+        ]
     },
     {
         id: 'general',
         label: '일반 컴포넌트',
-        description: '기본적인 정보 노출 및 외부 연동을 위한 컴포넌트입니다.',
+        description: '기본 정보 노출용 컴포넌트',
         icon: Database,
-        items: Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'general')
-            .map(([id, meta]) => ({ id: id as WidgetType, icon: meta.icon, label: meta.label }))
+        items: [
+            { id: 'DATA_TABLE', icon: LayoutGrid, label: '데이터 테이블' },
+            { id: 'IMAGE_BOX', icon: ImageIcon, label: '이미지 박스' },
+            { id: 'MAP_WIDGET', icon: MapPin, label: '지도 위젯' },
+            { id: 'WEATHER_INFO', icon: CloudSun, label: '날씨 정보' },
+            { id: 'KPI_GENERAL', icon: Activity, label: 'KPI (GENERAL)' },
+            { id: 'EARNING_PROGRESS', icon: TrendingUp, label: 'TOTAL EARNING (PROGRESS)' },
+            { id: 'EARNING_TREND', icon: Activity, label: 'EARNING TREND (CHART + KPI)' },
+            { id: 'TEXT_ONLY', icon: Type, label: '텍스트 (글자만)' },
+            { id: 'NAV_CARD_V', icon: Layers, label: '세로 네비 카드' }
+        ]
     }
 ];
 
@@ -49,72 +90,124 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+            {/* Glass Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/40 backdrop-blur-[10px] animate-in fade-in duration-500"
                 onClick={onClose}
             />
 
-            {/* Modal Body */}
-            <div className={`relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-base)] shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col bg-[var(--surface)] text-[var(--text-main)]`}>
-
-                {/* Header */}
-                <div className="px-8 py-6 border-b border-[var(--border-muted)] flex items-center justify-between shrink-0">
-                    <div>
-                        <h3 className="text-2xl font-black tracking-tighter uppercase">Add New Widget</h3>
-                        <p className="text-sm text-muted font-medium">원하는 위젯의 타입을 선택하여 대시보드에 추가하세요.</p>
+            {/* Modal Body: Slim-Sharp & Bezelless Preview V2.0 */}
+            <div 
+                className="relative w-full max-w-3xl h-[660px] overflow-hidden rounded-[var(--radius-modal,24px)] border animate-in zoom-in-95 duration-500 flex flex-col backdrop-blur-[40px]"
+                style={{
+                    backgroundColor: 'var(--modal-bg)',
+                    borderColor: 'var(--modal-border)',
+                    boxShadow: 'var(--modal-shadow), 0 0 30px rgba(59, 130, 246, 0.1)',
+                    color: 'var(--modal-text)'
+                }}
+            >
+                {/* Aurora Neon Top Highlight Line */}
+                <div className="absolute top-0 left-0 right-0 h-[1.2px] bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-60 z-20 shadow-[0_0_10px_var(--primary-color)]" />
+                
+                {/* Header Section: Tightened */}
+                <div className="px-6 py-4 border-b flex items-center justify-between shrink-0 z-10" style={{ borderColor: 'var(--modal-border)' }}>
+                    <div className="flex items-center gap-3.5">
+                        <div className="relative w-9 h-9 rounded-xl bg-[var(--primary-color)]/10 flex items-center justify-center border border-white/10 shadow-inner">
+                            <Layers className="w-5 h-5 text-[var(--primary-color)]" />
+                        </div>
+                        <div>
+                            <h3 className="text-[15px] font-bold tracking-tight uppercase leading-none">ADD NEW WIDGET</h3>
+                            <p className="text-[9px] font-medium tracking-[0.5em] mt-1.5 uppercase text-primary/40" style={{ color: 'var(--modal-subtext)' }}>AURORA SYSTEM CONFIG</p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all group"
                     >
-                        <X className="w-6 h-6 text-muted" />
+                        <X className="w-5 h-5 opacity-30 group-hover:opacity-100 transition-opacity" />
                     </button>
                 </div>
 
                 <div className="flex-1 flex overflow-hidden">
-                    {/* Sidebar - Categories */}
-                    <div className="w-64 border-r border-[var(--border-muted)] flex flex-col p-4 gap-2 bg-black/5 dark:bg-white/5">
+                    {/* Sidebar: Sharp Sidebar */}
+                    <div className="w-64 border-r flex flex-col p-4 gap-2 z-10" style={{ borderColor: 'var(--modal-border)', backgroundColor: 'var(--modal-sidebar-bg)' }}>
+                        <span className="text-[9px] font-bold tracking-[0.6em] uppercase px-3 mb-3 opacity-20">M O D U L E S</span>
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`flex flex-col items-start p-4 rounded-[var(--radius-xl)] transition-all text-left group ${activeCategory === cat.id ? 'bg-[var(--primary-color)] text-white shadow-xl shadow-[var(--primary-subtle)]' : 'hover:bg-[var(--border-muted)] text-[var(--text-muted)]'}`}
+                                className={`relative flex items-center p-2.5 px-4 rounded-xl transition-all duration-300 group ${activeCategory === cat.id 
+                                    ? 'bg-[var(--primary-color)]/10 border border-[var(--primary-color)]/20 shadow-sm' 
+                                    : 'hover:bg-black/5 dark:hover:bg-white/[0.03] border border-transparent opacity-40 hover:opacity-80'}`}
                             >
-                                <cat.icon className={`w-5 h-5 mb-2 ${activeCategory === cat.id ? 'text-white' : 'text-primary'}`} />
-                                <span className="font-black text-xs uppercase tracking-widest">{cat.label}</span>
-                                <span className={`text-[10px] opacity-60 font-medium leading-tight mt-1 ${activeCategory === cat.id ? 'text-blue-50' : ''}`}>
-                                    {cat.items.length}개 항목
-                                </span>
+                                {activeCategory === cat.id && (
+                                    <div className="absolute left-0 w-1 h-5 bg-[var(--primary-color)] rounded-full shadow-[0_0_12px_var(--primary-color)]" />
+                                )}
+                                
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${activeCategory === cat.id ? 'bg-[var(--primary-color)] shadow-inner' : 'bg-black/5 dark:bg-white/5'}`}>
+                                    <cat.icon className={`w-4 h-4 ${activeCategory === cat.id ? 'text-white' : 'opacity-40'}`} />
+                                </div>
+                                
+                                <div className="ml-4 flex flex-col items-start leading-tight">
+                                    <span className={`font-bold uppercase tracking-tight ${activeCategory === cat.id ? 'text-[13.5px]' : 'text-[12.5px]'}`}>{cat.label}</span>
+                                    <span className={`text-[9px] font-medium tracking-widest mt-1 ${activeCategory === cat.id ? 'text-[var(--primary-color)]' : 'opacity-15'}`}>
+                                        {cat.items.length} MODULES
+                                    </span>
+                                </div>
+                                <ChevronRight className={`ml-auto w-3.5 h-3.5 transition-all duration-300 ${activeCategory === cat.id ? 'text-[var(--primary-color)] translate-x-1' : 'opacity-0 -translate-x-3'}`} />
                             </button>
                         ))}
                     </div>
 
-                    {/* Main Content - Items Grid */}
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[var(--background)]">
-                        <div className="mb-6">
-                            <h4 className="text-xl font-black tracking-tight flex items-center gap-2">
+                    {/* Main Content: Slim Bezelless Card Grid */}
+                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-black/[0.01]">
+                        <div className="mb-5 border-l-[3.5px] border-[var(--primary-color)] pl-4 ml-1">
+                            <h4 className="text-[17px] font-bold tracking-tight uppercase opacity-90">
                                 {CATEGORIES.find(c => c.id === activeCategory)?.label}
                             </h4>
-                            <p className="text-sm text-muted mt-1">
+                            <p className="text-[11.5px] mt-1.5 font-medium" style={{ color: 'var(--modal-subtext)' }}>
                                 {CATEGORIES.find(c => c.id === activeCategory)?.description}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Grid optimized for immersive cards: Slimmer gap */}
+                        <div className="grid grid-cols-2 gap-4 px-1 pb-6">
                             {CATEGORIES.find(c => c.id === activeCategory)?.items.map(item => (
                                 <button
                                     key={item.id}
-                                    onClick={() => onSelect(item.id)}
-                                    className={`group relative flex flex-col items-center justify-center p-6 rounded-[var(--radius-xl)] border transition-all duration-300 hover:scale-[1.03] hover:shadow-premium bg-[var(--surface-muted)] border-[var(--border-muted)] hover:border-[var(--primary-color)]`}
+                                    onClick={() => onSelect(item.id as WidgetType)}
+                                    className="group relative flex flex-col h-40 overflow-hidden rounded-xl border border-white/20 hover:border-[var(--primary-color)]/30 transition-all duration-500 hover:-translate-y-1 shadow-[0_6px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.1)] bg-black/5 dark:bg-white/5"
                                 >
-                                    <div className="w-14 h-14 rounded-[var(--radius-lg)] bg-[var(--primary-subtle)] flex items-center justify-center mb-4 transition-colors group-hover:bg-[var(--primary-color)] group-hover:text-white">
-                                        <item.icon className="w-7 h-7 text-[var(--primary-color)] group-hover:text-white transition-colors" />
-                                    </div>
-                                    <span className="font-black text-xs uppercase tracking-tight text-center">{item.label}</span>
+                                    {/* Bezelless Preview Content */}
+                                    {(item as any).preview ? (
+                                        /* Full Bleed Image */
+                                        <div className="absolute inset-0">
+                                            <img 
+                                                src={isDark ? (item as any).preview.dark : (item as any).preview.light} 
+                                                alt={item.label}
+                                                className="w-full h-full object-cover filter transition-all duration-700 group-hover:scale-105"
+                                            />
+                                        </div>
+                                    ) : (
+                                        /* Minimal Icon Placeholder */
+                                        <div className="flex flex-col items-center justify-center h-full gap-2.5 opacity-[0.1] group-hover:opacity-30 group-hover:text-[var(--primary-color)] transition-all duration-500">
+                                            <item.icon className="w-10 h-10" />
+                                        </div>
+                                    )}
 
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ChevronRight className="w-4 h-4 text-[var(--primary-color)]" />
+                                    {/* Text Overlay: Ultra-Clear Translucent Glass Blur */}
+                                    <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border border-white/40"
+                                        style={{ 
+                                            background: 'rgba(255, 255, 255, 0.05)',
+                                            backdropFilter: 'blur(40px) saturate(180%) webkit-backdrop-filter: blur(40px) saturate(180%)',
+                                            boxShadow: '0 4px 15px rgba(0,0,0,0.03)'
+                                        }}>
+                                        <div className="flex-1">
+                                            <span className="font-bold text-[11px] uppercase tracking-[0.14em] text-[#050a1a] dark:text-white group-hover:opacity-100 transition-opacity drop-shadow-sm">
+                                                {item.label}
+                                            </span>
+                                        </div>
+                                        <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-all duration-500 text-[#050a1a] dark:text-white transform translate-x-2 group-hover:translate-x-0" />
                                     </div>
                                 </button>
                             ))}
@@ -122,14 +215,17 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="px-8 py-4 bg-black/5 dark:bg-white/5 border-t border-[var(--border-muted)] flex items-center justify-between shrink-0">
-                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5" /> SIOT DESIGN SYSTEM
+                {/* Footer Bar: Slim Padding */}
+                <div className="px-8 py-3.5 border-t flex items-center justify-between shrink-0 z-10" style={{ borderColor: 'var(--modal-border)', backgroundColor: 'var(--modal-sidebar-bg)' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-15">
+                        AURORA CORE V2.0
                     </p>
-                    <div className="flex gap-4">
-                        <button onClick={onClose} className="px-6 py-2 rounded-xl text-sm font-bold text-muted hover:text-main transition-colors">Close</button>
-                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-25 hover:opacity-100 transition-all underline underline-offset-4 decoration-current/20 hover:decoration-current"
+                    >
+                        TERMINAL EXIT
+                    </button>
                 </div>
             </div>
         </div>

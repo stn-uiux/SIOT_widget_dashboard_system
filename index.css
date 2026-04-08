@@ -147,9 +147,58 @@
     --scrollbar-track: transparent;
     --scrollbar-thumb: var(--black-alpha-10);
     --scrollbar-thumb-hover: var(--black-alpha-20);
+
+    /* Ultra-Slim Scale */
+    --text-ultra-heading: 15px;
+    --text-ultra-title: 13px;
+    --text-ultra-label: 11px;
+    --text-ultra-base: 10px;
+    --text-ultra-tiny: 8px;
+    --font-weight-light: 300;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+
+    /* Compact Typography & Spacing Scale (Perfect Slim) */
+    --text-compact-heading: 18px;
+    --text-compact-title: 16px;
+    --text-compact-label: 13px;
+    --text-compact-base: 12px;
+    --text-compact-tiny: 9px;
+    --spacing-nano: 2px;
+    --radius-modal: 32px;
+
+    /* Font Weights */
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-black: 900;
+
+    /* Letter Spacing */
+    --ls-tight: -0.02em;
+    --ls-normal: 0em;
+    --ls-wide: 0.05em;
+    --ls-widest: 0.1em;
+    --ls-tech: 0.2em;
+    /* Pure White Glass (Light Mode) - Fixed Grayish issue */
+    --modal-bg: rgba(255, 255, 255, 0.96);
+    --modal-border: rgba(255, 255, 255, 0.8);
+    --modal-text: #0f172a;
+    --modal-subtext: rgba(15, 23, 42, 0.4);
+    --modal-sidebar-bg: rgba(255, 255, 255, 0.5);
+    --modal-card-bg: #ffffff;
+    --modal-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.12);
 }
 
 .dark {
+    /* Deep Aurora Glass (Dark Mode) */
+    --modal-bg: rgba(6, 8, 12, 0.45);
+    --modal-border: rgba(255, 255, 255, 0.1);
+    --modal-text: #f8fafc;
+    --modal-subtext: rgba(248, 250, 252, 0.45);
+    --modal-sidebar-bg: rgba(255, 255, 255, 0.02);
+    --modal-card-bg: rgba(255, 255, 255, 0.03);
+    --modal-shadow: 0 60px 150px rgba(0, 0, 0, 0.8);
     --floating-panel-bg: rgba(0, 0, 0, 0.15); 
     --floating-panel-shadow: 0 20px 80px rgba(0, 0, 0, 0.6), 0 0 25px rgba(var(--primary-color-rgb), 0.1);
     --floating-panel-border: 1px solid rgba(255, 255, 255, 0.12);
@@ -412,6 +461,19 @@
     --shadow-light-text: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
+/* Typography Utility Classes */
+.fw-regular { font-weight: var(--font-regular); }
+.fw-medium { font-weight: var(--font-medium); }
+.fw-semibold { font-weight: var(--font-semibold); }
+.fw-bold { font-weight: var(--font-bold); }
+.fw-black { font-weight: var(--font-black); }
+
+.ls-tight { letter-spacing: var(--ls-tight); }
+.ls-normal { letter-spacing: var(--ls-normal); }
+.ls-wide { letter-spacing: var(--ls-wide); }
+.ls-widest { letter-spacing: var(--ls-widest); }
+.ls-tech { letter-spacing: var(--ls-tech); }
+
 /* Deep Glass Panel with Dual Rim Light (Bottom Blue + Top Mint) */
 [style*="var(--floating-panel-bg)"] {
   position: relative;
@@ -594,9 +656,24 @@ body {
     gap: var(--spacing);
 }
 
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+
 .rounded-design {
     border-radius: var(--border-radius);
 }
+
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
 
 .p-design {
     padding: var(--spacing);
