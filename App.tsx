@@ -1010,6 +1010,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
 };
 
 const App: React.FC = () => {
+  const [isHydrated, setIsHydrated] = useState(false);
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
   const [activeProjectId, setActiveProjectId] = useState<string>(
@@ -1135,8 +1136,10 @@ const App: React.FC = () => {
         if (!cancelled && savedLayout && typeof savedLayout === "object") {
           setLayoutStore(prev => ({ ...prev, ...savedLayout }));
         }
+        setIsHydrated(true);
       } catch (err) {
         console.error("[SIOT] Initialization error:", err);
+        setIsHydrated(true);
       }
     };
     hydrateAndOnboard();
@@ -1954,6 +1957,36 @@ const App: React.FC = () => {
   const currentLibrary =
     libraryOptions.find((opt) => opt.value === theme.chartLibrary) ||
     libraryOptions[0];
+
+  if (!isHydrated) {
+    return (
+      <div className="fixed inset-0 bg-[#020617] flex items-center justify-center z-[9999]">
+        <div className="relative flex flex-col items-center">
+          {/* Aurora Glow */}
+          <div className="absolute -inset-20 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
+          <div className="absolute -inset-10 bg-indigo-500/10 blur-[60px] rounded-full animate-pulse [animation-delay:700ms]" />
+          
+          <div className="relative mb-12 scale-150">
+            <GlobeBackground />
+          </div>
+
+          <div className="flex flex-col items-center space-y-6 mt-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" />
+            </div>
+            <div className="text-center">
+              <span className="text-sm uppercase tracking-[0.4em] font-black text-slate-400 animate-pulse">
+                Hydrating SIOT Dashboard
+              </span>
+              <p className="text-[var(--text-micro)] text-slate-500 mt-2 tracking-widest uppercase">Initializing core systems...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
