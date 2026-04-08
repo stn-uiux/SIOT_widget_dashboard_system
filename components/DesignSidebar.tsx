@@ -496,6 +496,19 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                         className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
                       />
                     </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-caption uppercase font-bold text-muted">Title Font Size</span>
+                        <span className="text-xs font-mono text-primary font-bold">{header.headerTitleSize || 18}px</span>
+                      </div>
+                      <input
+                        type="range" min="12" max="48" step="1"
+                        value={header.headerTitleSize || 18}
+                        onChange={(e) => updateHeader({ headerTitleSize: parseInt(e.target.value) })}
+                        className="w-full h-1.5 bg-gray-300/40 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)] transition-all"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -728,21 +741,6 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
                     </div>
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
-                    <h3 className="text-xs font-bold uppercase text-muted tracking-wider">Page Tabs</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-caption font-bold uppercase text-main">Show Page Tabs</p>
-                          <p className="text-micro text-muted">Hide for single page dashboards</p>
-                        </div>
-                        <Switch
-                          checked={theme.showPageTabs !== false}
-                          onChange={(checked) => updateTheme({ showPageTabs: checked })}
-                        />
-                      </div>
-                    </div>
-                  </div>
 
                   <div className="space-y-4 pt-4 border-t border-[var(--border-base)]">
                     <h3 className="text-xs font-bold uppercase text-muted tracking-wider flex items-center gap-2">

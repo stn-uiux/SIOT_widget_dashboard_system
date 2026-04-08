@@ -184,6 +184,7 @@ export interface HeaderConfig {
     [ThemeMode.LIGHT]?: { textColor: string; backgroundColor: string; };
     [ThemeMode.DARK]?: { textColor: string; backgroundColor: string; };
   };
+  headerTitleSize?: number;
 }
 
 export interface TabConfig {

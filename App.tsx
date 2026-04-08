@@ -2344,7 +2344,7 @@ const App: React.FC = () => {
                   className="h-8 w-auto mb-4 object-contain"
                 />
               )}
-              <h2 className="text-lg font-black tracking-tighter uppercase">
+              <h2 className="font-black tracking-tighter uppercase" style={{ fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : '1.125rem' }}>
                 {header.title}
               </h2>
             </div>
@@ -2418,8 +2418,11 @@ const App: React.FC = () => {
                       {/* Logo removed as requested to restore layout */}
 
                       <h2 
-                        className="text-lg font-black tracking-tighter whitespace-nowrap"
-                        style={{ color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor) }}
+                        className="font-black tracking-tighter whitespace-nowrap"
+                        style={{ 
+                          fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : '1.125rem',
+                          color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor) 
+                        }}
                       >
                         {header.title}
                       </h2>

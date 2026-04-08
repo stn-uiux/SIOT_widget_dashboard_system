@@ -980,7 +980,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   const titleWeight = widget.titleWeight ?? theme.titleWeight;
 
   const strokeColor = 'var(--border-base)';
-  const labelColor = isDark ? 'var(--text-muted)' : 'var(--text-muted)';
+  const labelColor = theme.textColor || 'var(--text-muted)';
 
   const series = widget.config.series && widget.config.series.length > 0
     ? widget.config.series
@@ -1060,14 +1060,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         {items.map((entry, index) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-            <span className="font-bold whitespace-nowrap" style={{ fontSize: 'var(--content-size)', color: isDark ? 'var(--text-muted)' : 'var(--text-muted)' }}>
+            <span className="font-bold whitespace-nowrap" style={{ fontSize: 'var(--content-size)', color: theme.textColor || 'var(--text-muted)' }}>
               {entry.value}
             </span>
           </div>
         ))}
         {showUnitInLegend && unit && (
           <div className="flex items-center gap-1.5 border-l pl-4 border-[var(--border-base)]">
-            <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: isDark ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+            <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: theme.textColor || 'var(--text-muted)' }}>
               단위: {unit}
             </span>
           </div>
@@ -1121,7 +1121,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           }
         });
         const nodes = Array.from(nodeIds).map((id) => ({ id, title: id }));
-        const resolvedFontColor = isDark ? 'var(--text-secondary)' : 'var(--text-secondary)';
+        const resolvedFontColor = theme.textColor || 'var(--text-secondary)';
         return (
           <div className="w-full h-full min-w-0 min-h-0 flex flex-col border-0 outline-none [&_*]:outline-none" style={{ border: 'none', boxShadow: 'none' }}>
             <ApexSankeyWidget data={{ nodes, edges }} fontColor={resolvedFontColor} nodeWidth={Math.max(14, theme.chartRadius * 2)} />
@@ -1778,8 +1778,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart key={chartKey} {...commonProps}>
+                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                  <BarChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
                         {localSeries.map((s, idx) => {
@@ -1850,8 +1850,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <HorizontalBarChartYAxisMeasure currentData={currentData} xAxisKey={xAxisKey} contentSize={contentSize}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart key={chartKey} layout="vertical" data={currentData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                  <BarChart layout="vertical" data={currentData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     {currentConfig.useGradient && (
                       <defs>
                         {localSeries.map((s, idx) => {
@@ -1915,8 +1915,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart key={chartKey} {...commonProps}>
+                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                  <LineChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
                         {localSeries.map((s, idx) => {
@@ -1991,8 +1991,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart key={chartKey} {...commonProps}>
+                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                  <AreaChart {...commonProps}>
                     {currentConfig.useGradient ? (
                       <defs>
                         {localSeries.map((s, idx) => {
@@ -2060,15 +2060,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       case WidgetType.CHART_PIE:
         return (
           <div className={`h-full`}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" key={chartKey}>
               <PieChart>
                 <Pie
                   data={currentData}
                   cx="50%"
                   cy="50%"
                   innerRadius="50%"
-                  outerRadius="70%"
+                  outerRadius="60%"
                   paddingAngle={5}
+                  minAngle={15}
                   dataKey={localSeries[0]?.key || 'value'}
                   nameKey={xAxisKey}
                   label={showLabels ? ({
@@ -2237,8 +2238,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart key={chartKey} {...commonProps}>
+                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                  <ComposedChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
                         {localSeries.map((s, idx) => {
@@ -2628,7 +2629,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <YAxis width={showYAxis ? 40 : 0} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="top" align="right" />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                   <Area
                     key={idx}
