@@ -7,9 +7,11 @@ interface ModeToggleProps {
     mode: ThemeMode;
     onChange: (mode: ThemeMode) => void;
     disabled?: boolean;
+    isEditMode?: boolean;
+    isPreviewMode?: boolean;
 }
 
-const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange, disabled }) => {
+const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange, disabled, isEditMode, isPreviewMode }) => {
     const [displayMode, setDisplayMode] = useState(mode);
     useEffect(() => setDisplayMode(mode), [mode]);
 
@@ -27,9 +29,9 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange, disabled }) => 
         <button
             type="button"
             onClick={handleClick}
-            className={`premium-mode-toggle ${isDark ? 'dark' : 'light'} ${disabled ? 'cursor-grab' : ''}`}
+            className={`premium-mode-toggle ${isDark ? 'dark' : 'light'} ${isPreviewMode ? 'is-preview' : ''} ${isEditMode ? 'is-edit' : ''}`}
             aria-label="Toggle Theme Mode"
-            title={disabled ? "Edit Mode - Drag to move" : "Toggle Theme"}
+            title={disabled ? (isEditMode ? "Edit Mode - Drag to move" : "Disabled") : "Toggle Theme"}
         >
             <div className="toggle-track">
                 <div className="toggle-thumb">

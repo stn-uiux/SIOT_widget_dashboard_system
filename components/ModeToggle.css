@@ -8,12 +8,23 @@
     background: none;
     border: none;
     padding: 0;
-    cursor: pointer;
     outline: none;
     position: relative;
     width: var(--toggle-w);
     height: var(--toggle-h);
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.premium-mode-toggle.is-preview {
+    cursor: pointer !important;
+}
+
+.premium-mode-toggle.is-edit {
+    cursor: grab !important;
+}
+
+.premium-mode-toggle:not(.is-preview):not(.is-edit) {
+    cursor: default !important;
 }
 
 /* 클릭은 항상 버튼이 받도록 내부는 터치/클릭 통과 */

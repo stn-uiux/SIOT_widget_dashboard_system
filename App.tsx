@@ -882,15 +882,24 @@ const HeaderLogo = ({ url }: { url?: string }) => (
 const HeaderThemeToggle = ({
   mode,
   onSwitch,
-  disabled
+  isEditMode,
+  isPreviewMode
 }: {
   mode: ThemeMode;
   onSwitch: (m: ThemeMode) => void;
-  disabled?: boolean;
+  isEditMode?: boolean;
+  isPreviewMode?: boolean;
 }) => {
+  const disabled = isEditMode || !isPreviewMode;
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <ModeToggle mode={mode} onChange={onSwitch} disabled={disabled} />
+      <ModeToggle 
+        mode={mode} 
+        onChange={onSwitch} 
+        disabled={disabled} 
+        isEditMode={isEditMode}
+        isPreviewMode={isPreviewMode}
+      />
     </div>
   );
 };
@@ -987,7 +996,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-20 ${isEditMode ? "pointer-events-auto" : "pointer-events-none"}`}
+      className={`absolute inset-0 z-20 ${(isEditMode || isPreviewMode) ? "pointer-events-auto" : "pointer-events-none"}`}
       onDragOver={(e) => isEditMode && e.preventDefault()}
       onDrop={(e) => isEditMode && handleManualDrop(e)}
     >
@@ -1017,7 +1026,12 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
             {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
             {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
             {w.type === HeaderWidgetType.THEME_TOGGLE && (
-              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} disabled={!isPreviewMode} />
+              <HeaderThemeToggle 
+                mode={theme.mode} 
+                onSwitch={onModeSwitch} 
+                isEditMode={isEditMode}
+                isPreviewMode={isPreviewMode} 
+              />
             )}
             {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
             {w.type === HeaderWidgetType.LOGO && <HeaderLogo url={w.url} />}
@@ -1036,13 +1050,50 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   );
 };
 
+// Loading UI Component (Reusable)
+const LoadingScreen = ({ message }: { message: string }) => (
+  <div className="fixed inset-0 bg-[#020617] flex items-center justify-center z-[9999]">
+    <div className="relative flex flex-col items-center">
+      <div className="absolute -inset-20 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
+      <div className="absolute -inset-10 bg-indigo-500/10 blur-[60px] rounded-full animate-pulse [animation-delay:700ms]" />
+      <div className="flex flex-col items-center">
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-8" />
+        <div className="text-center">
+          <span className="text-sm uppercase tracking-[0.4em] font-black text-white animate-pulse">
+            STN Dashboard
+          </span>
+          <p className="text-[10px] text-slate-400 mt-2 tracking-widest uppercase">
+            {message}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
-  // 0. Immediate Reset Check (Pre-render)
+  // 1. Immediate Reset Check (Pre-render)
   if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
-    localStorage.clear();
-    indexedDB.deleteDatabase("siot_dashboard_db");
-    window.location.href = window.location.pathname;
-    return null;
+    // Schedule reset
+    useEffect(() => {
+      const doReset = async () => {
+        localStorage.clear();
+        const req = indexedDB.deleteDatabase("siot_dashboard_db");
+        req.onsuccess = () => {
+          window.location.href = window.location.pathname;
+        };
+        req.onerror = () => {
+          window.location.href = window.location.pathname;
+        };
+        req.onblocked = () => {
+          window.location.href = window.location.pathname;
+        };
+      };
+      
+      doReset();
+    }, []);
+
+    return <LoadingScreen message="Resetting System..." />;
   }
 
   const [isHydrated, setIsHydrated] = useState(false);
@@ -1965,28 +2016,7 @@ const App: React.FC = () => {
     libraryOptions[0];
 
   if (!isHydrated) {
-    return (
-      <div className="fixed inset-0 bg-[#020617] flex items-center justify-center z-[9999]">
-        <div className="relative flex flex-col items-center">
-          {/* Aurora Glow */}
-          <div className="absolute -inset-20 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
-          <div className="absolute -inset-10 bg-indigo-500/10 blur-[60px] rounded-full animate-pulse [animation-delay:700ms]" />
-          
-          {/* Ultra-Safe Loading Indicator */}
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-8" />
-            <div className="text-center">
-              <span className="text-sm uppercase tracking-[0.4em] font-black text-white animate-pulse">
-                STN Dashboard
-              </span>
-              <p className="text-[10px] text-slate-400 mt-2 tracking-widest uppercase">
-                {window.location.search.includes("reset=true") ? "Resetting System..." : "Initializing core systems..."}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Initializing core systems..." />;
   }
 
   return (

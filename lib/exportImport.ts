@@ -133,8 +133,8 @@ async function cloneProjectAndCollectImages(
     exportedAt: new Date().toISOString(),
     project: clonedProject,
     layoutPositions: JSON.parse(JSON.stringify(layoutPositions)),
-    imageMap,
-  };
+    // Remove imageMap from manifest as it is not used in import and leads to large file sizes
+  } as any;
 
   return { manifest, imageEntries };
 }
