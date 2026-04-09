@@ -748,7 +748,6 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.SUMMARY_CHART]: { label: '트렌드 요약', icon: Activity, category: 'premium' },
   [WidgetType.DASH_FAILURE_STATUS]: { label: '장애 현황 (KPI)', icon: Activity, category: 'premium' },
   [WidgetType.DASH_NET_TRAFFIC]: { label: '네트워크 트래픽 (Stacked)', icon: Activity, category: 'premium' },
-  [WidgetType.DASH_TRAFFIC_STATUS]: { label: '네트워크 트래픽', icon: Activity, category: 'premium' },
   [WidgetType.DASH_SECURITY_STATUS]: { label: '보안 탐지 현황', icon: Hexagon, category: 'premium' },
   [WidgetType.DASH_RESOURCE_USAGE]: { label: '리소스 사용량', icon: BarChart3, category: 'premium' },
   [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },
