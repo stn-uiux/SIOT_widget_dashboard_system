@@ -16,7 +16,7 @@ interface WidgetPickerProps {
 
 // Preview Assets Configuration
 const PREVIEW_ASSETS = {
-    BAR_CHART: {
+    CHART_BAR: {
         light: '/assets/widget/light/graph/bar_graph_light.png',
         dark: '/assets/widget/dark/graph/bar_graph_dark.png'
     }
@@ -30,18 +30,18 @@ const CATEGORIES = [
         icon: BarChart3,
         items: [
             { 
-                id: 'BAR_CHART', 
+                id: WidgetType.CHART_BAR, 
                 icon: BarChart3, 
                 label: '세로 막대',
-                preview: PREVIEW_ASSETS.BAR_CHART
+                preview: PREVIEW_ASSETS.CHART_BAR
             },
-            { id: 'HORIZONTAL_BAR', icon: BarChartHorizontal, label: '가로 막대' },
-            { id: 'LINE_CHART', icon: LineChart, label: '선형 차트' },
-            { id: 'AREA_CHART', icon: AreaChart, label: '영역 차트' },
-            { id: 'PIE_CHART', icon: PieChart, label: '파이 차트' },
-            { id: 'RADAR_CHART', icon: Hexagon, label: '방사형 차트' },
-            { id: 'COMPOSED_CHART', icon: Layers, label: '혼합형 차트' },
-            { id: 'SANKEY_CHART', icon: Workflow, label: '생키 다이어그램' }
+            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대' },
+            { id: WidgetType.CHART_LINE, icon: LineChart, label: '선형 차트' },
+            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트' },
+            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트' },
+            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트' },
+            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트' },
+            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램' }
         ]
     },
     {
@@ -50,18 +50,18 @@ const CATEGORIES = [
         description: '고용량 데이터 최적화 템플릿',
         icon: LayoutGrid,
         items: [
-            { id: 'SINGLE_STAT', icon: Database, label: '단일 수치 (STAT)' },
-            { id: 'TREND_SUMMARY', icon: Activity, label: '트렌드 요약' },
-            { id: 'ISSUE_KPI', icon: Activity, label: '장애 현황 (KPI)' },
-            { id: 'ISSUE_STATS', icon: AreaChart, label: '장애 통계 (STATS)' },
-            { id: 'NETWORK_TRAFFIC', icon: Activity, label: '네트워크 트래픽' },
-            { id: 'SECURITY_DETECT', icon: Hexagon, label: '보안 탐지 현황' },
-            { id: 'RESOURCE_USAGE', icon: BarChart3, label: '리소스 사용률' },
-            { id: 'FACILITY_DB', icon: Database, label: '시설 현황' },
-            { id: 'FACILITY_MONITOR', icon: Monitor, label: '시설 상태' },
-            { id: 'RANK_LIST', icon: BarChartHorizontal, label: '순위 리스트' },
-            { id: 'WORK_SESS', icon: Activity, label: '업무망 상태' },
-            { id: 'VDI_STATUS', icon: LayoutGrid, label: 'VDI 접속 현황' }
+            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치 (STAT)' },
+            { id: WidgetType.EARNING_TREND, icon: Activity, label: '트렌드 요약' },
+            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)' },
+            { id: WidgetType.DASH_FAILURE_STATS, icon: AreaChart, label: '장애 통계 (STATS)' },
+            { id: WidgetType.DASH_TRAFFIC_STATUS, icon: Activity, label: '네트워크 트래픽' },
+            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황' },
+            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률' },
+            { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황' },
+            { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태' },
+            { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
+            { id: WidgetType.DASH_TRAFFIC_TOP5, icon: Activity, label: '업무망 상태' },
+            { id: WidgetType.DASH_VDI_STATUS, icon: LayoutGrid, label: 'VDI 접속 현황' }
         ]
     },
     {
@@ -70,15 +70,15 @@ const CATEGORIES = [
         description: '기본 정보 노출용 컴포넌트',
         icon: Database,
         items: [
-            { id: 'DATA_TABLE', icon: LayoutGrid, label: '데이터 테이블' },
-            { id: 'IMAGE_BOX', icon: ImageIcon, label: '이미지 박스' },
-            { id: 'MAP_WIDGET', icon: MapPin, label: '지도 위젯' },
-            { id: 'WEATHER_INFO', icon: CloudSun, label: '날씨 정보' },
-            { id: 'KPI_GENERAL', icon: Activity, label: 'KPI (GENERAL)' },
-            { id: 'EARNING_PROGRESS', icon: TrendingUp, label: 'TOTAL EARNING (PROGRESS)' },
-            { id: 'EARNING_TREND', icon: Activity, label: 'EARNING TREND (CHART + KPI)' },
-            { id: 'TEXT_ONLY', icon: Type, label: '텍스트 (글자만)' },
-            { id: 'NAV_CARD_V', icon: Layers, label: '세로 네비 카드' }
+            { id: WidgetType.TABLE, icon: LayoutGrid, label: '데이터 테이블' },
+            { id: WidgetType.IMAGE, icon: ImageIcon, label: '이미지 박스' },
+            { id: WidgetType.MAP, icon: MapPin, label: '지도 위젯' },
+            { id: WidgetType.WEATHER, icon: CloudSun, label: '날씨 정보' },
+            { id: WidgetType.GENERAL_KPI, icon: Activity, label: 'KPI (GENERAL)' },
+            { id: WidgetType.EARNING_PROGRESS, icon: TrendingUp, label: 'TOTAL EARNING (PROGRESS)' },
+            { id: WidgetType.EARNING_TREND, icon: Activity, label: 'EARNING TREND (CHART + KPI)' },
+            { id: WidgetType.TEXT_BLOCK, icon: Type, label: '텍스트 (글자만)' },
+            { id: WidgetType.VERTICAL_NAV_CARD, icon: Layers, label: '세로 네비 카드' }
         ]
     }
 ];

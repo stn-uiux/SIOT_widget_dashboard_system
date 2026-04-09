@@ -70,7 +70,7 @@ const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
 const proj1Zip = new URL("./assets/New_Project_1_2026-04-08.zip", import.meta.url).href;
 const proj2Zip = new URL("./assets/new_project_2_2026-04-08.zip", import.meta.url).href;
 const proj3Zip = new URL("./assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
-const proj4Zip = new URL("./assets/New_Project_4_2026-04-08.zip", import.meta.url).href;
+const proj4Zip = new URL("./assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
 
 const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
 const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
