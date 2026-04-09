@@ -1,0 +1,611 @@
+{
+  "version": 1,
+  "exportedAt": "2026-04-09T02:15:00.610Z",
+  "project": {
+    "id": "project_1773577332615",
+    "name": "New Project 4",
+    "pages": [
+      {
+        "id": "page_1",
+        "name": "Dashboard",
+        "layout": {
+          "columns": 24,
+          "rows": 12,
+          "defaultRowHeight": 20,
+          "fitToScreen": false,
+          "freePosition": true,
+          "backgroundImageDark": "images/img_0.png",
+          "glassmorphism": true,
+          "backgroundImageLight": "images/img_1.png",
+          "glassmorphismOpacity": 14
+        },
+        "widgets": [
+          {
+            "id": "widget_1773577602673",
+            "type": "CHART_BAR",
+            "title": "Monthly Traffic Analysis",
+            "colSpan": 6,
+            "rowSpan": 10,
+            "config": {
+              "xAxisKey": "name",
+              "yAxisKey": "value",
+              "unit": "건",
+              "showLegend": true,
+              "showGrid": true,
+              "showXAxis": true,
+              "showYAxis": true,
+              "showUnit": true,
+              "showUnitInLegend": true,
+              "showLabels": false,
+              "useGradient": true,
+              "series": [
+                {
+                  "key": "대출",
+                  "label": "Output",
+                  "color": "#43f9ed",
+                  "endColor": "#afe4df"
+                }
+              ],
+              "barWidth": 10
+            },
+            "data": [
+              {
+                "name": "Jan",
+                "반납": 240,
+                "대출": 400
+              },
+              {
+                "name": "Feb",
+                "반납": 149,
+                "대출": 300
+              },
+              {
+                "name": "Mar",
+                "반납": 240,
+                "대출": 200
+              },
+              {
+                "name": "Apr",
+                "반납": 339,
+                "대출": 278
+              },
+              {
+                "name": "May",
+                "반납": 139,
+                "대출": 189
+              },
+              {
+                "name": "Jun",
+                "반납": 240,
+                "대출": 239
+              },
+              {
+                "name": "Jul",
+                "반납": 510,
+                "대출": 349
+              }
+            ],
+            "noBezel": false,
+            "backgroundOpacity": 0
+          },
+          {
+            "id": "widget_1773577663874",
+            "type": "DASH_SECURITY_STATUS",
+            "title": "Security Overview",
+            "colSpan": 6,
+            "rowSpan": 10,
+            "config": {
+              "xAxisKey": "name",
+              "yAxisKey": "today",
+              "unit": "건",
+              "showLegend": false,
+              "showGrid": false,
+              "showXAxis": false,
+              "showYAxis": false,
+              "showUnit": true,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "series": [
+                {
+                  "key": "today",
+                  "label": "오늘",
+                  "color": "var(--primary-color)"
+                }
+              ]
+            },
+            "data": [
+              {
+                "name": "DDoS",
+                "today": 24,
+                "weekly": 186
+              },
+              {
+                "name": "IPS",
+                "today": 12,
+                "weekly": 448
+              },
+              {
+                "name": "Anti-Virus",
+                "today": 6,
+                "weekly": 30
+              }
+            ],
+            "mainValue": "545",
+            "noBezel": false,
+            "backgroundOpacity": 0
+          },
+          {
+            "id": "widget_1773578967400",
+            "type": "VERTICAL_NAV_CARD",
+            "title": "메뉴",
+            "colSpan": 3,
+            "rowSpan": 22,
+            "config": {},
+            "data": [],
+            "noBezel": false,
+            "navItems": [
+              {
+                "id": "nav_1",
+                "label": "1층",
+                "active": true
+              },
+              {
+                "id": "nav_2",
+                "label": "2층",
+                "active": false
+              },
+              {
+                "id": "nav_3",
+                "label": "3층",
+                "active": false
+              },
+              {
+                "id": "nav_4",
+                "label": "4층",
+                "active": false
+              },
+              {
+                "id": "nav_5",
+                "label": "5층",
+                "active": false
+              },
+              {
+                "id": "nav_1773582932822",
+                "label": "6층",
+                "active": false
+              },
+              {
+                "id": "nav_1773582934272",
+                "label": "7층",
+                "active": false
+              },
+              {
+                "id": "nav_1773582935305",
+                "label": "8층",
+                "active": false
+              }
+            ],
+            "backgroundOpacity": 0,
+            "noBorder": true,
+            "hideHeader": true
+          },
+          {
+            "id": "widget_1773580896131",
+            "type": "EARNING_PROGRESS",
+            "title": "Total earning",
+            "colSpan": 3,
+            "rowSpan": 7,
+            "config": {
+              "xAxisKey": "name",
+              "yAxisKey": "value",
+              "unit": "",
+              "showLegend": false,
+              "showGrid": false,
+              "showXAxis": false,
+              "showYAxis": false,
+              "showUnit": false,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "series": [],
+              "useGradient": true
+            },
+            "data": [],
+            "mainValue": "$12,875",
+            "subValue": "11%",
+            "progressValue": 88,
+            "noBezel": false,
+            "backgroundOpacity": 29,
+            "hideHeader": true,
+            "noBorder": true
+          },
+          {
+            "id": "widget_1773580943413",
+            "type": "DASH_NET_TRAFFIC",
+            "title": "Network Detection Trend",
+            "colSpan": 6,
+            "rowSpan": 10,
+            "config": {
+              "xAxisKey": "name",
+              "yAxisKey": "dmz",
+              "unit": "bps",
+              "showLegend": true,
+              "showGrid": true,
+              "showXAxis": true,
+              "showYAxis": true,
+              "showUnit": true,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "series": [
+                {
+                  "key": "dmz",
+                  "label": "DMZ",
+                  "color": "#3b82f6"
+                },
+                {
+                  "key": "vdi",
+                  "label": "VDI",
+                  "color": "#ec4899"
+                },
+                {
+                  "key": "biz",
+                  "label": "업무망",
+                  "color": "#22c55e"
+                },
+                {
+                  "key": "gov",
+                  "label": "5G정부망",
+                  "color": "#06b6d4"
+                }
+              ]
+            },
+            "data": [
+              {
+                "name": "Time 0",
+                "dmz": 27.64996134100925,
+                "vdi": 47.53353506569989,
+                "biz": 59.842883343717794,
+                "gov": 13.891930466129933
+              },
+              {
+                "name": "Time 1",
+                "dmz": 29.546734668755132,
+                "vdi": 48.77570308674602,
+                "biz": 47.064668799712194,
+                "gov": 16.707174291387382
+              },
+              {
+                "name": "Time 2",
+                "dmz": 38.55946490676055,
+                "vdi": 47.18503293341987,
+                "biz": 45.115461543233465,
+                "gov": 10.343378466878676
+              },
+              {
+                "name": "Time 3",
+                "dmz": 34.50728402223278,
+                "vdi": 31.859597065530817,
+                "biz": 40.294043518509795,
+                "gov": 16.89053158527421
+              },
+              {
+                "name": "Time 4",
+                "dmz": 22.941205178420137,
+                "vdi": 32.89749227827762,
+                "biz": 58.365623692944816,
+                "gov": 20.647578890925846
+              },
+              {
+                "name": "Time 5",
+                "dmz": 26.560109190355462,
+                "vdi": 41.982335245621236,
+                "biz": 49.552115755034066,
+                "gov": 24.657006587063858
+              },
+              {
+                "name": "Time 6",
+                "dmz": 28.54087080796057,
+                "vdi": 38.45916222367949,
+                "biz": 50.011466810002894,
+                "gov": 10.333771858327175
+              },
+              {
+                "name": "Time 7",
+                "dmz": 39.62438956773269,
+                "vdi": 30.831685310924573,
+                "biz": 59.09898559577555,
+                "gov": 14.685930738065649
+              },
+              {
+                "name": "Time 8",
+                "dmz": 20.262672268963428,
+                "vdi": 43.0192330687832,
+                "biz": 44.843941072171404,
+                "gov": 27.988231602099532
+              },
+              {
+                "name": "Time 9",
+                "dmz": 22.93095456650528,
+                "vdi": 30.889086535705815,
+                "biz": 53.12453920128755,
+                "gov": 26.380801600965412
+              }
+            ],
+            "noBezel": false,
+            "backgroundOpacity": 100,
+            "noBorder": true,
+            "hideHeader": false
+          },
+          {
+            "id": "widget_1773581016923",
+            "type": "DASH_FACILITY_1",
+            "title": "New Analysis",
+            "colSpan": 3,
+            "rowSpan": 6,
+            "config": {
+              "xAxisKey": "name",
+              "yAxisKey": "value",
+              "unit": "개",
+              "showLegend": false,
+              "showGrid": false,
+              "showXAxis": false,
+              "showYAxis": false,
+              "showUnit": true,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "series": [
+                {
+                  "key": "value",
+                  "label": "수량",
+                  "color": "var(--primary-color)"
+                }
+              ]
+            },
+            "data": [
+              {
+                "name": "IP-MPLS",
+                "value": 6
+              },
+              {
+                "name": "미등록",
+                "value": 0
+              }
+            ],
+            "noBezel": false,
+            "backgroundOpacity": 0,
+            "noBorder": true,
+            "hideHeader": true
+          },
+          {
+            "id": "widget_1775695012684",
+            "type": "WEATHER",
+            "title": "New Analysis",
+            "colSpan": 3,
+            "rowSpan": 7,
+            "config": {
+              "xAxisKey": "",
+              "yAxisKey": "",
+              "series": [],
+              "showLegend": false,
+              "showGrid": false,
+              "showXAxis": false,
+              "showYAxis": false,
+              "showUnit": false,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "unit": ""
+            },
+            "data": [],
+            "mainValue": "24°C",
+            "subValue": "Seoul, Partly Cloudy",
+            "noBezel": false,
+            "noBorder": true,
+            "hideHeader": true,
+            "backgroundOpacity": 39
+          },
+          {
+            "id": "widget_1775695064884",
+            "type": "MAP",
+            "title": "New Analysis",
+            "colSpan": 3,
+            "rowSpan": 7,
+            "config": {
+              "xAxisKey": "",
+              "yAxisKey": "",
+              "series": [],
+              "showLegend": false,
+              "showGrid": false,
+              "showXAxis": false,
+              "showYAxis": false,
+              "showUnit": false,
+              "showUnitInLegend": false,
+              "showLabels": false,
+              "unit": ""
+            },
+            "data": [],
+            "mainValue": "Seoul, South Korea",
+            "subValue": "37.5665, 126.9780",
+            "noBezel": false,
+            "noBorder": true,
+            "hideHeader": true,
+            "backgroundOpacity": 0
+          }
+        ],
+        "header": {
+          "show": true,
+          "position": "top",
+          "height": 76,
+          "width": 240,
+          "margin": 0,
+          "padding": 16,
+          "backgroundColor": "transparent",
+          "textColor": "#0f172a",
+          "textAlignment": "left",
+          "title": "Data Center Analysis",
+          "logo": "",
+          "showDivider": false,
+          "backgroundImage": "images/img_2.png",
+          "widgets": [
+            {
+              "id": "hw_1773577550180",
+              "type": "CLOCK",
+              "x": 55,
+              "y": 3,
+              "w": 4,
+              "h": 6
+            },
+            {
+              "id": "hw_1773577551807",
+              "type": "MONITOR",
+              "x": 52,
+              "y": 4,
+              "w": 3,
+              "h": 5
+            },
+            {
+              "id": "hw_1773577552468",
+              "type": "THEME_TOGGLE",
+              "x": 7,
+              "y": 3,
+              "w": 2,
+              "h": 6
+            }
+          ],
+          "headerTitleSize": 18,
+          "modeStyles": {
+            "dark": {
+              "textColor": "#0f172a",
+              "backgroundColor": "transparent"
+            },
+            "light": {
+              "textColor": "#0f172a",
+              "backgroundColor": "transparent"
+            }
+          },
+          "textColorDark": "#f9f9fb"
+        },
+        "tabs": []
+      }
+    ],
+    "activePageId": "page_1",
+    "theme": {
+      "name": "Dark Mode",
+      "primaryColor": "#3b82f6",
+      "backgroundColor": "#020617",
+      "surfaceColor": "#0f172a",
+      "titleColor": "#f8fafc",
+      "textColor": "#cfe6fc",
+      "borderColor": "#1e293b",
+      "widgetHeaderColor": "transparent",
+      "mode": "dark",
+      "chartLibrary": "recharts",
+      "borderRadius": 13,
+      "chartRadius": 6,
+      "borderWidth": 1,
+      "spacing": 5,
+      "dashboardPadding": 32,
+      "titleSize": 14,
+      "titleWeight": "700",
+      "contentSize": 12,
+      "textTiny": 12,
+      "textSmall": 12,
+      "textMd": 16,
+      "textLg": 22,
+      "textHero": 20,
+      "cardShadow": "0 10px 15px -3px rgb(0 0 0 / 0.5)",
+      "showPageTabs": true,
+      "dualModeSupport": true,
+      "modeStyles": {
+        "dark": {
+          "backgroundColor": "#020617",
+          "surfaceColor": "#0f172a",
+          "primaryColor": "#3b82f6",
+          "titleColor": "#f8fafc",
+          "textColor": "#223449"
+        },
+        "light": {
+          "backgroundColor": "#f8fafc",
+          "surfaceColor": "#ffffff",
+          "primaryColor": "#3b82f6",
+          "titleColor": "#494b50",
+          "textColor": "#223449"
+        }
+      }
+    }
+  },
+  "layoutPositions": {
+    "page_1": [
+      {
+        "i": "widget_1773577602673",
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 10,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1773577663874",
+        "x": 0,
+        "y": 10,
+        "w": 6,
+        "h": 10,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1773578967400",
+        "x": 21,
+        "y": 0,
+        "w": 3,
+        "h": 22,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1773580896131",
+        "x": 21,
+        "y": 22,
+        "w": 3,
+        "h": 7,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1773580943413",
+        "x": 0,
+        "y": 20,
+        "w": 6,
+        "h": 10,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1773581016923",
+        "x": 18,
+        "y": 0,
+        "w": 3,
+        "h": 6,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1775695012684",
+        "x": 6,
+        "y": 0,
+        "w": 3,
+        "h": 7,
+        "moved": false,
+        "static": false
+      },
+      {
+        "i": "widget_1775695064884",
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 7,
+        "moved": false,
+        "static": false
+      }
+    ]
+  }
+}
