@@ -1696,10 +1696,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   <div key={idx} className="flex items-center gap-2" style={{ gap: 'var(--spacing-sm)' }}>
                     <span className="text-[var(--text-muted)] shrink-0 w-20 truncate" style={{ fontSize: 'var(--text-small)' }}>{item.label}</span>
                     <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden" style={{ borderRadius: 'var(--border-radius)' }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{ width: `${pct}%`, backgroundColor: barColor, borderRadius: 'var(--border-radius)' }}
-                      />
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{ 
+                            width: `${pct}%`, 
+                            background: `linear-gradient(to right, ${barColor}, ${item.endColor ? resolveColor(item.endColor, 'var(--primary-color)', theme.primaryColor) : shadeColor(parseToHex(barColor), -20)})`, 
+                            borderRadius: 'var(--border-radius)' 
+                          }}
+                        />
                     </div>
                   </div>
                 );
@@ -1867,7 +1871,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           return (
                             <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
                               <stop offset="0%" stopColor={color} stopOpacity={1} />
-                              <stop offset="95%" stopColor={stopEndColor} stopOpacity={stopEndOpacity} />
+                              <stop offset="95%" stopColor={endColorRaw ? parseToHex(endColorRaw) : shadeColor(color, -25)} stopOpacity={1} />
                             </linearGradient>
                           );
                         })}

@@ -1037,6 +1037,14 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
 };
 
 const App: React.FC = () => {
+  // 0. Immediate Reset Check (Pre-render)
+  if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
+    localStorage.clear();
+    indexedDB.deleteDatabase("siot_dashboard_db");
+    window.location.href = window.location.pathname;
+    return null;
+  }
+
   const [isHydrated, setIsHydrated] = useState(false);
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
@@ -1084,25 +1092,6 @@ const App: React.FC = () => {
 
   // Consolidated Hydration & Onboarding
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
-      console.log("[STN] Reset triggered. Clearing storage...");
-      localStorage.clear();
-      // IndexedDB deletion is async but we don't necessarily need to wait for it before redirecting
-      // as long as we clear the key states in localStorage that trigger hydration.
-      const req = indexedDB.deleteDatabase("siot_dashboard_db");
-      req.onsuccess = () => {
-        window.location.href = window.location.pathname;
-      };
-      req.onerror = () => {
-        window.location.href = window.location.pathname;
-      };
-      // Fallback redirect after 500ms if DB deletion is stuck
-      setTimeout(() => {
-        window.location.href = window.location.pathname;
-      }, 500);
-      return;
-    }
-
     let cancelled = false;
     const hydrateAndOnboard = async () => {
       try {
