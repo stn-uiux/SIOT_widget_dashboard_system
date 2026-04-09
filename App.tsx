@@ -152,7 +152,7 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
 /** 비동기 저장 — IndexedDB (용량 제한 없음) */
 async function saveProjectsState(projects: Project[], activeProjectId: string): Promise<boolean> {
   const ok = await dbSave(PROJECTS_STORAGE_KEY, { projects, activeProjectId });
-  if (!ok) console.error("[SIOT] Failed to save project state to IndexedDB");
+  if (!ok) console.error("[STN] Failed to save project state to IndexedDB");
   // also try localStorage as fallback (may fail for large data, that's ok)
   try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify({ projects, activeProjectId })); } catch { /* quota ok */ }
   return ok;
@@ -1120,7 +1120,7 @@ const App: React.FC = () => {
               loadedProjects.push(project);
               loadedLayouts[project.id] = layoutPositions;
             } catch (e) {
-              console.error("[SIOT] Onboarding asset load failed:", url, e);
+              console.error("[STN] Onboarding asset load failed:", url, e);
             }
           }
 
@@ -1138,7 +1138,7 @@ const App: React.FC = () => {
         }
         setIsHydrated(true);
       } catch (err) {
-        console.error("[SIOT] Initialization error:", err);
+        console.error("[STN] Initialization error:", err);
         setIsHydrated(true);
       }
     };
@@ -1978,7 +1978,7 @@ const App: React.FC = () => {
             </div>
             <div className="text-center">
               <span className="text-sm uppercase tracking-[0.4em] font-black text-slate-400 animate-pulse">
-                Hydrating SIOT Dashboard
+                Hydrating STN Dashboard
               </span>
               <p className="text-[var(--text-micro)] text-slate-500 mt-2 tracking-widest uppercase">Initializing core systems...</p>
             </div>

@@ -37,13 +37,13 @@ export async function dbSave(key: string, value: unknown): Promise<boolean> {
             store.put(value, key);
             tx.oncomplete = () => { db.close(); resolve(true); };
             tx.onerror = () => {
-                console.error("[SIOT] IndexedDB write error:", tx.error);
+                console.error("[STN] IndexedDB write error:", tx.error);
                 db.close();
                 resolve(false);
             };
         });
     } catch (e) {
-        console.error("[SIOT] IndexedDB open error:", e);
+        console.error("[STN] IndexedDB open error:", e);
         return false;
     }
 }

@@ -1,4 +1,4 @@
-# SIOT Widget Dashboard (v1)
+# STN Widget Dashboard (v1)
 
 대시보드 위젯 편집·디자인·내보내기/불러오기가 가능한 프로젝트입니다.
 
