@@ -1890,53 +1890,62 @@ const App: React.FC = () => {
       return;
     }
 
-    // Smart Series Detection: If uploaded Excel has new numeric columns, add them to series config
+    // Smart Series Detection: If uploaded Excel has new columns or renames
     if (newData.length > 0 && widget.config) {
       const firstRow = newData[0];
       const xAxisKey = widget.config.xAxisKey || 'name';
       const currentSeries = widget.config.series || [];
-      const currentKeys = new Set(currentSeries.map(s => s.key));
+      const excelHeaders = Object.keys(firstRow).filter(k => k !== xAxisKey);
+      
       const newSeriesList = [...currentSeries];
-      let hasNewColumns = false;
-
-      Object.keys(firstRow).forEach(key => {
-        if (key !== xAxisKey && !currentKeys.has(key)) {
-          let val = firstRow[key];
-          // Try to treat string as number if possible
-          if (typeof val === 'string' && !Number.isNaN(parseFloat(val))) {
-            val = parseFloat(val);
-          }
-
-          // Add numeric columns that are not already tracked
-          if (typeof val === 'number' && !Number.isNaN(val)) {
-            // Case: If there's exactly one existing series and it's unmapped (empty in first row),
-            // maybe the user renamed it. Let's update that series instead of adding a new one.
-            if (currentSeries.length === 1 && (firstRow[currentSeries[0].label] === undefined && firstRow[currentSeries[0].key] === undefined)) {
-              newSeriesList[0] = {
-                ...newSeriesList[0],
-                key: key,
-                label: key
-              };
-              currentKeys.add(key); // prevent adding it again
-              hasNewColumns = true;
-            } else {
-              newSeriesList.push({
-                key: key,
-                label: key,
-                color: `var(--chart-palette-${(newSeriesList.length % 6) + 1})` || 'var(--primary-color)'
-              });
-              hasNewColumns = true;
-            }
-          }
+      const matchedExcelHeaders = new Set<string>();
+      
+      // 1. First, find which existing series match exactly by label or key
+      const missingSeriesIndices: number[] = [];
+      newSeriesList.forEach((s, idx) => {
+        if (firstRow[s.label] !== undefined) {
+          matchedExcelHeaders.add(s.label);
+        } else if (firstRow[s.key] !== undefined) {
+          matchedExcelHeaders.add(s.key);
+        } else {
+          missingSeriesIndices.push(idx);
         }
       });
 
-      if (hasNewColumns) {
+      // 2. Find excel headers that didn't match any existing series
+      const candidateHeaders = excelHeaders.filter(h => !matchedExcelHeaders.has(h));
+
+      let hasChanges = false;
+
+      // 3. Try to map missing series to candidate headers (Renames)
+      while (missingSeriesIndices.length > 0 && candidateHeaders.length > 0) {
+        const sIdx = missingSeriesIndices.shift()!;
+        const newHeader = candidateHeaders.shift()!;
+        newSeriesList[sIdx] = {
+          ...newSeriesList[sIdx],
+          key: newHeader,
+          label: newHeader
+        };
+        matchedExcelHeaders.add(newHeader);
+        hasChanges = true;
+      }
+
+      // 4. Add remaining candidate headers as NEW series
+      candidateHeaders.forEach(header => {
+        newSeriesList.push({
+          key: header,
+          label: header,
+          color: `var(--chart-palette-${(newSeriesList.length % 6) + 1})` || 'var(--primary-color)'
+        });
+        hasChanges = true;
+      });
+
+      if (hasChanges) {
         updateWidget(id, { 
           data: newData, 
           config: { ...widget.config, series: newSeriesList } 
         });
-        showToast("New columns detected and added to chart configuration.");
+        showToast("Chart configuration updated based on Excel headers.");
         return;
       }
     }
