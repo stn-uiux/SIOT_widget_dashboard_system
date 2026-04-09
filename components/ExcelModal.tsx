@@ -61,25 +61,7 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
         const data = XLSX.utils.sheet_to_json(ws);
 
         if (data && Array.isArray(data) && data.length > 0) {
-          const xAxis = widget.config.xAxisKey || 'name';
-          const xAxisLabel = widget.config.xAxisLabel || xAxis;
-          
-          // Map user-facing labels back to internal keys
-          const importedData = data.map((row: any) => {
-            const newRow: any = { [xAxis]: row[xAxisLabel] !== undefined ? row[xAxisLabel] : row[xAxis] };
-            widget.config.series?.forEach(s => {
-              newRow[s.key] = row[s.label] !== undefined ? row[s.label] : row[s.key];
-            });
-            // Keep any other remaining properties just in case
-            Object.keys(row).forEach(k => {
-              if (k !== xAxisLabel && !widget.config.series?.some(s => s.label === k)) {
-                newRow[k] = row[k];
-              }
-            });
-            return newRow;
-          });
-
-          onUpload(widget.id, importedData);
+          onUpload(widget.id, data);
           setStatus('success');
           setTimeout(onClose, 1500);
         } else {

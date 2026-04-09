@@ -1890,17 +1890,28 @@ const App: React.FC = () => {
       return;
     }
 
-    // Smart Series Detection: If uploaded Excel has new columns or renames
+    // Smart Series Detection & Data Mapping
     if (newData.length > 0 && widget.config) {
       const firstRow = newData[0];
       const xAxisKey = widget.config.xAxisKey || 'name';
+      
+      // Figure out which column in Excel matches the X-Axis
+      let excelXKey = xAxisKey;
+      if (firstRow[xAxisKey] === undefined) {
+        // Try common names
+        const candidates = ['name', 'label', 'category', 'date', 'time'];
+        const found = Object.keys(firstRow).find(k => candidates.includes(k.toLowerCase()));
+        if (found) excelXKey = found;
+        else excelXKey = Object.keys(firstRow)[0]; // Fallback to first column
+      }
+
       const currentSeries = widget.config.series || [];
-      const excelHeaders = Object.keys(firstRow).filter(k => k !== xAxisKey);
+      const excelHeaders = Object.keys(firstRow).filter(k => k !== excelXKey);
       
       const newSeriesList = [...currentSeries];
       const matchedExcelHeaders = new Set<string>();
       
-      // 1. First, find which existing series match exactly by label or key
+      // 1. Identify which existing series match Excel headers
       const missingSeriesIndices: number[] = [];
       newSeriesList.forEach((s, idx) => {
         if (firstRow[s.label] !== undefined) {
@@ -1912,25 +1923,25 @@ const App: React.FC = () => {
         }
       });
 
-      // 2. Find excel headers that didn't match any existing series
+      // 2. Identify candidate headers from Excel that aren't matched yet
       const candidateHeaders = excelHeaders.filter(h => !matchedExcelHeaders.has(h));
 
-      let hasChanges = false;
+      let hasChanges = (excelXKey !== xAxisKey);
 
-      // 3. Try to map missing series to candidate headers (Renames)
+      // 3. Auto-rename missing series based on available candidate columns
       while (missingSeriesIndices.length > 0 && candidateHeaders.length > 0) {
         const sIdx = missingSeriesIndices.shift()!;
         const newHeader = candidateHeaders.shift()!;
         newSeriesList[sIdx] = {
           ...newSeriesList[sIdx],
-          key: newHeader,
+          key: newHeader, // Set key to match the new label/header for simplicity
           label: newHeader
         };
         matchedExcelHeaders.add(newHeader);
         hasChanges = true;
       }
 
-      // 4. Add remaining candidate headers as NEW series
+      // 4. Add remaining new columns as new series
       candidateHeaders.forEach(header => {
         newSeriesList.push({
           key: header,
@@ -1940,14 +1951,32 @@ const App: React.FC = () => {
         hasChanges = true;
       });
 
-      if (hasChanges) {
-        updateWidget(id, { 
-          data: newData, 
-          config: { ...widget.config, series: newSeriesList } 
+      // 5. Final Data Normalization: Map Excel keys to the updated series keys
+      const normalizedData = newData.map(row => {
+        const newRow: any = { [xAxisKey]: row[excelXKey] };
+        newSeriesList.forEach(s => {
+          // Check if data exists in Excel for this series label or key
+          const val = row[s.label] !== undefined ? row[s.label] : row[s.key];
+          if (val !== undefined) {
+            newRow[s.key] = val;
+          }
         });
-        showToast("Chart configuration updated based on Excel headers.");
-        return;
+        return newRow;
+      });
+
+      updateWidget(id, { 
+        data: normalizedData, 
+        config: { 
+          ...widget.config, 
+          xAxisKey: xAxisKey,
+          series: newSeriesList 
+        } 
+      });
+
+      if (hasChanges) {
+        showToast("Chart configuration updated from Excel headers.");
       }
+      return;
     }
 
     updateWidget(id, { data: newData });
