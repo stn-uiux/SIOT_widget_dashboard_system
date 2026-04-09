@@ -627,6 +627,25 @@ export const TYPE_DEFAULT_DATA: Record<string, {
       series: [{ key: 'value', label: '수량', color: 'var(--primary-color)' }]
     }
   },
+  [WidgetType.DASH_TRAFFIC_STATUS]: {
+    data: [
+      { name: 'Time 1', dmz: 25, vdi: 35, biz: 45, gov: 15 },
+      { name: 'Time 2', dmz: 28, vdi: 32, biz: 48, gov: 12 },
+      { name: 'Time 3', dmz: 22, vdi: 38, biz: 42, gov: 18 },
+      { name: 'Time 4', dmz: 30, vdi: 30, biz: 50, gov: 10 },
+      { name: 'Time 5', dmz: 25, vdi: 35, biz: 45, gov: 15 }
+    ],
+    config: {
+      xAxisKey: 'name', yAxisKey: 'dmz', unit: 'bps',
+      showLegend: true, showGrid: true, showXAxis: true, showYAxis: true, showUnit: true, showUnitInLegend: false, showLabels: false,
+      series: [
+        { key: 'dmz', label: 'DMZ', color: '#3b82f6' },
+        { key: 'vdi', label: 'VDI', color: '#ec4899' },
+        { key: 'biz', label: '업무망', color: '#22c55e' },
+        { key: 'gov', label: '5G정부망', color: '#06b6d4' }
+      ]
+    }
+  },
 
   [WidgetType.GENERAL_KPI]: {
     mainValue: '204',
@@ -728,8 +747,8 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.SUMMARY]: { label: '단일 수치 (Stat)', icon: Database, category: 'premium' },
   [WidgetType.SUMMARY_CHART]: { label: '트렌드 요약', icon: Activity, category: 'premium' },
   [WidgetType.DASH_FAILURE_STATUS]: { label: '장애 현황 (KPI)', icon: Activity, category: 'premium' },
-  [WidgetType.DASH_FAILURE_STATS]: { label: '장애 통계 (Stats)', icon: AreaChart, category: 'premium' },
-  [WidgetType.DASH_NET_TRAFFIC]: { label: '네트워크 트래픽', icon: Activity, category: 'premium' },
+  [WidgetType.DASH_NET_TRAFFIC]: { label: '네트워크 트래픽 (Stacked)', icon: Activity, category: 'premium' },
+  [WidgetType.DASH_TRAFFIC_STATUS]: { label: '네트워크 트래픽', icon: Activity, category: 'premium' },
   [WidgetType.DASH_SECURITY_STATUS]: { label: '보안 탐지 현황', icon: Hexagon, category: 'premium' },
   [WidgetType.DASH_RESOURCE_USAGE]: { label: '리소스 사용량', icon: BarChart3, category: 'premium' },
   [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },

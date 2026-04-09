@@ -76,14 +76,22 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         const defShadow = getComputedStyle(document.documentElement).getPropertyValue(defShadowKey).trim() || (isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)');
         const tokenBg = variant && tokenValue(variant.background);
         const parsed = tokenBg ? parseRgba(tokenBg) : null;
-        const glassRgb = parsed?.rgb ?? (isDark ? '15, 23, 42' : '255, 255, 255');
+        // Prioritize theme.surfaceColor for the RGB part of glassmorphism
+        const glassRgb = hexToRgb(theme.surfaceColor);
         const glassOpacity = parsed?.opacity ?? defOpacity;
+        
         root.style.setProperty('--glass-bg-rgb', glassRgb);
         root.style.setProperty('--glass-opacity', String(glassOpacity));
-        root.style.setProperty('--glass-bg', 'rgba(var(--glass-bg-rgb), var(--glass-opacity))');
+        root.style.setProperty('--glass-bg', `rgba(${glassRgb}, ${glassOpacity})`);
         root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || defBorder);
         root.style.setProperty('--glass-shadow', (variant && tokenValue(variant.shadow)) || defShadow);
         root.style.setProperty('--glass-blur', blur);
+
+        // Dedicated GNB background to decouple it from widgets
+        const gnbBg = isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)';
+        const gnbBtnBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)';
+        root.style.setProperty('--gnb-bg', gnbBg);
+        root.style.setProperty('--gnb-btn-bg', gnbBtnBg);
 
         // Mode Classes (on the same element we're theming)
         root.classList.remove('dark', 'midnight-pro');

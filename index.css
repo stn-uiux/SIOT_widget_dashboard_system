@@ -433,8 +433,6 @@
     --floating-panel-bg: linear-gradient(165deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.55) 100%);
     --panel-item-bg: transparent; /* Background removed as requested */
     --panel-item-bg-hover: rgba(255, 255, 255, 0.05); /* Very subtle white hover hint */
-    --background: #020617;
-    --surface: #0f172a;
     --surface-elevated: #1e293b;
     --surface-muted: #1e293b;
     --text-main: #f8fafc;

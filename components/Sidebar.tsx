@@ -316,12 +316,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
       WidgetType.CHART_RADAR,
       WidgetType.CHART_TREEMAP,
       WidgetType.CHART_COMPOSED,
-      WidgetType.TABLE,
-      WidgetType.DASH_RANK_LIST,
-      WidgetType.DASH_FAILURE_STATS,
-      WidgetType.DASH_TRAFFIC_STATUS,
-      WidgetType.DASH_NET_TRAFFIC,
-      WidgetType.DASH_TRAFFIC_TOP5
+      WidgetType.TABLE
     ];
 
     const isOldViz = vizTypes.includes(oldType);

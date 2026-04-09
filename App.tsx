@@ -2075,7 +2075,7 @@ const App: React.FC = () => {
             right: 'var(--spacing-xl)',
             width: 'var(--ai-fab-size)',
             height: 'var(--ai-fab-size)',
-            backgroundColor: 'var(--surface)',
+            backgroundColor: 'var(--gnb-bg)',
             backdropFilter: 'blur(24px)',
             borderRadius: '9999px',
             boxShadow: '0 12px 48px rgba(0,0,0,0.3), 0 0 20px var(--primary-color-20)',
@@ -2097,7 +2097,7 @@ const App: React.FC = () => {
             bottom: 'var(--spacing-xl)', 
             right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
             height: 'var(--ai-fab-size)',
-            backgroundColor: 'rgba(var(--surface-rgb), 0.8)',
+            backgroundColor: 'var(--gnb-bg)',
             backdropFilter: 'blur(16px)',
             borderRadius: '9999px',
             padding: '0 24px',
@@ -2253,6 +2253,7 @@ const App: React.FC = () => {
               <button
                 onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
                 className={`btn-base btn-surface h-10 px-4 rounded-full ${isLibraryDropdownOpen ? "active" : ""}`}
+                style={{ backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)' }}
               >
                 <div
                   className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
@@ -2302,18 +2303,21 @@ const App: React.FC = () => {
             <button
               onClick={handleToggleDesignSidebar}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
+              style={{ backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
             >
               <Palette className="w-4 h-4" /> <span className="text-xs">Design</span>
             </button>
             <button
               onClick={handleOpenLayoutSidebar}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
+              style={{ backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
             >
               <LayoutGrid className="w-4 h-4" /> <span className="text-xs">Layout</span>
             </button>
             <button
               onClick={handleProjectSave}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
+              style={{ backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)' }}
             >
               <Edit3 className="w-4 h-4" /> <span className="text-xs">Edit</span>
             </button>
@@ -2324,6 +2328,7 @@ const App: React.FC = () => {
                 setIsFloatingGnbOpen(false);
               }}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+              style={{ backgroundColor: 'var(--gnb-btn-bg)' }}
             >
               <Eye className="w-4 h-4" /> <span className="text-xs">Preview</span>
             </button>
