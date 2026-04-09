@@ -101,51 +101,76 @@ async function saveLayoutStore(store: LayoutStore) {
 
 type ProjectsState = { projects: Project[]; activeProjectId: string };
 
-/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 빠르게 불러옴 (legacy 호환) */
-function loadProjectsStateSync(initial: Project[]): ProjectsState {
-  try {
-    const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
-    if (!raw) return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
-    const parsed = JSON.parse(raw) as ProjectsState;
-    if (!parsed?.projects?.length || !Array.isArray(parsed.projects))
-      return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
-    const id = parsed.activeProjectId && parsed.projects.some((p: Project) => p.id === parsed.activeProjectId)
-      ? parsed.activeProjectId
-      : parsed.projects[0].id;
+/** 저장된 프로젝트 데이터를 현재 스키마에 맞춰 보정하고 테마 설정을 검증 (Self-Healing 포함) */
+function migrateProjects(projects: Project[]): Project[] {
+  if (!Array.isArray(projects)) return [];
+  
+  return projects.map((p) => {
+    // 1. 테마 보정 및 자가 치유
+    const isDefaultProject = p.id && String(p.id).startsWith('project_');
+    let theme = { ...DEFAULT_THEME, ...(p.theme || {}) };
+    
+    // 테마 자가 교정: 배경색이 밝거나 모드가 라이트인 경우 강제로 다크 모드 동기화
+    const isLightBackground = theme.backgroundColor && (theme.backgroundColor.toLowerCase() === '#f8fafc' || theme.backgroundColor.toLowerCase() === '#ffffff');
+    if (theme.mode === ThemeMode.LIGHT || isLightBackground) {
+      console.log(`[STN] Theme mismatch detected for project ${p.id}. Forcing Dark Mode.`);
+      theme = { 
+        ...theme, 
+        name: "Dark Mode",
+        mode: ThemeMode.DARK, 
+        backgroundColor: '#020617', 
+        surfaceColor: '#0f172a', 
+        titleColor: '#f8fafc',
+        textColor: '#94a3b8'
+      };
+    }
 
-    // ── 스키마 마이그레이션: 저장된 데이터에 없는 새 필드를 기본값으로 채움 ──
-    // 이렇게 하면 새 테마 필드 추가 시 저장된 데이터가 undefined로 남아 리셋되는 현상을 방지
-    const migratedProjects: Project[] = parsed.projects.map((p) => {
-      const mappedPages = (p.pages || []).map((pg) => {
-        const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
-        // 마이그레이션: 예전 기본값 'var(--background)'는 투명으로 교정
-        if (mergedHeader.backgroundColor === 'var(--background)') {
-          mergedHeader.backgroundColor = 'transparent';
-        }
-        return {
-          ...pg,
-          layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-          header: mergedHeader,
-        };
-      });
-      // 페이지가 하나도 없으면 기본 페이지 하나 생성 (빈 화면 방지)
-      const pages = mappedPages.length > 0
-        ? mappedPages
-        : [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
-      const activePageId = p.activePageId && pages.some((pg) => pg.id === p.activePageId)
-        ? p.activePageId
-        : pages[0].id;
+    // 2. 페이지 및 헤더 마이그레이션
+    const mappedPages = (p.pages || []).map((pg) => {
+      const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
+      // 배경색이 레거시 변수 형태면 투명으로 교정
+      if (mergedHeader.backgroundColor === 'var(--background)') {
+        mergedHeader.backgroundColor = 'transparent';
+      }
       return {
-        ...p,
-        theme: { ...DEFAULT_THEME, ...p.theme },
-        pages,
-        activePageId,
+        ...pg,
+        layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
+        header: mergedHeader,
       };
     });
 
-    return { projects: migratedProjects, activeProjectId: id };
+    const pages = mappedPages.length > 0
+      ? mappedPages
+      : [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
+      
+    const activePageId = p.activePageId && pages.some((pg) => pg.id === p.activePageId)
+      ? p.activePageId
+      : pages[0].id;
+
+    return {
+      ...p,
+      theme,
+      pages,
+      activePageId,
+    };
+  });
+}
+
+/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 불러옴 */
+function loadProjectsStateSync(initial: Project[]): ProjectsState {
+  try {
+    const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
+    if (!raw) return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
+    const parsed = JSON.parse(raw) as ProjectsState;
+    
+    const projects = migrateProjects(parsed.projects || initial);
+    const activeProjectId = (parsed.activeProjectId && projects.some(p => p.id === parsed.activeProjectId))
+      ? parsed.activeProjectId
+      : (projects[0]?.id ?? "project_1");
+      
+    return { projects, activeProjectId };
   } catch {
-    return { projects: initial, activeProjectId: initial[0]?.id ?? "project_1" };
+    return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
   }
 }
 
@@ -876,6 +901,7 @@ interface HeaderWidgetLayerProps {
   onUpdate: (updates: Partial<HeaderConfig>) => void;
   theme: DashboardTheme;
   onModeSwitch: (m: ThemeMode) => void;
+  isPreviewMode: boolean;
 }
 
 const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
@@ -884,6 +910,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   onUpdate,
   theme,
   onModeSwitch,
+  isPreviewMode,
 }) => {
   const widgets = header.widgets || [];
   const containerRef = useRef<HTMLDivElement>(null);
@@ -990,7 +1017,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
             {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
             {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
             {w.type === HeaderWidgetType.THEME_TOGGLE && (
-              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} disabled={isEditMode} />
+              <HeaderThemeToggle mode={theme.mode} onSwitch={onModeSwitch} disabled={!isPreviewMode} />
             )}
             {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
             {w.type === HeaderWidgetType.LOGO && <HeaderLogo url={w.url} />}
@@ -1013,12 +1040,11 @@ const App: React.FC = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
-  const [activeProjectId, setActiveProjectId] = useState<string>(
-    () => getInitialProjectsState().activeProjectId,
-  );
+  const [activeProjectId, setActiveProjectId] = useState<string>(() => getInitialProjectsState().activeProjectId);
 
   const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0];
-  const currentPage = currentProject?.pages?.find((p) => p.id === currentProject.activePageId) || currentProject?.pages?.[0];
+  const theme = currentProject?.theme || DEFAULT_THEME;
+  const currentPage = currentProject?.pages?.find((p) => p.id === currentProject?.activePageId) || currentProject?.pages?.[0];
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -1059,53 +1085,38 @@ const App: React.FC = () => {
   // Consolidated Hydration & Onboarding
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
-      indexedDB.deleteDatabase("siot_dashboard_db");
+      console.log("[STN] Reset triggered. Clearing storage...");
       localStorage.clear();
-      window.location.href = window.location.pathname; // 리셋 쿼리스트링 제거 후 재접속
+      // IndexedDB deletion is async but we don't necessarily need to wait for it before redirecting
+      // as long as we clear the key states in localStorage that trigger hydration.
+      const req = indexedDB.deleteDatabase("siot_dashboard_db");
+      req.onsuccess = () => {
+        window.location.href = window.location.pathname;
+      };
+      req.onerror = () => {
+        window.location.href = window.location.pathname;
+      };
+      // Fallback redirect after 500ms if DB deletion is stuck
+      setTimeout(() => {
+        window.location.href = window.location.pathname;
+      }, 500);
       return;
     }
 
     let cancelled = false;
     const hydrateAndOnboard = async () => {
       try {
+        // 1. IndexedDB에서 최근 프로젝트 로드
         const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
         const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
 
         if (!cancelled && saved?.projects?.length > 0) {
-          const migratedProjects: Project[] = saved.projects.map((p) => ({
-            ...p,
-            theme: { ...DEFAULT_THEME, ...p.theme },
-            pages: (p.pages || []).map((pg) => {
-              const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
-              // 마이그레이션: 예전 기본값 'var(--background)'는 투명으로 교정
-              if (mergedHeader.backgroundColor === 'var(--background)') {
-                mergedHeader.backgroundColor = 'transparent';
-              }
-              // modeStyles 에 저장된 예전 backgroundColor도 교정
-              if (mergedHeader.modeStyles) {
-                const cleaned: typeof mergedHeader.modeStyles = {};
-                for (const [modeKey, modeVal] of Object.entries(mergedHeader.modeStyles)) {
-                  if (modeVal) {
-                    cleaned[modeKey as keyof typeof mergedHeader.modeStyles] = {
-                      ...modeVal,
-                      backgroundColor: modeVal.backgroundColor === 'var(--background)' ? 'transparent' : modeVal.backgroundColor,
-                    };
-                  }
-                }
-                mergedHeader.modeStyles = cleaned;
-              }
-              return {
-                ...pg,
-                layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-                header: mergedHeader,
-              };
-            }),
-          }));
-          // IndexedDB가 source of truth — 항상 적용 (배경 이미지 등 대용량 데이터는 localStorage에 못 들어가므로)
-          setProjects(migratedProjects);
+          const migrated = migrateProjects(saved.projects);
+          setProjects(migrated);
           if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
-
-        } else if (!cancelled && !projectsRaw) {
+        } 
+        // 2. 데이터가 아예 없으면 초기 온보딩 (ZIP 로드)
+        else if (!cancelled && !projectsRaw) {
           const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
           const loadedProjects: Project[] = [];
           const loadedLayouts: LayoutStore = {};
@@ -1120,26 +1131,30 @@ const App: React.FC = () => {
               loadedProjects.push(project);
               loadedLayouts[project.id] = layoutPositions;
             } catch (e) {
-              console.error("[STN] Onboarding asset load failed:", url, e);
+              console.error("[STN] Onboarding failed:", url, e);
             }
           }
 
-          if (loadedProjects.length > 0 && !cancelled) {
-            setProjects(loadedProjects);
-            setActiveProjectId(loadedProjects[0].id);
+          if (!cancelled && loadedProjects.length > 0) {
+            const migrated = migrateProjects(loadedProjects);
+            setProjects(migrated);
+            setActiveProjectId(migrated[0].id);
             setLayoutStore(prev => ({ ...prev, ...loadedLayouts }));
-            saveProjectsState(loadedProjects, loadedProjects[0].id);
+            saveProjectsState(migrated, migrated[0].id);
             saveLayoutStore(loadedLayouts);
           }
         }
+
+        // 3. 레이아웃 스토리지 복구
         const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
-        if (!cancelled && savedLayout && typeof savedLayout === "object") {
+        if (!cancelled && savedLayout) {
           setLayoutStore(prev => ({ ...prev, ...savedLayout }));
         }
+
         setIsHydrated(true);
       } catch (err) {
         console.error("[STN] Initialization error:", err);
-        setIsHydrated(true);
+        setIsHydrated(true); // 에러가 나더라도 일단 화면은 보여줌
       }
     };
     hydrateAndOnboard();
@@ -1272,7 +1287,7 @@ const App: React.FC = () => {
   }, [capturingForExport, isPreviewMode, currentProject, layoutStore, activeProjectId]);
 
   // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
-  const { theme } = currentProject ?? { theme: DEFAULT_THEME };
+  // theme shortcuts are already initialized at the top 
   const _page = currentPage ?? (currentProject?.pages?.[0]);
   const { widgets = [], layout = DEFAULT_PAGE.layout, header: pageHeader } = _page ?? { widgets: [], layout: DEFAULT_PAGE.layout, header: DEFAULT_HEADER };
   const header = pageHeader || DEFAULT_HEADER;
@@ -1518,7 +1533,7 @@ const App: React.FC = () => {
     // just switching to that mode via a default preset, we might want to restore it.
     // However, if the user explicitly clicks a preset, they usually want that preset's colors.
     // BUT! For the default "Light Mode" / "Dark Mode" presets, they act like mode switches.
-    const isDefaultModePreset = preset.name === "Light Mode" || preset.name === "Dark Mode" || preset.name === "Cyber Mode";
+    const isDefaultModePreset = preset.name === "Light Mode" || preset.name === "Dark Mode";
     const targetSaved = (newModeStyles as any)[mode];
     if (isDefaultModePreset && targetSaved && Object.keys(targetSaved).length > 0) {
       Object.assign(updates, targetSaved);
@@ -1566,6 +1581,7 @@ const App: React.FC = () => {
 
     const updates: Partial<DashboardTheme> = { 
       mode,
+      name: mode === ThemeMode.DARK ? "Dark Mode" : mode === ThemeMode.LIGHT ? "Light Mode" : currentTheme.name,
       modeStyles: newModeStyles 
     };
 
@@ -1890,76 +1906,41 @@ const App: React.FC = () => {
       return;
     }
 
-    // Smart Series Detection & Data Mapping
+    // Direct Series Overwrite & Data Mapping
     if (newData.length > 0 && widget.config) {
-      const firstRow = newData[0];
-      const xAxisKey = widget.config.xAxisKey || 'name';
-      
-      // Figure out which column in Excel matches the X-Axis
-      let excelXKey = xAxisKey;
-      if (firstRow[xAxisKey] === undefined) {
-        // Try common names
-        const candidates = ['name', 'label', 'category', 'date', 'time'];
-        const found = Object.keys(firstRow).find(k => candidates.includes(k.toLowerCase()));
-        if (found) excelXKey = found;
-        else excelXKey = Object.keys(firstRow)[0]; // Fallback to first column
-      }
-
-      const currentSeries = widget.config.series || [];
-      const excelHeaders = Object.keys(firstRow).filter(k => k !== excelXKey);
-      
-      const newSeriesList = [...currentSeries];
-      const matchedExcelHeaders = new Set<string>();
-      
-      // 1. Identify which existing series match Excel headers
-      const missingSeriesIndices: number[] = [];
-      newSeriesList.forEach((s, idx) => {
-        if (firstRow[s.label] !== undefined) {
-          matchedExcelHeaders.add(s.label);
-        } else if (firstRow[s.key] !== undefined) {
-          matchedExcelHeaders.add(s.key);
-        } else {
-          missingSeriesIndices.push(idx);
-        }
-      });
-
-      // 2. Identify candidate headers from Excel that aren't matched yet
-      const candidateHeaders = excelHeaders.filter(h => !matchedExcelHeaders.has(h));
-
-      let hasChanges = (excelXKey !== xAxisKey);
-
-      // 3. Auto-rename missing series based on available candidate columns
-      while (missingSeriesIndices.length > 0 && candidateHeaders.length > 0) {
-        const sIdx = missingSeriesIndices.shift()!;
-        const newHeader = candidateHeaders.shift()!;
-        newSeriesList[sIdx] = {
-          ...newSeriesList[sIdx],
-          key: newHeader, // Set key to match the new label/header for simplicity
-          label: newHeader
-        };
-        matchedExcelHeaders.add(newHeader);
-        hasChanges = true;
-      }
-
-      // 4. Add remaining new columns as new series
-      candidateHeaders.forEach(header => {
-        newSeriesList.push({
-          key: header,
-          label: header,
-          color: `var(--chart-palette-${(newSeriesList.length % 6) + 1})` || 'var(--primary-color)'
+      const cleanRow = (row: any) => {
+        const cleaned: any = {};
+        Object.keys(row).forEach(k => {
+          cleaned[String(k).trim()] = row[k];
         });
-        hasChanges = true;
+        return cleaned;
+      };
+      
+      const cleanedData = newData.map(cleanRow);
+      const firstRow = cleanedData[0];
+      const excelKeys = Object.keys(firstRow);
+      
+      const xAxisKey = (widget.config.xAxisKey || 'name').trim();
+      let excelXKey = excelKeys.find(k => k.toLowerCase() === xAxisKey.toLowerCase()) || excelKeys[0];
+
+      // Any column that is NOT the X-Axis and has numeric data (or just any other column) becomes a series
+      const dataKeys = excelKeys.filter(k => k !== excelXKey);
+      
+      // Build new series list from scratch based on Excel headers to be safe
+      const newSeriesList = dataKeys.map((key, idx) => {
+        // Try to preserve existing color if possible, else use palette
+        const existing = widget.config?.series?.find(s => s.label.trim() === key || s.key.trim() === key);
+        return {
+          key: key,
+          label: key,
+          color: existing?.color || `var(--chart-palette-${(idx % 6) + 1})`
+        };
       });
 
-      // 5. Final Data Normalization: Map Excel keys to the updated series keys
-      const normalizedData = newData.map(row => {
+      const normalizedData = cleanedData.map(row => {
         const newRow: any = { [xAxisKey]: row[excelXKey] };
         newSeriesList.forEach(s => {
-          // Check if data exists in Excel for this series label or key
-          const val = row[s.label] !== undefined ? row[s.label] : row[s.key];
-          if (val !== undefined) {
-            newRow[s.key] = val;
-          }
+          newRow[s.key] = row[s.key];
         });
         return newRow;
       });
@@ -1973,9 +1954,7 @@ const App: React.FC = () => {
         } 
       });
 
-      if (hasChanges) {
-        showToast("Chart configuration updated from Excel headers.");
-      }
+      showToast(`Imported ${newSeriesList.length} data series: ${newSeriesList.map(s => s.label).join(', ')}`, "success");
       return;
     }
 
@@ -2004,21 +1983,16 @@ const App: React.FC = () => {
           <div className="absolute -inset-20 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
           <div className="absolute -inset-10 bg-indigo-500/10 blur-[60px] rounded-full animate-pulse [animation-delay:700ms]" />
           
-          <div className="relative mb-12 scale-150">
-            <GlobeBackground />
-          </div>
-
-          <div className="flex flex-col items-center space-y-6 mt-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" />
-            </div>
+          {/* Ultra-Safe Loading Indicator */}
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-8" />
             <div className="text-center">
-              <span className="text-sm uppercase tracking-[0.4em] font-black text-slate-400 animate-pulse">
-                Hydrating STN Dashboard
+              <span className="text-sm uppercase tracking-[0.4em] font-black text-white animate-pulse">
+                STN Dashboard
               </span>
-              <p className="text-[var(--text-micro)] text-slate-500 mt-2 tracking-widest uppercase">Initializing core systems...</p>
+              <p className="text-[10px] text-slate-400 mt-2 tracking-widest uppercase">
+                {window.location.search.includes("reset=true") ? "Resetting System..." : "Initializing core systems..."}
+              </p>
             </div>
           </div>
         </div>
@@ -2031,7 +2005,7 @@ const App: React.FC = () => {
       ref={appRootRef}
       className={`h-screen flex flex-col transition-colors duration-300 overflow-hidden bg-[var(--background)] text-[var(--text-main)] ${theme.mode !== ThemeMode.LIGHT ? "dark" : ""}`}
     >
-      <DesignSystem theme={theme} targetRef={projectScopeRef} />
+      <DesignSystem theme={theme} />
 
       {/* 내보내기 중 로딩 바 (캡처 순간에는 숨겨서 스크린샷에 안 나오게) */}
       {capturingForExport && !hideBarForCapture && (
@@ -2065,7 +2039,17 @@ const App: React.FC = () => {
       {/* Exit Preview — Premium Floating Icon Button */}
       {isPreviewMode && (
         <button
-          onClick={() => setIsPreviewMode(false)}
+          onClick={() => {
+            // Exit preview and ensure theme is consistent
+            setIsPreviewMode(false);
+            // If the user toggled the mode in preview, make sure the project theme reflects it fully
+            const currentMode = theme.mode;
+            const currentName = theme.name;
+            updateProjectTheme({ 
+               mode: currentMode,
+               name: currentMode === ThemeMode.DARK ? "Dark Mode" : currentMode === ThemeMode.LIGHT ? "Light Mode" : currentName 
+            });
+          }}
           className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-premium group border-2 border-[var(--primary-color)]"
           style={{ 
             bottom: 'var(--spacing-xl)', 
@@ -2404,6 +2388,7 @@ const App: React.FC = () => {
               onUpdate={updateHeader}
               theme={theme}
               onModeSwitch={handleModeSwitch}
+              isPreviewMode={isPreviewMode}
             />
             <div
               className={`mb-8 flex flex-col items-${header.textAlignment === TextAlignment.CENTER ? "center" : header.textAlignment === TextAlignment.RIGHT ? "end" : "start"} ${header.textAlignment === TextAlignment.CENTER ? "text-center" : header.textAlignment === TextAlignment.RIGHT ? "text-right" : "text-left"}`}
@@ -2467,6 +2452,7 @@ const App: React.FC = () => {
                   onUpdate={updateHeader}
                   theme={theme}
                   onModeSwitch={handleModeSwitch}
+                  isPreviewMode={isPreviewMode}
                 />
                 <div
                   className={`flex items-center gap-8 w-full relative ${header.textAlignment === TextAlignment.CENTER
@@ -2623,7 +2609,7 @@ const App: React.FC = () => {
         onClose={() => setExcelWidgetId(null)}
         widget={widgets.find((w) => w.id === excelWidgetId) || null}
         onUpload={handleExcelUpload}
-        isDark={true}
+        isDark={theme.mode === ThemeMode.DARK}
       />
 
       {/* Premium Toast Notification */}
@@ -2635,7 +2621,7 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteWidget}
         onCancel={() => setDeleteConfirmId(null)}
-        isDark={true}
+        isDark={theme.mode === ThemeMode.DARK}
       />
       <ConfirmModal
         isOpen={deleteProjectId !== null}

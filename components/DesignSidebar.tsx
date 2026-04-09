@@ -89,6 +89,8 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('mode');
   const [newPresetName, setNewPresetName] = useState('');
 
+  console.log(`[STN Designer] Current Theme: ${theme.name} (${theme.mode})`);
+
   const handleSaveCurrentAsPreset = () => {
     if (!newPresetName) return;
     onSavePreset(newPresetName);

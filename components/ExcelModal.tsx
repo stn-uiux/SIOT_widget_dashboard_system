@@ -86,44 +86,42 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
         onClick={onClose}
       />
       
-      <div className={`relative w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 ${
-        isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white'
-      }`}>
-        <div className="flex items-center justify-between p-5 border-b dark:border-gray-800">
+      <div className={`relative w-full max-w-sm rounded-[var(--radius-modal)] shadow-[var(--modal-shadow)] overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300 bg-[var(--modal-bg)] border border-[var(--modal-border)] backdrop-blur-xl`}>
+        <div className="flex items-center justify-between p-6 border-b border-[var(--modal-border)]">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <FileSpreadsheet className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <div className="p-2.5 bg-green-500/10 rounded-xl">
+              <FileSpreadsheet className="w-5 h-5 text-green-500" />
             </div>
             <div>
-              <h2 className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Excel Import</h2>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Update widget data</p>
+              <h2 className="font-black text-lg tracking-tight text-main">Excel Import</h2>
+              <p className="text-[10px] text-muted uppercase tracking-widest font-bold">Update widget data</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full dark:text-gray-400">
-            <X size={20} />
+          <button onClick={onClose} className="p-2 hover:bg-[var(--black-alpha-05)] dark:hover:bg-[var(--white-alpha-10)] rounded-full text-muted transition-colors">
+            <X size={18} />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="space-y-3">
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-muted leading-relaxed">
               Download the current data as a template, modify the values, and upload it back to see the changes.
             </p>
             
             <button 
               onClick={downloadSample}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold text-sm border border-blue-100 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all"
+              className="w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-[var(--primary-subtle)] text-[var(--primary-color)] font-bold text-xs uppercase tracking-widest border border-[var(--primary-5)]/20 hover:brightness-110 transition-all shadow-sm"
             >
-              <Download size={18} /> Download Excel Template
+              <Download size={16} /> Download Excel Template
             </button>
           </div>
 
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all ${
-              status === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
-              status === 'error' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
-              isDark ? 'border-gray-700 hover:border-blue-500 bg-gray-800/50' : 'border-gray-200 hover:border-blue-500 bg-gray-50'
+            className={`border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all ${
+              status === 'success' ? 'border-green-500 bg-green-500/5' :
+              status === 'error' ? 'border-red-500 bg-red-500/5' :
+              'border-[var(--modal-border)] hover:border-[var(--primary-color)] bg-[var(--modal-card-bg)] hover:bg-[var(--primary-subtle)]/5'
             }`}
           >
             <input 
@@ -136,30 +134,30 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
             
             {status === 'idle' && (
               <>
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <div className="w-14 h-14 rounded-full bg-[var(--primary-subtle)] flex items-center justify-center text-[var(--primary-color)] shadow-inner">
                   <Upload size={24} />
                 </div>
                 <div className="text-center">
-                  <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>Click to upload Excel</p>
-                  <p className="text-xs text-gray-500 mt-1">Supports .xlsx, .xls, .csv</p>
+                  <p className="font-bold text-sm text-main">Click to upload Excel</p>
+                  <p className="text-[10px] text-muted mt-1 font-medium">Supports .xlsx, .xls, .csv</p>
                 </div>
               </>
             )}
 
             {status === 'success' && (
               <>
-                <CheckCircle2 className="w-12 h-12 text-green-500" />
-                <p className="text-green-500 font-bold">Successfully Updated!</p>
+                <CheckCircle2 className="w-14 h-14 text-green-500 animate-bounce" />
+                <p className="text-green-500 font-black text-lg tracking-tight">Successfully Updated!</p>
               </>
             )}
 
             {status === 'error' && (
               <>
-                <AlertCircle className="w-12 h-12 text-red-500" />
+                <AlertCircle className="w-14 h-14 text-red-500" />
                 <p className="text-red-500 font-bold text-center text-xs px-4">{errorMessage}</p>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setStatus('idle'); }} 
-                  className="text-[10px] underline text-gray-400 uppercase font-bold"
+                  className="mt-2 text-[10px] underline text-muted uppercase font-black tracking-widest"
                 >
                   Try Again
                 </button>
@@ -168,7 +166,7 @@ const ExcelModal: React.FC<ExcelModalProps> = ({ widget, isOpen, onClose, onUplo
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-[10px] text-gray-500 text-center italic">
+        <div className="p-4 bg-[var(--modal-sidebar-bg)] border-t border-[var(--modal-border)] text-[9px] text-muted text-center italic font-medium opacity-80">
           Ensure column headers match the template format for correct data mapping.
         </div>
       </div>

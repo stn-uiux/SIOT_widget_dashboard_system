@@ -196,11 +196,12 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                     )}
 
                                     {/* Text Overlay: Ultra-Clear Translucent Glass Blur */}
-                                    <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border border-white/40"
+                                    <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border border-white/20 dark:border-white/5"
                                         style={{ 
-                                            background: 'rgba(255, 255, 255, 0.05)',
-                                            backdropFilter: 'blur(40px) saturate(180%) webkit-backdrop-filter: blur(40px) saturate(180%)',
-                                            boxShadow: '0 4px 15px rgba(0,0,0,0.03)'
+                                            background: isDark ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)',
+                                            backdropFilter: 'blur(2px) saturate(160%)',
+                                            WebkitBackdropFilter: 'blur(2px) saturate(160%)',
+                                            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.03)'
                                         }}>
                                         <div className="flex-1">
                                             <span className="font-bold text-[11px] uppercase tracking-[0.14em] text-[#050a1a] dark:text-white group-hover:opacity-100 transition-opacity drop-shadow-sm">
