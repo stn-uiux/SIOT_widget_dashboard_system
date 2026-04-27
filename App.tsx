@@ -21,6 +21,7 @@ import {
   X,
   Download,
   Upload,
+  LogOut,
 } from "lucide-react";
 import { getSemanticColorForMode } from "./design-tokens/themeFromTokens";
 import {
@@ -64,6 +65,8 @@ import FloatingAssistantButton from "./components/FloatingAssistantButton";
 import { dbSave, dbLoad } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 import { supabase, getProfile, getSession, Profile } from './lib/supabase';
+import { User as AuthUser } from "@supabase/supabase-js";
+import LoginPage from "./components/LoginPage";
 // Assets - Use safer path references to avoid Vite module transformation issues with spaces/special chars
 const logoB = new URL("./assets/logo-b-1 1.png", import.meta.url).href;
 const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
@@ -1085,6 +1088,23 @@ const LoadingScreen = ({ message }: { message: string }) => (
 );
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Auth Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // 1. Immediate Reset Check (Pre-render)
   if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
     // Schedule reset
@@ -1109,7 +1129,6 @@ const App: React.FC = () => {
     return <LoadingScreen message="Resetting System..." />;
   }
 
-  const [isHydrated, setIsHydrated] = useState(false);
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
   const [activeProjectId, setActiveProjectId] = useState<string>(() => getInitialProjectsState().activeProjectId);
@@ -1632,6 +1651,12 @@ const App: React.FC = () => {
     setSelectedWidgetId(null);
   };
 
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowLogoutModal(false);
+    showToast("Successfully logged out", "success");
+  };
 
   // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
   useEffect(() => {
@@ -2189,6 +2214,11 @@ const App: React.FC = () => {
     return <LoadingScreen message="Initializing core systems..." />;
   }
 
+  // 로그인이 되어 있지 않으면 로그인 페이지 표시
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => {}} />;
+  }
+
   return (
     <div
       ref={appRootRef}
@@ -2559,6 +2589,27 @@ const App: React.FC = () => {
             >
               <Eye className="w-4 h-4" /> <span className="text-xs">Preview</span>
             </button>
+
+            {/* User Info & Logout */}
+            <div className="h-6 w-px bg-[var(--border-base)] mx-2" />
+            <div className="flex items-center gap-3 pl-2 pr-1">
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {user?.email?.startsWith('admin') && (
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-[8px] font-black text-blue-500 tracking-widest leading-none">ADMIN</span>
+                  )}
+                  <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
+                </div>
+                <span className="text-xs font-bold text-main">{user?.email?.split('@')[0]}</span>
+              </div>
+              <button
+                onClick={() => setShowLogoutModal(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-muted hover:text-red-500 transition-all active:scale-90"
+                title="로그아웃"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2884,6 +2935,17 @@ const App: React.FC = () => {
         cancelText="취소"
         onConfirm={confirmDeleteProject}
         onCancel={() => setDeleteProjectId(null)}
+        isDark={theme.mode === ThemeMode.DARK}
+      />
+
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        title="로그아웃"
+        message="정말로 로그아웃하시겠습니까?"
+        confirmText="로그아웃"
+        cancelText="취소"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
         isDark={theme.mode === ThemeMode.DARK}
       />
 
