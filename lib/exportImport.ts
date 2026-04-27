@@ -56,7 +56,7 @@ function getExtensionFromMime(mime: string): string {
 function collectImageUrls(project: Project): string[] {
   const set = new Set<string>();
   const list: string[] = [];
-  
+
   function scan(obj: any) {
     if (!obj || typeof obj !== "object") {
       if (typeof obj === "string" && (obj.startsWith("data:image") || obj.startsWith("images/"))) {
@@ -67,7 +67,7 @@ function collectImageUrls(project: Project): string[] {
       }
       return;
     }
-    
+
     if (Array.isArray(obj)) {
       obj.forEach(scan);
     } else {
@@ -143,7 +143,8 @@ async function cloneProjectAndCollectImages(
 export async function exportProjectToZip(
   project: Project,
   layoutPositions: Record<string, LayoutItemExport[] | Record<string, LayoutItemExport[]>>,
-  previewBlob: Blob | null
+  previewBlob: Blob | null,
+  customSuffix?: string
 ): Promise<void> {
   const { manifest, imageEntries } = await cloneProjectAndCollectImages(project, layoutPositions);
   const zip = new JSZip();
@@ -157,12 +158,13 @@ export async function exportProjectToZip(
   const blob = await zip.generateAsync({ type: "blob" });
   const safeName = project.name.replace(/[^a-zA-Z0-9가-힣_-]/g, "_");
   const today = new Date().toISOString().slice(0, 10);
-  const name = `${safeName}_${today}.zip`;
+  const suffix = customSuffix || "";
+  const name = `${safeName}${suffix}_${today}.zip`;
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 100);
 }
 
 /** ZIP 파일 파싱 후 프로젝트 + 레이아웃 + 이미지 URL 복원 */

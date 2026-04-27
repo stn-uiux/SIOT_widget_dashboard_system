@@ -57,12 +57,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
   if (!selectedWidget) return (
-    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col overflow-hidden transition-all duration-500 border ${
-      theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
-    }`} style={{
-      borderRadius: 'var(--radius-panel)',
-      border: 'var(--floating-panel-border)',
-    }}>
+    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+      }`} style={{
+        borderRadius: 'var(--radius-panel)',
+        border: 'var(--floating-panel-border)',
+      }}>
       <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
@@ -92,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <span className="text-xs text-muted font-medium flex items-center gap-1.5">
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="6" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="11" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
+                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="6" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="11" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
                 Columns
               </span>
               <input
@@ -104,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted font-medium flex items-center gap-1.5 grayscale opacity-50">
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="6" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="1" y="11" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
+                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="1" y="6" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="1" y="11" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
                 Rows (Auto)
               </span>
               <div className="relative group">
@@ -161,9 +160,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.useGrid !== false ? '칸 단위 스냅' : '픽셀 자유'}>
                 {layout.useGrid !== false ? (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5"/><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5"/></svg>
+                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5" /><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /></svg>
                 ) : (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="2" y="2" width="5" height="4" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="8" y="2" width="6" height="7" fill="currentColor" opacity="0.5" rx="0.5"/><rect x="15" y="2" width="3" height="3" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="2" y="7" width="4" height="5" fill="currentColor" opacity="0.45" rx="0.5"/><rect x="7" y="10" width="6" height="4" fill="currentColor" opacity="0.5" rx="0.5"/></svg>
+                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="2" y="2" width="5" height="4" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="8" y="2" width="6" height="7" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="15" y="2" width="3" height="3" fill="currentColor" opacity="0.35" rx="0.5" /><rect x="2" y="7" width="4" height="5" fill="currentColor" opacity="0.45" rx="0.5" /><rect x="7" y="10" width="6" height="4" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
                 )}
               </div>
               <span className="text-xs font-bold text-secondary">그리드 사용</span>
@@ -232,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               >
                 {/* Hover shine effect */}
                 <div className="absolute inset-0 w-full h-full transform -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-                
+
                 <CheckCircle2 className={`w-4 h-4 transition-transform group-hover/btn:scale-110 text-white`} />
                 <span>일괄 적용하기</span>
               </button>
@@ -252,7 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           >
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title="위로 쏠리지 않고 고정">
-                <svg viewBox="0 0 20 20" className="w-full h-full text-primary/70"><rect x="1" y="2" width="18" height="5" fill="currentColor" opacity="0.4" rx="0.5"/><rect x="3" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/><rect x="11" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5"/></svg>
+                <svg viewBox="0 0 20 20" className="w-full h-full text-primary/70"><rect x="1" y="2" width="18" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="3" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5" /><rect x="11" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5" /></svg>
               </div>
               <span className="text-xs font-bold text-secondary">자유 배치 (FREE POSITION)</span>
             </div>
@@ -438,7 +437,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const isImage = currentType === WidgetType.IMAGE;
   const isMap = currentType === WidgetType.MAP || currentType === WidgetType.MAP_GOOGLE || currentType === WidgetType.MAP_NAVER;
   const isWeather = currentType === WidgetType.WEATHER;
-  
+
   const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   const hasDataRows = isChart || isSummaryChart || isEarningTrend || isPremiumSummary;
@@ -494,12 +493,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
 
   return (
-    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
-      theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
-    }`} style={{
-      borderRadius: 'var(--radius-panel)',
-      border: 'var(--floating-panel-border)',
-    }}>
+    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+      }`} style={{
+        borderRadius: 'var(--radius-panel)',
+        border: 'var(--floating-panel-border)',
+      }}>
       <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
@@ -523,727 +521,202 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
       }}>
-      <section className="space-y-4">
-        <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
-          <Layers className="w-4 h-4" /> Visualization
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'viz')
-            .map(([id, meta]) => (
-              <button
-                key={id}
-                onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
+        <section className="space-y-4">
+          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
+            <Layers className="w-4 h-4" /> Visualization
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {Object.entries(WIDGET_METADATA)
+              .filter(([_, meta]) => meta.category === 'viz')
+              .map(([id, meta]) => (
+                <button
+                  key={id}
+                  onClick={() => handleTypeChange(id as WidgetType)}
+                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
                     ? 'border-primary bg-primary/10 text-primary shadow-sm'
                     : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                  }`}
-              >
-                <meta.icon className="w-4 h-4" />
-                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-              </button>
-            ))}
-        </div>
-      </section>
+                    }`}
+                >
+                  <meta.icon className="w-4 h-4" />
+                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                </button>
+              ))}
+          </div>
+        </section>
 
-      {/* Premium Dashboard Templates */}
-      <section className="space-y-4">
-        <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
-          <PaletteIcon className="w-4 h-4" /> Premium Templates
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'premium')
-            .map(([id, meta]) => (
-              <button
-                key={id}
-                onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
+        {/* Premium Dashboard Templates */}
+        <section className="space-y-4">
+          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
+            <PaletteIcon className="w-4 h-4" /> Premium Templates
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {Object.entries(WIDGET_METADATA)
+              .filter(([_, meta]) => meta.category === 'premium')
+              .map(([id, meta]) => (
+                <button
+                  key={id}
+                  onClick={() => handleTypeChange(id as WidgetType)}
+                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
                     ? 'border-primary bg-primary/10 text-primary shadow-sm'
                     : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                  }`}
-              >
-                <meta.icon className="w-4 h-4" />
-                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-              </button>
-            ))}
-        </div>
-      </section>
+                    }`}
+                >
+                  <meta.icon className="w-4 h-4" />
+                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                </button>
+              ))}
+          </div>
+        </section>
 
-      {/* General Widgets Section */}
-      <section className="space-y-4">
-        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          <LayoutGrid className="w-4 h-4" /> General Components
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {Object.entries(WIDGET_METADATA)
-            .filter(([_, meta]) => meta.category === 'general')
-            .map(([id, meta]) => (
-              <button
-                key={id}
-                onClick={() => handleTypeChange(id as WidgetType)}
-                className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all glass-item ${currentType === id
-                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                  : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                  }`}
-              >
-                <meta.icon className="w-4 h-4" />
-                <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-              </button>
-            ))}
-        </div>
-      </section>
+        {/* General Widgets Section */}
+        <section className="space-y-4">
+          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <LayoutGrid className="w-4 h-4" /> General Components
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {Object.entries(WIDGET_METADATA)
+              .filter(([_, meta]) => meta.category === 'general')
+              .map(([id, meta]) => (
+                <button
+                  key={id}
+                  onClick={() => handleTypeChange(id as WidgetType)}
+                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all glass-item ${currentType === id
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
+                    }`}
+                >
+                  <meta.icon className="w-4 h-4" />
+                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
+                </button>
+              ))}
+          </div>
+        </section>
 
 
-      {
-        isSummary && !isGeneralKpi && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Smile className="w-4 h-4" /> 트렌드 요약
-            </label>
-            <div className="space-y-3">
-              <div>
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
-                <input
-                  type="number"
-                  min={12}
-                  max={96}
-                  value={selectedWidget.titleSize ?? 48}
-                  onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
-                />
-              </div>
-              <div>
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Google Icon Name</span>
-                <div className="relative group mt-1">
-                  <input
-                    type="text"
-                    value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
-                    onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                    className="w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
-                    placeholder="e.g. group, monitoring, star"
-                  />
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
-                    {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isTextBlock && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Smile className="w-4 h-4" /> 텍스트 설정
-            </label>
-            <div className="space-y-3">
-              <div>
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
-                <textarea
-                  value={selectedWidget.mainValue ?? ''}
-                  onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  rows={4}
-                  className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
-                  placeholder="여기에 글자를 입력하세요."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+        {
+          isSummary && !isGeneralKpi && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Smile className="w-4 h-4" /> 트렌드 요약
+              </label>
+              <div className="space-y-3">
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
                   <input
                     type="number"
-                    min={8}
-                    max={72}
-                    value={selectedWidget.titleSize ?? 18}
-                    onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 18 })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                    min={12}
+                    max={96}
+                    value={selectedWidget.titleSize ?? 48}
+                    onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                   />
                 </div>
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
-                  <select
-                    value={selectedWidget.titleWeight ?? '400'}
-                    onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    <option value="100">100 (Thin)</option>
-                    <option value="200">200 (Extra Light)</option>
-                    <option value="300">300 (Light)</option>
-                    <option value="400">400 (Normal)</option>
-                    <option value="500">500 (Medium)</option>
-                    <option value="600">600 (Semi Bold)</option>
-                    <option value="700">700 (Bold)</option>
-                    <option value="800">800 (Extra Bold)</option>
-                    <option value="900">900 (Black)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isEarningProgress && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <PaletteIcon className="w-4 h-4" /> Progress
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={selectedWidget.progressValue ?? 89}
-                onChange={(e) => updateCurrentWidget({ progressValue: parseInt(e.target.value, 10) })}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
-              />
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isEarningTrend && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> Earning Trend
-            </label>
-            <div className="space-y-3">
-              <div>
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
-                <input
-                  type="number"
-                  min={12}
-                  max={96}
-                  value={selectedWidget.titleSize ?? 48}
-                  onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
-                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
-                />
-              </div>
-              <div className="space-y-1">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Comparison text</span>
-                <input
-                  type="text"
-                  value={selectedWidget.comparisonText ?? ''}
-                  onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
-                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
-                  placeholder="Compared of $11,750 last year"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="space-y-1 flex-1">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Trend %</span>
-                  <input
-                    type="number"
-                    value={selectedWidget.trendPercent ?? 21}
-                    onChange={(e) => updateCurrentWidget({ trendPercent: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs glass-item"
-                  />
-                </div>
-                <div className="flex items-center gap-2 pt-5">
-                  <span className="text-caption uppercase font-bold text-gray-400">Direction</span>
-                  <Switch
-                    checked={selectedWidget.trendUp !== false}
-                    onChange={(checked) => updateCurrentWidget({ trendUp: checked })}
-                  />
-                  <span className="text-xs text-[var(--text-muted)]">{selectedWidget.trendUp !== false ? '▲ Up' : '▼ Down'}</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">Category bars</span>
-                {(selectedWidget.categoryItems ?? [{ label: 'Sales', value: 8 }, { label: 'Product', value: 68, color: 'var(--warning)' }, { label: 'Marketing', value: 12 }]).map((item, idx) => (
-                  <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border border-[var(--border-base)] glass-item">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Google Icon Name</span>
+                  <div className="relative group mt-1">
                     <input
                       type="text"
-                      value={item.label}
-                      onChange={(e) => {
-                        const next = [...(selectedWidget.categoryItems ?? [])];
-                        if (!next[idx]) next[idx] = { label: '', value: 0 };
-                        next[idx] = { ...next[idx], label: e.target.value };
-                        updateCurrentWidget({ categoryItems: next });
-                      }}
-                      className="flex-1 min-w-0 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
-                      placeholder="Label"
+                      value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
+                      onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
+                      className="w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
+                      placeholder="e.g. group, monitoring, star"
                     />
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
+                      {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          isTextBlock && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Smile className="w-4 h-4" /> 텍스트 설정
+              </label>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
+                  <textarea
+                    value={selectedWidget.mainValue ?? ''}
+                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    rows={4}
+                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                    placeholder="여기에 글자를 입력하세요."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
                     <input
                       type="number"
-                      min={0}
-                      max={100}
-                      value={item.value}
-                      onChange={(e) => {
-                        const next = [...(selectedWidget.categoryItems ?? [])];
-                        if (!next[idx]) next[idx] = { label: '', value: 0 };
-                        next[idx] = { ...next[idx], value: parseInt(e.target.value, 10) || 0 };
-                        updateCurrentWidget({ categoryItems: next });
-                      }}
-                      className="w-14 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
-                    />
-                    <input
-                      type="text"
-                      value={item.color ?? ''}
-                      onChange={(e) => {
-                        const next = [...(selectedWidget.categoryItems ?? [])];
-                        if (!next[idx]) next[idx] = { label: '', value: 0 };
-                        next[idx] = { ...next[idx], color: e.target.value || undefined };
-                        updateCurrentWidget({ categoryItems: next });
-                      }}
-                      className="w-20 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item"
-                      placeholder="Color"
+                      min={8}
+                      max={72}
+                      value={selectedWidget.titleSize ?? 18}
+                      onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 18 })}
+                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isGeneralKpi && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <PaletteIcon className="w-4 h-4" /> KPI Icon
-            </label>
-            <div className="space-y-2">
-              <span className="text-caption uppercase font-bold text-gray-400 ml-1">Icon</span>
-              <select
-                value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
-                onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold glass-item"
-              >
-                {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        currentType === WidgetType.VERTICAL_NAV_CARD && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Layers className="w-4 h-4" /> 세로 네비 카드
-            </label>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">카드 개수 (1~8)</span>
-                <div
-                  className="inline-flex items-center rounded-[9999px] border border-[var(--border-base)] overflow-hidden"
-                  style={{
-                    background: 'transparent',
-                    padding: 'var(--spacing-xs) var(--spacing-sm)',
-                    gap: 'var(--spacing-sm)',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const items = selectedWidget.navItems ?? [];
-                      if (items.length <= 1) return;
-                      const next = items.slice(0, -1);
-                      const removedWasActive = items[items.length - 1]?.active;
-                      if (removedWasActive && next.length > 0 && !next.some((it) => it.active)) {
-                        next[0] = { ...next[0], active: true };
-                      }
-                      onUpdateWidget(selectedWidget.id, { navItems: next });
-                    }}
-                    disabled={((selectedWidget.navItems ?? []).length) <= 1}
-                    className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
-                    style={{
-                      width: 'var(--spacing-lg)',
-                      height: 'var(--spacing-lg)',
-                      color: 'var(--text-main)',
-                    }}
-                    title="카드 줄이기"
-                  >
-                    <Minus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
-                  </button>
-                  <span
-                    className="tabular-nums font-semibold min-w-[1.25rem] text-center"
-                    style={{ color: 'var(--text-main)', fontSize: 'var(--content-size)' }}
-                  >
-                    {(selectedWidget.navItems ?? []).length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const items = selectedWidget.navItems ?? [];
-                      if (items.length >= 8) return;
-                      onUpdateWidget(selectedWidget.id, {
-                        navItems: [...items, { id: `nav_${Date.now()}`, label: '새 메뉴', active: false }],
-                      });
-                    }}
-                    disabled={((selectedWidget.navItems ?? []).length) >= 8}
-                    className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
-                    style={{
-                      width: 'var(--spacing-lg)',
-                      height: 'var(--spacing-lg)',
-                      color: 'var(--text-main)',
-                    }}
-                    title="카드 추가 (최대 8개)"
-                  >
-                    <Plus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">메뉴 문구</span>
-                {((selectedWidget.navItems ?? []) as { id: string; label: string; active?: boolean }[]).map((item, idx) => (
-                  <div key={item.id} className="flex gap-2 items-center">
-                    <span className="text-xs text-[var(--text-muted)] w-6 tabular-nums">{idx + 1}.</span>
-                    <input
-                      type="text"
-                      value={item.label}
-                      onChange={(e) => {
-                        const next = (selectedWidget.navItems ?? []).map((it, j) =>
-                          j === idx ? { ...it, label: e.target.value } : it
-                        );
-                        onUpdateWidget(selectedWidget.id, { navItems: next });
-                      }}
-                      className="flex-1 min-w-0 p-2 bg-transparent border border-[var(--border-base)] rounded-[var(--radius-md)] text-xs outline-none focus:ring-1 focus:ring-[var(--primary-color)] glass-item"
-                      placeholder="메뉴 이름"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isImage && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <Image className="w-4 h-4" /> Image Settings
-            </label>
-
-            <div className="space-y-4">
-              {/* File Upload */}
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Upload Image</span>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          updateCurrentWidget({ mainValue: reader.result as string });
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 glass-item`}
-                  />
-                </div>
-              </div>
-
-              {/* URL Input */}
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
-                <input
-                  type="text"
-                  value={currentMainValue || ''}
-                  onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
-              {/* Caption */}
-              <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
-                <input
-                  type="text"
-                  value={currentSubValue || ''}
-                  onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
-                  placeholder="Image description..."
-                />
-              </div>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isIconResizable && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <PaletteIcon className="w-4 h-4" /> Icon Size
-            </label>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center px-1">
-                <span className="text-caption uppercase font-bold text-gray-400">Size (px)</span>
-                <span className="text-xs font-bold text-blue-500">{selectedWidget.iconSize || 48}px</span>
-              </div>
-              <input
-                type="range"
-                min="24"
-                max="128"
-                step="4"
-                value={selectedWidget.iconSize || 48}
-                onChange={(e) => updateCurrentWidget({ iconSize: parseInt(e.target.value, 10) })}
-                className="w-full accent-blue-500 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-              />
-            </div>
-          </section>
-        )
-      }
-
-      {
-        isBarResizable && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <BarChartHorizontal className="w-4 h-4" /> Bar Settings (Graph Width)
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Graph Width (%)</span>
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{currentConfig.barWidth ?? 60}%</span>
-              </div>
-              <input
-                type="range"
-                min={5}
-                max={100}
-                step={5}
-                value={currentConfig.barWidth ?? 60}
-                onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, barWidth: parseInt(e.target.value, 10) } })}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
-              />
-              <p className="text-micro text-muted italic px-1 mt-1">* 수치를 낮추면 더 얇은 그래프가 됩니다.</p>
-            </div>
-          </section>
-        )
-      }
-
-      {
-        !isSec && (
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <PaletteIcon className="w-4 h-4" /> Background
-            </label>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Background opacity</span>
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={selectedWidget.backgroundOpacity ?? 100}
-                onChange={(e) => updateCurrentWidget({ backgroundOpacity: parseInt(e.target.value, 10) })}
-                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
-              />
-            </div>
-          </section>
-        )
-      }
-
-      {
-        appearanceOptions.length > 0 && (
-          <section className="space-y-4">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-              <PaletteIcon className="w-4 h-4" /> Appearance & Display
-            </label>
-            <div className="space-y-2">
-              {appearanceOptions.map((option) => (
-                <div
-                  key={option.key}
-                  onClick={() => toggleConfig(option.key as any)}
-                  className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
-                >
-                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                    {option.label}
-                  </span>
-                  <div className="pointer-events-none">
-                    <Switch
-                      checked={
-                        option.key === 'noBezel' ? (selectedWidget.noBezel || false) :
-                          option.key === 'noBorder' ? (selectedWidget.noBorder || false) :
-                            option.key === 'hideHeader' ? (selectedWidget.hideHeader || false) :
-                              (currentConfig as any)[option.key] || false
-                      }
-                      onChange={() => { }}
-                    />
+                  <div>
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
+                    <select
+                      value={selectedWidget.titleWeight ?? '400'}
+                      onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
+                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="100">100 (Thin)</option>
+                      <option value="200">200 (Extra Light)</option>
+                      <option value="300">300 (Light)</option>
+                      <option value="400">400 (Normal)</option>
+                      <option value="500">500 (Medium)</option>
+                      <option value="600">600 (Semi Bold)</option>
+                      <option value="700">700 (Bold)</option>
+                      <option value="800">800 (Extra Bold)</option>
+                      <option value="900">900 (Black)</option>
+                    </select>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )
-      }
+              </div>
+            </section>
+          )
+        }
 
-
-
-      {
-        isChart && !isSummary && !isSummaryChart && (
-
-
-          <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
-                <Palette className="w-4 h-4" /> Data Series
+        {
+          isEarningProgress && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <PaletteIcon className="w-4 h-4" /> Progress
               </label>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={handleResetSeriesColors}
-                  className="btn-base btn-surface flex items-center gap-1"
-                  style={{ padding: '6px 8px' }}
-                  title="Reset series colors to brand/theme"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="text-caption font-bold uppercase">Reset</span>
-                </button>
-                <button
-                  onClick={handleAddSeries}
-                  className="btn-base btn-surface"
-                  style={{ padding: '6px' }}
-                  title="Add series"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {(currentConfig.series || []).map((s, idx) => (
-                <div key={s.key} className={`p-3 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-[var(--primary-color)]/30 shadow-sm glass-item`}>
-                  <div className="flex flex-col gap-0.5 mr-1">
-                    <button
-                      disabled={idx === 0}
-                      onClick={() => moveSeries(idx, 'up')}
-                      className="p-0.5 rounded hover:bg-[var(--primary-subtle)] disabled:opacity-0 transition-all"
-                    >
-                      <ChevronUp className="w-3 h-3 text-gray-500" />
-                    </button>
-                    <button
-                      disabled={idx === (currentConfig.series?.length || 0) - 1}
-                      onClick={() => moveSeries(idx, 'down')}
-                      className="p-0.5 rounded hover:bg-white/10 disabled:opacity-0 transition-all glass-item"
-                    >
-                      <ChevronDown className="w-3 h-3 text-gray-500" />
-                    </button>
-                  </div>
-
-                  <div className="flex gap-1 shrink-0 items-center">
-                    <div className="relative group/picker">
-                      <div
-                        className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                        style={{ backgroundColor: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }}
-                        title="Start Color"
-                      />
-                      <input
-                        type="color"
-                        value={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
-                        onChange={(e) => handleUpdateSeries(s.key, { color: e.target.value })}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </div>
-                    {currentConfig.useGradient && !isReallyAmCharts && (
-                      <div className="relative group/picker">
-                        <div
-                          className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                          style={{ backgroundColor: resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor) }}
-                          title="End Color"
-                        />
-                        <input
-                          type="color"
-                          value={resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor)}
-                          onChange={(e) => handleUpdateSeries(s.key, { endColor: e.target.value })}
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      value={s.color?.startsWith('var') ? '' : s.color}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.startsWith('#')) handleUpdateSeries(s.key, { color: val });
-                      }}
-                      placeholder="#HEX"
-                      className="w-14 bg-transparent border-none p-0 text-caption font-medium uppercase text-muted outline-none focus:ring-0 ml-1"
-                      title="Direct HEX input"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={s.label}
-                      onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
-                      className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => handleRemoveSeries(s.key)}
-                    className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-1"
-                    title="계열 삭제"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
                 </div>
-              ))}
-            </div>
-          </section>
-        )
-      }
-
-      <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-        <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
-          <Database className="w-4 h-4" /> Data Config
-        </label>
-
-        <div className="space-y-3">
-          {hasDataRows && !isSummary && !isGeneralKpi && !isEarningProgress && (
-            <div className="space-y-1">
-              <span className="text-caption uppercase font-bold text-muted ml-1">Header (Axis Label)</span>
-              <div className="relative group">
                 <input
-                  type="text"
-                  value={currentConfig.xAxisLabel || ''}
-                  onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
-                  className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold glass-item`}
-                  placeholder="e.g. Month, Project Name"
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={selectedWidget.progressValue ?? 89}
+                  onChange={(e) => updateCurrentWidget({ progressValue: parseInt(e.target.value, 10) })}
+                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
                 />
-                <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary" />
               </div>
-            </div>
-          )}
+            </section>
+          )
+        }
 
-          {!isImage && !isMap && !isWeather && (
-            <div className="space-y-1">
-              <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
-              <input
-                type="text"
-                value={currentConfig.unit || ''}
-                onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-                className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all glass-item`}
-                placeholder="e.g. 명, $, %"
-              />
-            </div>
-          )}
-
-          {(isSummary || isSummaryChart || isPremiumSummary || isGeneralKpi || isEarningProgress || isEarningTrend) && (
-            <>
-              {isSummaryChart && (
-                <div className="space-y-1">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">큰 숫자 크기 (px)</span>
+        {
+          isEarningTrend && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" /> Earning Trend
+              </label>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
                   <input
                     type="number"
                     min={12}
@@ -1253,132 +726,689 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                   />
                 </div>
-              )}
-              {!isImage && !isMap && !isWeather && (
                 <div className="space-y-1">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Current Value</span>
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Comparison text</span>
                   <input
                     type="text"
-                    value={currentMainValue || ''}
-                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
-                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono font-bold glass-item"
+                    value={selectedWidget.comparisonText ?? ''}
+                    onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
+                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
+                    placeholder="Compared of $11,750 last year"
                   />
                 </div>
-              )}
-              {!isImage && !isEarningTrend && !isMap && !isWeather && (
-                <div className="space-y-1">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Description</span>
-                  <input
-                    type="text"
-                    value={currentSubValue || ''}
-                    onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
-                    className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all glass-item"
-                  />
+                <div className="flex items-center gap-3">
+                  <div className="space-y-1 flex-1">
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Trend %</span>
+                    <input
+                      type="number"
+                      value={selectedWidget.trendPercent ?? 21}
+                      onChange={(e) => updateCurrentWidget({ trendPercent: parseFloat(e.target.value) || 0 })}
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs glass-item"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-5">
+                    <span className="text-caption uppercase font-bold text-gray-400">Direction</span>
+                    <Switch
+                      checked={selectedWidget.trendUp !== false}
+                      onChange={(checked) => updateCurrentWidget({ trendUp: checked })}
+                    />
+                    <span className="text-xs text-[var(--text-muted)]">{selectedWidget.trendUp !== false ? '▲ Up' : '▼ Down'}</span>
+                  </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+                <div className="space-y-2">
+                  {(() => {
+                    const items = selectedWidget.categoryItems ?? [
+                      { label: 'Sales', value: 8 },
+                      { label: 'Product', value: 68, color: 'var(--warning)' },
+                      { label: 'Marketing', value: 12 }
+                    ];
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-caption uppercase font-bold text-gray-400 ml-1">Category bars</span>
+                          <button
+                            onClick={() => updateCurrentWidget({ categoryItems: [...items, { label: 'New', value: 10 }] })}
+                            className="p-1 hover:bg-primary/10 rounded text-primary transition-colors flex items-center gap-1"
+                            title="Add Category"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span className="text-nano font-bold uppercase tracking-tighter">Add</span>
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {items.map((item, idx) => (
+                            <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border border-[var(--border-base)] glass-item">
+                              <input
+                                type="text"
+                                value={item.label}
+                                onChange={(e) => {
+                                  const next = [...items];
+                                  next[idx] = { ...next[idx], label: e.target.value };
+                                  updateCurrentWidget({ categoryItems: next });
+                                }}
+                                className="flex-1 min-w-0 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item font-semibold"
+                                placeholder="Label"
+                              />
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={item.value}
+                                onChange={(e) => {
+                                  const next = [...items];
+                                  next[idx] = { ...next[idx], value: parseFloat(e.target.value) || 0 };
+                                  updateCurrentWidget({ categoryItems: next });
+                                }}
+                                className="w-14 p-1.5 text-xs rounded border border-[var(--border-base)] bg-transparent glass-item font-mono"
+                              />
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: resolveColor(item.color || 'var(--primary-color)', theme.primaryColor, theme.primaryColor) }} />
+                                <input
+                                  type="text"
+                                  value={item.color ?? ''}
+                                  onChange={(e) => {
+                                    const next = [...items];
+                                    next[idx] = { ...next[idx], color: e.target.value || undefined };
+                                    updateCurrentWidget({ categoryItems: next });
+                                  }}
+                                  className="w-20 p-1.5 text-[10px] rounded border border-[var(--border-base)] bg-transparent glass-item uppercase"
+                                  placeholder="Color"
+                                />
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const next = items.filter((_, i) => i !== idx);
+                                  updateCurrentWidget({ categoryItems: next });
+                                }}
+                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </section>
+          )
+        }
 
-        {hasDataRows && (
-          <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
-            {currentData.map((item, idx) => {
-              const isSankey = currentType === WidgetType.CHART_SANKEY;
+        {
+          isGeneralKpi && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <PaletteIcon className="w-4 h-4" /> KPI Icon
+              </label>
+              <div className="space-y-2">
+                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Icon</span>
+                <select
+                  value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
+                  onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
+                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold glass-item"
+                >
+                  {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </section>
+          )
+        }
 
-              return (
-                <div key={idx} className="p-3 bg-transparent rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all glass-item">
-                  <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
-                    <div className="w-full flex items-center gap-2">
-                      {/* Primary Label (Source for Sankey) */}
-                      <div className="flex-1">
-                        <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
-                          {isSankey ? 'Source' : (currentConfig.xAxisLabel || 'Label')}
-                        </span>
-                        <input
-                          type="text"
-                          value={item[currentConfig.xAxisKey] || item.name || ''}
-                          onChange={(e) => handleDataChange(idx, currentConfig.xAxisKey || 'name', e.target.value)}
-                          className="bg-transparent border-none p-0 text-xs font-black text-blue-600 dark:text-blue-400 focus:ring-0 w-full"
-                          placeholder={isSankey ? "Source Node" : "Label..."}
-                        />
-                      </div>
-
-                      {/* Secondary Label (Target for Sankey) */}
-                      {isSankey && (
-                        <>
-                          <span className="text-gray-400">→</span>
-                          <div className="flex-1">
-                            <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
-                              {isSankey ? 'Target' : 'Category'}
-                            </span>
-                            <input
-                              type="text"
-                              value={item[currentConfig.yAxisKey] || ''}
-                              onChange={(e) => handleDataChange(idx, currentConfig.yAxisKey, e.target.value)}
-                              className="bg-transparent border-none p-0 text-xs font-black text-purple-600 dark:text-purple-400 focus:ring-0 w-full text-right"
-                              placeholder={isSankey ? "Target Node" : "Value..."}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => removeDataRow(idx)} 
-                      className="flex shrink-0 items-center justify-center w-7 h-7 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-2" 
-                      title="데이터 행 삭제"
+        {
+          currentType === WidgetType.VERTICAL_NAV_CARD && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Layers className="w-4 h-4" /> 세로 네비 카드
+              </label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">카드 개수 (1~8)</span>
+                  <div
+                    className="inline-flex items-center rounded-[9999px] border border-[var(--border-base)] overflow-hidden"
+                    style={{
+                      background: 'transparent',
+                      padding: 'var(--spacing-xs) var(--spacing-sm)',
+                      gap: 'var(--spacing-sm)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const items = selectedWidget.navItems ?? [];
+                        if (items.length <= 1) return;
+                        const next = items.slice(0, -1);
+                        const removedWasActive = items[items.length - 1]?.active;
+                        if (removedWasActive && next.length > 0 && !next.some((it) => it.active)) {
+                          next[0] = { ...next[0], active: true };
+                        }
+                        onUpdateWidget(selectedWidget.id, { navItems: next });
+                      }}
+                      disabled={((selectedWidget.navItems ?? []).length) <= 1}
+                      className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
+                      style={{
+                        width: 'var(--spacing-lg)',
+                        height: 'var(--spacing-lg)',
+                        color: 'var(--text-main)',
+                      }}
+                      title="카드 줄이기"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Minus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
+                    </button>
+                    <span
+                      className="tabular-nums font-semibold min-w-[1.25rem] text-center"
+                      style={{ color: 'var(--text-main)', fontSize: 'var(--content-size)' }}
+                    >
+                      {(selectedWidget.navItems ?? []).length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const items = selectedWidget.navItems ?? [];
+                        if (items.length >= 8) return;
+                        onUpdateWidget(selectedWidget.id, {
+                          navItems: [...items, { id: `nav_${Date.now()}`, label: '새 메뉴', active: false }],
+                        });
+                      }}
+                      disabled={((selectedWidget.navItems ?? []).length) >= 8}
+                      className="flex items-center justify-center rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--action-hover-bg)]"
+                      style={{
+                        width: 'var(--spacing-lg)',
+                        height: 'var(--spacing-lg)',
+                        color: 'var(--text-main)',
+                      }}
+                      title="카드 추가 (최대 8개)"
+                    >
+                      <Plus className="w-4 h-4" style={{ width: 'var(--content-size)', height: 'var(--content-size)' }} />
                     </button>
                   </div>
-
-                  {/* Series Values */}
-                  {(currentConfig.series || [{ key: 'value', label: 'Value' }]).map((s) => (
-                    <div key={s.key} className="flex items-center justify-between gap-4">
-                      <span className="text-micro font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">메뉴 문구</span>
+                  {((selectedWidget.navItems ?? []) as { id: string; label: string; active?: boolean }[]).map((item, idx) => (
+                    <div key={item.id} className="flex gap-2 items-center">
+                      <span className="text-xs text-[var(--text-muted)] w-6 tabular-nums">{idx + 1}.</span>
                       <input
-                        type="number"
-                        value={item[s.key] ?? 0}
-                        onChange={(e) => handleDataChange(idx, s.key, parseFloat(e.target.value) || 0)}
-                        className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white glass-item"
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => {
+                          const next = (selectedWidget.navItems ?? []).map((it, j) =>
+                            j === idx ? { ...it, label: e.target.value } : it
+                          );
+                          onUpdateWidget(selectedWidget.id, { navItems: next });
+                        }}
+                        className="flex-1 min-w-0 p-2 bg-transparent border border-[var(--border-base)] rounded-[var(--radius-md)] text-xs outline-none focus:ring-1 focus:ring-[var(--primary-color)] glass-item"
+                        placeholder="메뉴 이름"
                       />
                     </div>
                   ))}
                 </div>
-              )
-            })}
-            <button onClick={addDataRow} className="btn-base btn-surface w-full mt-4 border-dashed border-2">
-              <Plus className="w-4 h-4" /> Add Data Row
-            </button>
-          </div>
-        )}
-      </section>
+              </div>
+            </section>
+          )
+        }
 
-      <section className="space-y-4 border-t border-[var(--border-base)] p-4">
-        <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
-            <select
-              value={selectedWidget.colSpan}
-              onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })}
-              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
-            >
-              {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Cols</option>))}
-            </select>
+        {
+          isImage && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Image className="w-4 h-4" /> Image Settings
+              </label>
+
+              <div className="space-y-4">
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Upload Image</span>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            updateCurrentWidget({ mainValue: reader.result as string });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 glass-item`}
+                    />
+                  </div>
+                </div>
+
+                {/* URL Input */}
+                <div className="space-y-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
+                  <input
+                    type="text"
+                    value={currentMainValue || ''}
+                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
+                {/* Caption */}
+                <div className="space-y-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
+                  <input
+                    type="text"
+                    value={currentSubValue || ''}
+                    onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
+                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
+                    placeholder="Image description..."
+                  />
+                </div>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          isIconResizable && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <PaletteIcon className="w-4 h-4" /> Icon Size
+              </label>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-caption uppercase font-bold text-gray-400">Size (px)</span>
+                  <span className="text-xs font-bold text-blue-500">{selectedWidget.iconSize || 48}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="24"
+                  max="128"
+                  step="4"
+                  value={selectedWidget.iconSize || 48}
+                  onChange={(e) => updateCurrentWidget({ iconSize: parseInt(e.target.value, 10) })}
+                  className="w-full accent-blue-500 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </section>
+          )
+        }
+
+        {
+          isBarResizable && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <BarChartHorizontal className="w-4 h-4" /> Bar Settings (Graph Width)
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Graph Width (%)</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{currentConfig.barWidth ?? 60}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={currentConfig.barWidth ?? 60}
+                  onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, barWidth: parseInt(e.target.value, 10) } })}
+                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                />
+                <p className="text-micro text-muted italic px-1 mt-1">* 수치를 낮추면 더 얇은 그래프가 됩니다.</p>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          !isSec && (
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <PaletteIcon className="w-4 h-4" /> Background
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Background opacity</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={selectedWidget.backgroundOpacity ?? 100}
+                  onChange={(e) => updateCurrentWidget({ backgroundOpacity: parseInt(e.target.value, 10) })}
+                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                />
+              </div>
+            </section>
+          )
+        }
+
+        {
+          appearanceOptions.length > 0 && (
+            <section className="space-y-4">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <PaletteIcon className="w-4 h-4" /> Appearance & Display
+              </label>
+              <div className="space-y-2">
+                {appearanceOptions.map((option) => (
+                  <div
+                    key={option.key}
+                    onClick={() => toggleConfig(option.key as any)}
+                    className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
+                  >
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                      {option.label}
+                    </span>
+                    <div className="pointer-events-none">
+                      <Switch
+                        checked={
+                          option.key === 'noBezel' ? (selectedWidget.noBezel || false) :
+                            option.key === 'noBorder' ? (selectedWidget.noBorder || false) :
+                              option.key === 'hideHeader' ? (selectedWidget.hideHeader || false) :
+                                (currentConfig as any)[option.key] || false
+                        }
+                        onChange={() => { }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+
+
+        {
+          isChart && !isSummary && !isSummaryChart && (
+
+
+            <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
+                  <Palette className="w-4 h-4" /> Data Series
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleResetSeriesColors}
+                    className="btn-base btn-surface flex items-center gap-1"
+                    style={{ padding: '6px 8px' }}
+                    title="Reset series colors to brand/theme"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="text-caption font-bold uppercase">Reset</span>
+                  </button>
+                  <button
+                    onClick={handleAddSeries}
+                    className="btn-base btn-surface"
+                    style={{ padding: '6px' }}
+                    title="Add series"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {(currentConfig.series || []).map((s, idx) => (
+                  <div key={s.key} className={`p-3 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-[var(--primary-color)]/30 shadow-sm glass-item`}>
+                    <div className="flex flex-col gap-0.5 mr-1">
+                      <button
+                        disabled={idx === 0}
+                        onClick={() => moveSeries(idx, 'up')}
+                        className="p-0.5 rounded hover:bg-[var(--primary-subtle)] disabled:opacity-0 transition-all"
+                      >
+                        <ChevronUp className="w-3 h-3 text-gray-500" />
+                      </button>
+                      <button
+                        disabled={idx === (currentConfig.series?.length || 0) - 1}
+                        onClick={() => moveSeries(idx, 'down')}
+                        className="p-0.5 rounded hover:bg-white/10 disabled:opacity-0 transition-all glass-item"
+                      >
+                        <ChevronDown className="w-3 h-3 text-gray-500" />
+                      </button>
+                    </div>
+
+                    <div className="flex gap-1 shrink-0 items-center">
+                      <div className="relative group/picker">
+                        <div
+                          className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
+                          style={{ backgroundColor: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }}
+                          title="Start Color"
+                        />
+                        <input
+                          type="color"
+                          value={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
+                          onChange={(e) => handleUpdateSeries(s.key, { color: e.target.value })}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                      </div>
+                      {currentConfig.useGradient && !isReallyAmCharts && (
+                        <div className="relative group/picker">
+                          <div
+                            className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
+                            style={{ backgroundColor: resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor) }}
+                            title="End Color"
+                          />
+                          <input
+                            type="color"
+                            value={resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor)}
+                            onChange={(e) => handleUpdateSeries(s.key, { endColor: e.target.value })}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        value={s.color?.startsWith('var') ? '' : s.color}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val.startsWith('#')) handleUpdateSeries(s.key, { color: val });
+                        }}
+                        placeholder="#HEX"
+                        className="w-14 bg-transparent border-none p-0 text-caption font-medium uppercase text-muted outline-none focus:ring-0 ml-1"
+                        title="Direct HEX input"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={s.label}
+                        onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
+                        className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => handleRemoveSeries(s.key)}
+                      className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-1"
+                      title="계열 삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
+          <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
+            <Database className="w-4 h-4" /> Data Config
+          </label>
+
+          <div className="space-y-3">
+            {hasDataRows && !isSummary && !isGeneralKpi && !isEarningProgress && (
+              <div className="space-y-1">
+                <span className="text-caption uppercase font-bold text-muted ml-1">Header (Axis Label)</span>
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={currentConfig.xAxisLabel || ''}
+                    onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
+                    className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold glass-item`}
+                    placeholder="e.g. Month, Project Name"
+                  />
+                  <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary" />
+                </div>
+              </div>
+            )}
+
+            {!isImage && !isMap && !isWeather && (
+              <div className="space-y-1">
+                <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
+                <input
+                  type="text"
+                  value={currentConfig.unit || ''}
+                  onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
+                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all glass-item`}
+                  placeholder="e.g. 명, $, %"
+                />
+              </div>
+            )}
+
+            {(isSummary || isSummaryChart || isPremiumSummary || isGeneralKpi || isEarningProgress || isEarningTrend) && (
+              <>
+                {isSummaryChart && (
+                  <div className="space-y-1">
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">큰 숫자 크기 (px)</span>
+                    <input
+                      type="number"
+                      min={12}
+                      max={96}
+                      value={selectedWidget.titleSize ?? 48}
+                      onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 48 })}
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
+                    />
+                  </div>
+                )}
+                {!isImage && !isMap && !isWeather && (
+                  <div className="space-y-1">
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Current Value</span>
+                    <input
+                      type="text"
+                      value={currentMainValue || ''}
+                      onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono font-bold glass-item"
+                    />
+                  </div>
+                )}
+                {!isImage && !isEarningTrend && !isMap && !isWeather && (
+                  <div className="space-y-1">
+                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Description</span>
+                    <input
+                      type="text"
+                      value={currentSubValue || ''}
+                      onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all glass-item"
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
-          <div className="space-y-1">
-            <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Height</span>
-            <select
-              value={selectedWidget.rowSpan}
-              onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })}
-              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
-            >
-              {[1, 2, 3, 4].map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Rows</option>))}
-            </select>
+
+          {hasDataRows && (
+            <div className="max-h-80 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+              {currentData.map((item, idx) => {
+                const isSankey = currentType === WidgetType.CHART_SANKEY;
+
+                return (
+                  <div key={idx} className="p-3 bg-transparent rounded-2xl border border-[var(--border-base)] space-y-2 group/row shadow-sm hover:shadow-md transition-all glass-item">
+                    <div className="flex items-center justify-between border-b border-[var(--border-base)] pb-1.5 mb-1.5">
+                      <div className="w-full flex items-center gap-2">
+                        {/* Primary Label (Source for Sankey) */}
+                        <div className="flex-1">
+                          <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
+                            {isSankey ? 'Source' : (currentConfig.xAxisLabel || 'Label')}
+                          </span>
+                          <input
+                            type="text"
+                            value={item[currentConfig.xAxisKey] || item.name || ''}
+                            onChange={(e) => handleDataChange(idx, currentConfig.xAxisKey || 'name', e.target.value)}
+                            className="bg-transparent border-none p-0 text-xs font-black text-blue-600 dark:text-blue-400 focus:ring-0 w-full"
+                            placeholder={isSankey ? "Source Node" : "Label..."}
+                          />
+                        </div>
+
+                        {/* Secondary Label (Target for Sankey) */}
+                        {isSankey && (
+                          <>
+                            <span className="text-gray-400">→</span>
+                            <div className="flex-1">
+                              <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
+                                {isSankey ? 'Target' : 'Category'}
+                              </span>
+                              <input
+                                type="text"
+                                value={item[currentConfig.yAxisKey] || ''}
+                                onChange={(e) => handleDataChange(idx, currentConfig.yAxisKey, e.target.value)}
+                                className="bg-transparent border-none p-0 text-xs font-black text-purple-600 dark:text-purple-400 focus:ring-0 w-full text-right"
+                                placeholder={isSankey ? "Target Node" : "Value..."}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeDataRow(idx)}
+                        className="flex shrink-0 items-center justify-center w-7 h-7 rounded-lg text-[var(--action-danger)] hover:bg-[var(--action-danger-subtle)] transition-all ml-2"
+                        title="데이터 행 삭제"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Series Values */}
+                    {(currentConfig.series || [{ key: 'value', label: 'Value' }]).map((s) => (
+                      <div key={s.key} className="flex items-center justify-between gap-4">
+                        <span className="text-micro font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
+                        <input
+                          type="number"
+                          value={item[s.key] ?? 0}
+                          onChange={(e) => handleDataChange(idx, s.key, parseFloat(e.target.value) || 0)}
+                          className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white glass-item"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+              <button onClick={addDataRow} className="btn-base btn-surface w-full mt-4 border-dashed border-2">
+                <Plus className="w-4 h-4" /> Add Data Row
+              </button>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4 border-t border-[var(--border-base)] p-4">
+          <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
+              <select
+                value={selectedWidget.colSpan}
+                onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })}
+                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
+              >
+                {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Cols</option>))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Height</span>
+              <select
+                value={selectedWidget.rowSpan}
+                onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })}
+                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
+              >
+                {[1, 2, 3, 4].map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Rows</option>))}
+              </select>
+            </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
     </div>
   );
 };

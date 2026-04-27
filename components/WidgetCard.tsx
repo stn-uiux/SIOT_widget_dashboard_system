@@ -144,7 +144,7 @@ const RechartsNumericYAxisMeasure: React.FC<{
       return;
     }
     const w = measureRef.current.offsetWidth;
-    setYAxisWidth(Math.max(24, Math.min(120, w + 8)));
+    setYAxisWidth(Math.max(24, Math.min(120, w + 4)));
   }, [maxVal, props.contentSize]);
 
   const effectiveWidth = props.showYAxis !== false ? yAxisWidth : 0;
@@ -252,7 +252,7 @@ const TrafficStatusChart: React.FC<TrafficStatusChartProps> = (props) => {
 const parseToHex = (colorStr: string, primaryColor: string = '#3b82f6'): string => {
   if (!colorStr) return '#64748b';
   if (colorStr.startsWith('#')) return colorStr;
-  
+
   try {
     // Resolve CSS variables manually
     if (colorStr.startsWith('var(')) {
@@ -261,7 +261,7 @@ const parseToHex = (colorStr: string, primaryColor: string = '#3b82f6'): string 
       const val = style.getPropertyValue(varName).trim();
       if (val) return parseToHex(val, primaryColor);
     }
-    
+
     // RGB(A) parsing
     if (colorStr.startsWith('rgb')) {
       const vals = colorStr.match(/\d+/g);
@@ -275,7 +275,7 @@ const parseToHex = (colorStr: string, primaryColor: string = '#3b82f6'): string 
   } catch (e) {
     console.error('parseToHex failed', e);
   }
-  
+
   return colorStr.includes('primary') ? primaryColor : '#64748b';
 };
 
@@ -329,13 +329,13 @@ const AmChartComponent = React.memo<{
       const seriesList = safeConfig.series && safeConfig.series.length > 0
         ? safeConfig.series
         : [{ key: safeConfig.yAxisKey || 'value', label: 'Value', color: 'var(--primary-color)' }];
-      
-      const { 
-        xAxisKey = 'name', 
-        xAxisLabel = '', 
-        showGrid = true, 
-        showXAxis = true, 
-        showYAxis = true 
+
+      const {
+        xAxisKey = 'name',
+        xAxisLabel = '',
+        showGrid = true,
+        showXAxis = true,
+        showYAxis = true
       } = safeConfig;
 
       root.container.setAll({ paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 });
@@ -721,15 +721,15 @@ const AmChartComponent = React.memo<{
               cornerRadiusTL: theme.chartRadius,
               cornerRadiusTR: theme.chartRadius,
               strokeOpacity: 0,
-            fill: safeConfig.useGradient 
-              ? (am5.LinearGradient.new(root, {
+              fill: safeConfig.useGradient
+                ? (am5.LinearGradient.new(root, {
                   stops: [
                     { color: toAm5Color(s.color) },
                     { color: toAm5Color(s.endColor || s.color) }
                   ],
                   rotation: 90
                 }) as any)
-              : (toAm5Color(s.color) as any)
+                : (toAm5Color(s.color) as any)
             });
 
             series.data.setAll(data);
@@ -1026,7 +1026,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
     const commonProps = {
       data: currentData,
-      margin: { top: 6, right: 6, left: 6, bottom: xAxisLabel ? 20 : 0 }
+      margin: { top: 6, right: 6, left: 0, bottom: xAxisLabel ? 26 : 4 }
     };
 
     const tooltipStyle = {
@@ -1077,14 +1077,30 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
     const renderLegend = (props: any) => {
       const { payload } = props;
-      if (!payload || !localSeries) return null;
+      if (!payload) return null;
+
+      // For Pie charts, we want to show all segments (categories)
+      if (currentType === WidgetType.CHART_PIE) {
+        const pieItems = payload.map((entry: any, index: number) => {
+          let color = entry.color || entry.payload?.fill || '';
+          if (!color || String(color).startsWith('url(')) {
+            // Fallback to PIE_COLORS if no color found
+            const rawPieColor = PIE_COLORS[index % PIE_COLORS.length];
+            color = resolveColor(rawPieColor, theme.primaryColor, theme.primaryColor);
+          }
+          return { value: entry.value, color };
+        });
+        return renderCustomLegend(pieItems);
+      }
+
+      if (!localSeries) return null;
 
       // Force legend items to follow the exact order defined in the Sidebar (localSeries)
       // This ensures the custom reordering via arrows is properly reflected in the legend.
       const orderedItems = localSeries.map(s => {
-        const p = payload.find((item: any) => 
-          item.dataKey === s.key || 
-          item.value === s.label || 
+        const p = payload.find((item: any) =>
+          item.dataKey === s.key ||
+          item.value === s.label ||
           item.payload?.dataKey === s.key
         );
         if (!p) return null;
@@ -1696,14 +1712,14 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   <div key={idx} className="flex items-center gap-2" style={{ gap: 'var(--spacing-sm)' }}>
                     <span className="text-[var(--text-muted)] shrink-0 w-20 truncate" style={{ fontSize: 'var(--text-small)' }}>{item.label}</span>
                     <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden" style={{ borderRadius: 'var(--border-radius)' }}>
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{ 
-                            width: `${pct}%`, 
-                            background: `linear-gradient(to right, ${barColor}, ${item.endColor ? resolveColor(item.endColor, 'var(--primary-color)', theme.primaryColor) : shadeColor(parseToHex(barColor), -20)})`, 
-                            borderRadius: 'var(--border-radius)' 
-                          }}
-                        />
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${pct}%`,
+                          background: `linear-gradient(to right, ${barColor}, ${item.endColor ? resolveColor(item.endColor, 'var(--primary-color)', theme.primaryColor) : shadeColor(parseToHex(barColor), -20)})`,
+                          borderRadius: 'var(--border-radius)'
+                        }}
+                      />
                     </div>
                   </div>
                 );
@@ -1792,7 +1808,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
                           const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
                           const stopEndOpacity = endColorRaw ? 1 : 0.2;
-                          
+
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-bar-${idx}-${safeWidgetId}`;
 
@@ -1807,26 +1823,26 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
                     {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false}>
+                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
                         {xAxisLabel && (
-                          <Label 
-                            value={xAxisLabel} 
-                            position="insideBottom" 
-                            offset={-10} 
-                            style={{ 
-                              fontSize: '10px', 
-                              fontWeight: '900', 
-                              textTransform: 'uppercase', 
+                          <Label
+                            value={xAxisLabel}
+                            position="insideBottom"
+                            offset={-10}
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: '900',
+                              textTransform: 'uppercase',
                               letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)' 
-                            }} 
+                              fill: 'var(--text-muted)'
+                            }}
                           />
                         )}
                       </XAxis>
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       const fbColor = parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor));
@@ -1864,7 +1880,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
                           const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
                           const stopEndOpacity = endColorRaw ? 1 : 0.2;
-                          
+
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-hbar-${idx}-${safeWidgetId}`;
 
@@ -1928,7 +1944,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
                           const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
-                          
+
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-ln-${idx}-${safeWidgetId}`;
 
@@ -1943,26 +1959,26 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
                     {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false}>
+                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
                         {xAxisLabel && (
-                          <Label 
-                            value={xAxisLabel} 
-                            position="insideBottom" 
-                            offset={-10} 
-                            style={{ 
-                              fontSize: '10px', 
-                              fontWeight: '900', 
-                              textTransform: 'uppercase', 
+                          <Label
+                            value={xAxisLabel}
+                            position="insideBottom"
+                            offset={-10}
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: '900',
+                              textTransform: 'uppercase',
                               letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)' 
-                            }} 
+                              fill: 'var(--text-muted)'
+                            }}
                           />
                         )}
                       </XAxis>
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return (
@@ -2004,7 +2020,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
                           const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
-                          
+
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-ar-${idx}-${safeWidgetId}`;
 
@@ -2019,26 +2035,26 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     ) : null}
                     {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
                     {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false}>
+                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
                         {xAxisLabel && (
-                          <Label 
-                            value={xAxisLabel} 
-                            position="insideBottom" 
-                            offset={-10} 
-                            style={{ 
-                              fontSize: '10px', 
-                              fontWeight: '900', 
-                              textTransform: 'uppercase', 
+                          <Label
+                            value={xAxisLabel}
+                            position="insideBottom"
+                            offset={-10}
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: '900',
+                              textTransform: 'uppercase',
                               letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)' 
-                            }} 
+                              fill: 'var(--text-muted)'
+                            }}
                           />
                         )}
                       </XAxis>
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return (
@@ -2276,26 +2292,26 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
                     {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false}>
+                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
                         {xAxisLabel && (
-                          <Label 
-                            value={xAxisLabel} 
-                            position="insideBottom" 
-                            offset={-10} 
-                            style={{ 
-                              fontSize: '10px', 
-                              fontWeight: '900', 
-                              textTransform: 'uppercase', 
+                          <Label
+                            value={xAxisLabel}
+                            position="insideBottom"
+                            offset={-10}
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: '900',
+                              textTransform: 'uppercase',
                               letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)' 
-                            }} 
+                              fill: 'var(--text-muted)'
+                            }}
                           />
                         )}
                       </XAxis>
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return idx === 0 ? (
@@ -2525,7 +2541,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         return (
           <div className="h-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={currentData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <AreaChart data={currentData} margin={commonProps.margin}>
                 <defs>
                   {localSeries.map((s, idx) => (
                     <linearGradient key={`grad-stats-${idx}`} id={`grad-stats-${idx}`} x1="0" y1="0" x2="0" y2="1">
@@ -2535,10 +2551,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   ))}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} opacity={0.5} />
-                <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} stroke={labelColor} fontSize={parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-tiny')) || 10} fontWeight="600" />
+                <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} stroke={labelColor} fontSize={parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-tiny')) || 10} fontWeight="600" height={24} />
                 <YAxis hide />
                 <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
                 {localSeries.map((s, idx) => (
                   <Area
                     key={s.key}
@@ -2618,37 +2634,41 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
       case WidgetType.DASH_NET_TRAFFIC:
         return (
-          <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={currentData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  {localSeries.map((s, idx) => (
-                    <linearGradient key={idx} id={`gradNet-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} opacity={0.2} />}
-                <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                <YAxis width={showYAxis ? 40 : 0} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-                {localSeries.map((s, idx) => (
-                  <Area
-                    key={idx}
-                    type="natural"
-                    dataKey={s.key}
-                    stroke={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
-                    strokeWidth={2}
-                    fill={`url(#gradNet-${idx})`}
-                    dot={false}
-                    stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? '1' : undefined}
-                  />
-                ))}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
+            {(yAxisWidth) => (
+              <div className="h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={currentData} margin={{ ...commonProps.margin, left: -24, right: -10 }}>
+                    <defs>
+                      {localSeries.map((s, idx) => (
+                        <linearGradient key={idx} id={`gradNet-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={resolveColor(s.color, theme.primaryColor, theme.primaryColor)} stopOpacity={0} />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    {showGrid && <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} opacity={0.2} />}
+                    <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24} padding={{ left: 0, right: 0 }} />
+                    <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: 2 }} />}
+                    {localSeries.map((s, idx) => (
+                      <Area
+                        key={idx}
+                        type="natural"
+                        dataKey={s.key}
+                        stroke={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
+                        strokeWidth={2}
+                        fill={`url(#gradNet-${idx})`}
+                        dot={false}
+                        stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? '1' : undefined}
+                      />
+                    ))}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </RechartsNumericYAxisMeasure>
         );
 
       case WidgetType.DASH_SECURITY_STATUS:

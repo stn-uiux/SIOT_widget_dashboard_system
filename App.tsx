@@ -104,22 +104,22 @@ type ProjectsState = { projects: Project[]; activeProjectId: string };
 /** 저장된 프로젝트 데이터를 현재 스키마에 맞춰 보정하고 테마 설정을 검증 (Self-Healing 포함) */
 function migrateProjects(projects: Project[]): Project[] {
   if (!Array.isArray(projects)) return [];
-  
+
   return projects.map((p) => {
     // 1. 테마 보정 및 자가 치유
     const isDefaultProject = p.id && String(p.id).startsWith('project_');
     let theme = { ...DEFAULT_THEME, ...(p.theme || {}) };
-    
+
     // 테마 자가 교정: 배경색이 밝거나 모드가 라이트인 경우 강제로 다크 모드 동기화
     const isLightBackground = theme.backgroundColor && (theme.backgroundColor.toLowerCase() === '#f8fafc' || theme.backgroundColor.toLowerCase() === '#ffffff');
     if (theme.mode === ThemeMode.LIGHT || isLightBackground) {
       console.log(`[STN] Theme mismatch detected for project ${p.id}. Forcing Dark Mode.`);
-      theme = { 
-        ...theme, 
+      theme = {
+        ...theme,
         name: "Dark Mode",
-        mode: ThemeMode.DARK, 
-        backgroundColor: '#020617', 
-        surfaceColor: '#0f172a', 
+        mode: ThemeMode.DARK,
+        backgroundColor: '#020617',
+        surfaceColor: '#0f172a',
         titleColor: '#f8fafc',
         textColor: '#94a3b8'
       };
@@ -142,7 +142,7 @@ function migrateProjects(projects: Project[]): Project[] {
     const pages = mappedPages.length > 0
       ? mappedPages
       : [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
-      
+
     const activePageId = p.activePageId && pages.some((pg) => pg.id === p.activePageId)
       ? p.activePageId
       : pages[0].id;
@@ -162,12 +162,12 @@ function loadProjectsStateSync(initial: Project[]): ProjectsState {
     const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
     if (!raw) return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
     const parsed = JSON.parse(raw) as ProjectsState;
-    
+
     const projects = migrateProjects(parsed.projects || initial);
     const activeProjectId = (parsed.activeProjectId && projects.some(p => p.id === parsed.activeProjectId))
       ? parsed.activeProjectId
       : (projects[0]?.id ?? "project_1");
-      
+
     return { projects, activeProjectId };
   } catch {
     return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
@@ -402,191 +402,108 @@ const DashboardGrid: React.FC<{
         style={{ width: "100%" }}
       >
         {widgets.length === 0 && isEditMode ? (
-        <div className="w-full flex justify-center py-10">
-          <button
-            onClick={onOpenWidgetPicker}
-            style={{
-              borderRadius: "var(--border-radius)",
-              width: "100%",
-              maxWidth: "var(--empty-state-max-width)",
-              minHeight: "var(--empty-state-min-height)",
-            }}
-            className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
-          >
-            <div className="w-16 h-16 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Plus className="w-8 h-8 text-primary" />
-            </div>
-            <div className="text-center">
-              <span className="font-black text-lg uppercase tracking-widest block mb-2">
-                Create Your Dashboard
-              </span>
-              <p className="text-xs text-muted font-medium">
-                Click to add your first analysis widget
-              </p>
-            </div>
-          </button>
-        </div>
-      ) : (
-        <>
-          {(() => {
-            // 그리드 가이드라인: Edit 모드 + 그리드 사용 ON일 때, 일반/반응형 둘 다 표시
-            if (usePixelGrid || !isEditMode) return null;
-            const margin = theme.spacing;
-            const cols = layout.columns;
-            if (!cols || gridWidth <= 0) return null;
-            const colWidth = (gridWidth - (cols - 1) * margin) / cols;
-            const rowH = rglRowHeight;
-            const hPeriod = rowH + margin;
-            const totalH = 3000;
-            const gridFillVar = theme.mode === ThemeMode.LIGHT ? "--grid-guide-fill-light" : "--grid-guide-fill-dark";
-            const gridFill = typeof document !== "undefined"
-              ? getComputedStyle(document.documentElement).getPropertyValue(gridFillVar).trim() || "rgba(0,0,0,0.06)"
-              : "rgba(0,0,0,0.06)";
-            const columns = Array.from({ length: cols }, (_, i) => ({
-              x: i * (colWidth + margin),
-              width: colWidth,
-            }));
-            const rowCount = Math.ceil(totalH / hPeriod);
-            const rows = Array.from({ length: rowCount }, (_, j) => ({
-              y: j * hPeriod,
-              height: rowH,
-            }));
-            const svg = [
-              "<svg xmlns='http://www.w3.org/2000/svg' width='",
-              gridWidth,
-              "' height='",
-              totalH,
-              "'>",
-              columns
-                .map(
-                  (c) =>
-                    `<rect x='${c.x}' y='0' width='${c.width}' height='${totalH}' fill='${gridFill}'/>`,
-                )
-                .join(""),
-              rows
-                .map(
-                  (r) =>
-                    `<rect x='0' y='${r.y}' width='${gridWidth}' height='${r.height}' fill='${gridFill}'/>`,
-                )
-                .join(""),
-              "</svg>",
-            ].join("");
-            const dataUri = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-            return (
-              <div
-                aria-hidden
-                className="grid-neon-overlay pointer-events-none absolute inset-0 z-0"
-                style={{
-                  backgroundImage: dataUri,
-                  backgroundSize: `${gridWidth}px ${totalH}px`,
-                  backgroundPosition: "0 0",
-                  backgroundRepeat: "repeat-y",
-                }}
-              />
-            );
-          })()}
-          {layout.useResponsive && responsiveLayouts && onResponsiveLayoutChange ? (
-            <ResponsiveGridLayout
-              className={resizingId || draggingId ? "is-interacting" : ""}
-              width={gridWidth}
-              breakpoints={RESPONSIVE_BREAKPOINTS}
-              cols={RESPONSIVE_COLS}
-              layouts={responsiveLayouts}
-              rowHeight={rglRowHeight}
-              margin={[theme.spacing, theme.spacing] as [number, number]}
-              containerPadding={[0, 0] as [number, number]}
-              maxRows={layout.fitToScreen ? layout.rows : Infinity}
-              compactor={getCompactor((layout.useGrid === false || layout.freePosition) ? null : "vertical", (layout.useGrid === false || layout.freePosition))}
-              dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
-              resizeConfig={{
-                enabled: isEditMode,
-                handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
-              }}
-              autoSize={!layout.fitToScreen}
-              onLayoutChange={(_layout, layouts) => onResponsiveLayoutChange(layouts)}
-              onDragStart={(layout, oldItem, newItem) => {
-                setDraggingId(newItem.i);
-              }}
-              onDragStop={() => {
-                setDraggingId(null);
-              }}
-              onResizeStart={(layout, oldItem, newItem) => {
-                setResizingId(newItem.i);
-                setLiveSize({ w: newItem.w, h: newItem.h });
-              }}
-              onResize={(layout, oldItem, newItem) => {
-                if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
-                resizeRafRef.current = requestAnimationFrame(() => {
-                  setLiveSize({ w: newItem.w, h: newItem.h });
-                });
-              }}
-              onResizeStop={() => {
-                if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
-                setResizingId(null);
-                setLiveSize(null);
-              }}
+          <div className="w-full flex justify-center py-10">
+            <button
+              onClick={onOpenWidgetPicker}
               style={{
-                position: "relative",
-                zIndex: 1,
-                minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
+                borderRadius: "var(--border-radius)",
+                width: "100%",
+                maxWidth: "var(--empty-state-max-width)",
+                minHeight: "var(--empty-state-min-height)",
               }}
+              className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
             >
-              {(widgets || []).map((widget) => {
-                const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
-                const isThisResizing = resizingId === widget.id;
-                return (
-                  <div
-                    key={widget.id}
-                    className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
-                    style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
-                  >
-                    <WidgetCard
-                      widget={widget}
-                      theme={theme}
-                      isEditMode={isEditMode}
-                      onEdit={onWidgetSelect}
-                      onUpdate={onUpdateWidget}
-                      onDelete={onDeleteWidget}
-                      onOpenExcel={onOpenExcel}
-                      glassStyle={layout?.glassmorphism ?? false}
-                      selected={selectedWidgetId === widget.id}
-                      isResizing={isThisResizing}
-                      isDragging={draggingId === widget.id}
-                    />
-                    {isEditMode && isThisResizing && liveSize && (
-                      <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
-                            {liveSize.w} × {liveSize.h}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </ResponsiveGridLayout>
-          ) : (
-            <>
-              <GridLayout
+              <div className="w-16 h-16 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Plus className="w-8 h-8 text-primary" />
+              </div>
+              <div className="text-center">
+                <span className="font-black text-lg uppercase tracking-widest block mb-2">
+                  Create Your Dashboard
+                </span>
+                <p className="text-xs text-muted font-medium">
+                  Click to add your first analysis widget
+                </p>
+              </div>
+            </button>
+          </div>
+        ) : (
+          <>
+            {(() => {
+              // 그리드 가이드라인: Edit 모드 + 그리드 사용 ON일 때, 일반/반응형 둘 다 표시
+              if (usePixelGrid || !isEditMode) return null;
+              const margin = theme.spacing;
+              const cols = layout.columns;
+              if (!cols || gridWidth <= 0) return null;
+              const colWidth = (gridWidth - (cols - 1) * margin) / cols;
+              const rowH = rglRowHeight;
+              const hPeriod = rowH + margin;
+              const totalH = 3000;
+              const gridFillVar = theme.mode === ThemeMode.LIGHT ? "--grid-guide-fill-light" : "--grid-guide-fill-dark";
+              const gridFill = typeof document !== "undefined"
+                ? getComputedStyle(document.documentElement).getPropertyValue(gridFillVar).trim() || "rgba(0,0,0,0.06)"
+                : "rgba(0,0,0,0.06)";
+              const columns = Array.from({ length: cols }, (_, i) => ({
+                x: i * (colWidth + margin),
+                width: colWidth,
+              }));
+              const rowCount = Math.ceil(totalH / hPeriod);
+              const rows = Array.from({ length: rowCount }, (_, j) => ({
+                y: j * hPeriod,
+                height: rowH,
+              }));
+              const svg = [
+                "<svg xmlns='http://www.w3.org/2000/svg' width='",
+                gridWidth,
+                "' height='",
+                totalH,
+                "'>",
+                columns
+                  .map(
+                    (c) =>
+                      `<rect x='${c.x}' y='0' width='${c.width}' height='${totalH}' fill='${gridFill}'/>`,
+                  )
+                  .join(""),
+                rows
+                  .map(
+                    (r) =>
+                      `<rect x='0' y='${r.y}' width='${gridWidth}' height='${r.height}' fill='${gridFill}'/>`,
+                  )
+                  .join(""),
+                "</svg>",
+              ].join("");
+              const dataUri = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+              return (
+                <div
+                  aria-hidden
+                  className="grid-neon-overlay pointer-events-none absolute inset-0 z-0"
+                  style={{
+                    backgroundImage: dataUri,
+                    backgroundSize: `${gridWidth}px ${totalH}px`,
+                    backgroundPosition: "0 0",
+                    backgroundRepeat: "repeat-y",
+                  }}
+                />
+              );
+            })()}
+            {layout.useResponsive && responsiveLayouts && onResponsiveLayoutChange ? (
+              <ResponsiveGridLayout
                 className={resizingId || draggingId ? "is-interacting" : ""}
-                layout={displayLayout}
                 width={gridWidth}
-                gridConfig={{
-                  cols: rglCols,
-                  rowHeight: rglRowH,
-                  margin: (usePixelGrid ? [0, 0] : [theme.spacing, theme.spacing]) as [number, number],
-                  containerPadding: [0, 0] as [number, number],
-                  maxRows: usePixelGrid ? Infinity : layout.fitToScreen ? layout.rows : Infinity,
-                }}
-                compactor={getCompactor((usePixelGrid || layout.freePosition) ? null : "vertical", (usePixelGrid || layout.freePosition))}
+                breakpoints={RESPONSIVE_BREAKPOINTS}
+                cols={RESPONSIVE_COLS}
+                layouts={responsiveLayouts}
+                rowHeight={rglRowHeight}
+                margin={[theme.spacing, theme.spacing] as [number, number]}
+                containerPadding={[0, 0] as [number, number]}
+                maxRows={layout.fitToScreen ? layout.rows : Infinity}
+                compactor={getCompactor((layout.useGrid === false || layout.freePosition) ? null : "vertical", (layout.useGrid === false || layout.freePosition))}
                 dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
                 resizeConfig={{
                   enabled: isEditMode,
                   handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
                 }}
                 autoSize={!layout.fitToScreen}
-                onLayoutChange={handleLayoutChange}
+                onLayoutChange={(_layout, layouts) => onResponsiveLayoutChange(layouts)}
                 onDragStart={(layout, oldItem, newItem) => {
                   setDraggingId(newItem.i);
                 }}
@@ -615,14 +532,14 @@ const DashboardGrid: React.FC<{
                 }}
               >
                 {(widgets || []).map((widget) => {
-                    const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
-                    const isThisResizing = resizingId === widget.id;
-                    return (
-                      <div
-                        key={widget.id}
-                        className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
-                        style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
-                      >
+                  const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
+                  const isThisResizing = resizingId === widget.id;
+                  return (
+                    <div
+                      key={widget.id}
+                      className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                      style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
+                    >
                       <WidgetCard
                         widget={widget}
                         theme={theme}
@@ -648,19 +565,102 @@ const DashboardGrid: React.FC<{
                     </div>
                   );
                 })}
-              </GridLayout>
-            </>
-          )}
+              </ResponsiveGridLayout>
+            ) : (
+              <>
+                <GridLayout
+                  className={resizingId || draggingId ? "is-interacting" : ""}
+                  layout={displayLayout}
+                  width={gridWidth}
+                  gridConfig={{
+                    cols: rglCols,
+                    rowHeight: rglRowH,
+                    margin: (usePixelGrid ? [0, 0] : [theme.spacing, theme.spacing]) as [number, number],
+                    containerPadding: [0, 0] as [number, number],
+                    maxRows: usePixelGrid ? Infinity : layout.fitToScreen ? layout.rows : Infinity,
+                  }}
+                  compactor={getCompactor((usePixelGrid || layout.freePosition) ? null : "vertical", (usePixelGrid || layout.freePosition))}
+                  dragConfig={{ enabled: isEditMode, handle: ".drag-handle" }}
+                  resizeConfig={{
+                    enabled: isEditMode,
+                    handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
+                  }}
+                  autoSize={!layout.fitToScreen}
+                  onLayoutChange={handleLayoutChange}
+                  onDragStart={(layout, oldItem, newItem) => {
+                    setDraggingId(newItem.i);
+                  }}
+                  onDragStop={() => {
+                    setDraggingId(null);
+                  }}
+                  onResizeStart={(layout, oldItem, newItem) => {
+                    setResizingId(newItem.i);
+                    setLiveSize({ w: newItem.w, h: newItem.h });
+                  }}
+                  onResize={(layout, oldItem, newItem) => {
+                    if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                    resizeRafRef.current = requestAnimationFrame(() => {
+                      setLiveSize({ w: newItem.w, h: newItem.h });
+                    });
+                  }}
+                  onResizeStop={() => {
+                    if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+                    setResizingId(null);
+                    setLiveSize(null);
+                  }}
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    minHeight: layout.fitToScreen && widgets.length > 0 ? "100%" : "auto",
+                  }}
+                >
+                  {(widgets || []).map((widget) => {
+                    const isThisInteracting = resizingId === widget.id || draggingId === widget.id;
+                    const isThisResizing = resizingId === widget.id;
+                    return (
+                      <div
+                        key={widget.id}
+                        className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
+                        style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
+                      >
+                        <WidgetCard
+                          widget={widget}
+                          theme={theme}
+                          isEditMode={isEditMode}
+                          onEdit={onWidgetSelect}
+                          onUpdate={onUpdateWidget}
+                          onDelete={onDeleteWidget}
+                          onOpenExcel={onOpenExcel}
+                          glassStyle={layout?.glassmorphism ?? false}
+                          selected={selectedWidgetId === widget.id}
+                          isResizing={isThisResizing}
+                          isDragging={draggingId === widget.id}
+                        />
+                        {isEditMode && isThisResizing && liveSize && (
+                          <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
+                                {liveSize.w} × {liveSize.h}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </GridLayout>
+              </>
+            )}
 
-          {isEditMode && (
-            <div 
-              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-auto pointer-events-none flex flex-col items-center"
-            >
-              {/* Dynamic Island Style Pill Button */}
-              <div className="group pointer-events-auto relative">
-                <button
-                  onClick={onOpenWidgetPicker}
-                  className={`
+            {isEditMode && (
+              <div
+                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-auto pointer-events-none flex flex-col items-center"
+              >
+                {/* Dynamic Island Style Pill Button */}
+                <div className="group pointer-events-auto relative">
+                  <button
+                    onClick={onOpenWidgetPicker}
+                    className={`
                     relative flex items-center gap-3 px-6 h-[52px]
                     bg-white/10 dark:bg-black/40 backdrop-blur-2xl
                     border border-white/20 dark:border-white/10
@@ -669,36 +669,36 @@ const DashboardGrid: React.FC<{
                     shadow-[var(--shadow-header-bar)]
                     before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity
                   `}
-                >
-                  {/* Glowing Animated Ring */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                    <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent,var(--primary-color),transparent)] animate-[spin_4s_linear_infinite] opacity-40" />
-                  </div>
+                  >
+                    {/* Glowing Animated Ring */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                      <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent,var(--primary-color),transparent)] animate-[spin_4s_linear_infinite] opacity-40" />
+                    </div>
 
-                  {/* Icon with hover rotation */}
-                  <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700">
-                    <Plus className="w-5 h-5 text-white stroke-[3px]" />
-                  </div>
+                    {/* Icon with hover rotation */}
+                    <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700">
+                      <Plus className="w-5 h-5 text-white stroke-[3px]" />
+                    </div>
 
-                  {/* Text with letter spacing animation */}
-                  <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-slate-700" : "text-white"}`}>
-                    Add Widget
-                  </span>
+                    {/* Text with letter spacing animation */}
+                    <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-slate-700" : "text-white"}`}>
+                      Add Widget
+                    </span>
 
-                </button>
+                  </button>
 
-                {/* Subtle outer glow */}
-                <div className="absolute -inset-1 bg-primary/20 blur-2xl rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {/* Subtle outer glow */}
+                  <div className="absolute -inset-1 bg-primary/20 blur-2xl rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+
+                {/* Hint under the button */}
+                <div className="mt-3 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm border border-white/5 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
+                  <span className="text-white/70 uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)' }}>Pick analysis component</span>
+                </div>
               </div>
-              
-              {/* Hint under the button */}
-              <div className="mt-3 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm border border-white/5 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
-                <span className="text-white/70 uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)' }}>Pick analysis component</span>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -893,10 +893,10 @@ const HeaderThemeToggle = ({
   const disabled = isEditMode || !isPreviewMode;
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <ModeToggle 
-        mode={mode} 
-        onChange={onSwitch} 
-        disabled={disabled} 
+      <ModeToggle
+        mode={mode}
+        onChange={onSwitch}
+        disabled={disabled}
         isEditMode={isEditMode}
         isPreviewMode={isPreviewMode}
       />
@@ -977,12 +977,12 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
       type,
       x: Math.max(0, Math.min(x, 54)),
       y: Math.max(0, Math.min(y, 11)),
-      w: type === HeaderWidgetType.CLOCK 
-        ? 4 
-        : (type === HeaderWidgetType.MONITOR 
-          ? 5 
-          : type === HeaderWidgetType.THEME_TOGGLE 
-            ? 3 
+      w: type === HeaderWidgetType.CLOCK
+        ? 4
+        : (type === HeaderWidgetType.MONITOR
+          ? 5
+          : type === HeaderWidgetType.THEME_TOGGLE
+            ? 3
             : type === HeaderWidgetType.IMAGE || type === HeaderWidgetType.LOGO
               ? 6
               : 4),
@@ -996,18 +996,18 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-20 ${(isEditMode || isPreviewMode) ? "pointer-events-auto" : "pointer-events-none"}`}
+      className={`header-widget-layer absolute inset-0 z-20 ${(isEditMode || isPreviewMode) ? "pointer-events-auto" : "pointer-events-none"}`}
       onDragOver={(e) => isEditMode && e.preventDefault()}
       onDrop={(e) => isEditMode && handleManualDrop(e)}
     >
       <GridLayout
         className="layout"
-        layout={widgets.map((w) => ({ 
-          i: w.id, 
-          x: w.x, 
-          y: w.y, 
-          w: w.type === HeaderWidgetType.CLOCK ? Math.min(w.w, 4) : w.type === HeaderWidgetType.THEME_TOGGLE ? Math.min(w.w, 3) : w.w, 
-          h: w.h 
+        layout={widgets.map((w) => ({
+          i: w.id,
+          x: w.x,
+          y: w.y,
+          w: w.type === HeaderWidgetType.CLOCK ? Math.min(w.w, 4) : w.type === HeaderWidgetType.THEME_TOGGLE ? Math.min(w.w, 3) : w.w,
+          h: w.h
         }))}
         width={gridWidth}
         gridConfig={{
@@ -1026,11 +1026,11 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
             {w.type === HeaderWidgetType.CLOCK && <HeaderClock />}
             {w.type === HeaderWidgetType.MONITOR && <HeaderMonitor />}
             {w.type === HeaderWidgetType.THEME_TOGGLE && (
-              <HeaderThemeToggle 
-                mode={theme.mode} 
-                onSwitch={onModeSwitch} 
+              <HeaderThemeToggle
+                mode={theme.mode}
+                onSwitch={onModeSwitch}
                 isEditMode={isEditMode}
-                isPreviewMode={isPreviewMode} 
+                isPreviewMode={isPreviewMode}
               />
             )}
             {w.type === HeaderWidgetType.IMAGE && <HeaderImage url={w.url} />}
@@ -1089,7 +1089,7 @@ const App: React.FC = () => {
           window.location.href = window.location.pathname;
         };
       };
-      
+
       doReset();
     }, []);
 
@@ -1154,7 +1154,7 @@ const App: React.FC = () => {
           const migrated = migrateProjects(saved.projects);
           setProjects(migrated);
           if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
-        } 
+        }
         // 2. 데이터가 아예 없으면 초기 온보딩 (ZIP 로드)
         else if (!cancelled && !projectsRaw) {
           const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
@@ -1280,6 +1280,11 @@ const App: React.FC = () => {
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
   const [capturingForExport, setCapturingForExport] = useState(false);
   const [exportPhase, setExportPhase] = useState<"waiting" | "capturing" | "packing" | null>(null);
+  const [exportTarget, setExportTarget] = useState<"full" | "base" | null>(null);
+  const [importTarget, setImportTarget] = useState<"full" | "base" | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [hideBarForCapture, setHideBarForCapture] = useState(false);
   const exportPreviewRef = useRef<HTMLDivElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -1298,25 +1303,65 @@ const App: React.FC = () => {
       }
       setExportPhase("capturing");
       setHideBarForCapture(true);
-      const capture = () =>
-        import("html-to-image")
-          .then((mod) => mod.toBlob(rootEl, { pixelRatio: 1, cacheBust: true }))
-          .then((blob) => {
-            setExportPhase("packing");
-            const layoutPositions = (layoutStore[activeProjectId] ?? {}) as Record<string, Record<string, LayoutItem[]>>;
-            return exportProjectToZip(currentProject, layoutPositions, blob);
-          })
-          .then(() => showToast("내보내기 완료."))
-          .catch((err) => {
-            console.error(err);
-            showToast("미리보기 캡처 실패", "error");
-          })
-          .finally(() => {
-            setHideBarForCapture(false);
-            setExportPhase(null);
-            setCapturingForExport(false);
-            setIsPreviewMode(false);
-          });
+      const capture = async () => {
+        try {
+          const mod = await import("html-to-image");
+          let fullBlob: Blob | null = null;
+          let baseBlob: Blob | null = null;
+
+          if (exportTarget === "full") {
+            fullBlob = await mod.toBlob(rootEl, { pixelRatio: 1, cacheBust: true });
+          } else {
+            baseBlob = await mod.toBlob(rootEl, {
+              pixelRatio: 1,
+              cacheBust: true,
+              filter: (node: any) => {
+                if (node.classList?.contains('react-grid-layout') ||
+                  node.classList?.contains('header-widget-layer') ||
+                  (node.textContent && node.textContent.includes('Add Widget') && node.tagName === 'BUTTON')) {
+                  return false;
+                }
+                if (node.classList?.contains('widget-card')) {
+                  return false;
+                }
+                return true;
+              }
+            });
+          }
+
+          setExportPhase("packing");
+          const layoutPositions = (layoutStore[activeProjectId] ?? {}) as Record<string, Record<string, LayoutItem[]>>;
+
+          if (exportTarget === "full") {
+            // Download 1: Full Project
+            await exportProjectToZip(currentProject, layoutPositions, fullBlob);
+            showToast("Project exported successfully (Full)");
+          } else if (exportTarget === "base") {
+            // Download 2: Settings Only (Clean)
+            const cleanProject: Project = {
+              ...currentProject,
+              pages: currentProject.pages.map(pg => ({
+                ...pg,
+                widgets: [],
+                header: pg.header ? { ...pg.header, widgets: [] } : pg.header
+              }))
+            };
+            // For clean project, we pass empty layout positions
+            await exportProjectToZip(cleanProject, {}, baseBlob, "_Base_Layout");
+            showToast("Project layout exported successfully (Base)");
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("미리보기 캡처 실패", "error");
+        } finally {
+          setHideBarForCapture(false);
+          setExportPhase(null);
+          setCapturingForExport(false);
+          setIsPreviewMode(false);
+          setExportTarget(null);
+        }
+      };
+
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           capture();
@@ -1332,8 +1377,8 @@ const App: React.FC = () => {
   const { widgets = [], layout = DEFAULT_PAGE.layout, header: pageHeader } = _page ?? { widgets: [], layout: DEFAULT_PAGE.layout, header: DEFAULT_HEADER };
   const header = pageHeader || DEFAULT_HEADER;
 
-  const pageBgUrl = layout && (theme.mode === ThemeMode.LIGHT 
-    ? (layout.backgroundImageLight || layout.backgroundImage) 
+  const pageBgUrl = layout && (theme.mode === ThemeMode.LIGHT
+    ? (layout.backgroundImageLight || layout.backgroundImage)
     : (layout.backgroundImageDark || layout.backgroundImage));
   const showUnifiedBg = !!(layout?.backgroundGlobe || pageBgUrl);
 
@@ -1512,7 +1557,7 @@ const App: React.FC = () => {
     const timer = setTimeout(() => {
       saveProjectsState(projects, activeProjectId);
     }, 400); // 0.4초 후 저장 (저장 누락 방지를 위해 단축)
-    
+
     const handleBeforeUnload = () => {
       saveProjectsState(projects, activeProjectId);
       savePresets(presets);
@@ -1527,7 +1572,7 @@ const App: React.FC = () => {
 
   const handleApplyPreset = (preset: ThemePreset) => {
     const currentTheme = currentProject.theme;
-    
+
     // 1. Snapshot CURRENT colors before overwriting
     const currentSnapshot = {
       backgroundColor: currentTheme.backgroundColor,
@@ -1543,13 +1588,13 @@ const App: React.FC = () => {
     };
 
     // 2. Prepare updates from preset
-    const { 
-      mode, 
-      backgroundColor, 
-      surfaceColor, 
-      primaryColor, 
-      titleColor, 
-      textColor, 
+    const {
+      mode,
+      backgroundColor,
+      surfaceColor,
+      primaryColor,
+      titleColor,
+      textColor,
       chartPalette,
       cardShadow,
       borderColor
@@ -1619,10 +1664,10 @@ const App: React.FC = () => {
       [currentTheme.mode]: currentSnapshot,
     };
 
-    const updates: Partial<DashboardTheme> = { 
+    const updates: Partial<DashboardTheme> = {
       mode,
       name: mode === ThemeMode.DARK ? "Dark Mode" : mode === ThemeMode.LIGHT ? "Light Mode" : currentTheme.name,
-      modeStyles: newModeStyles 
+      modeStyles: newModeStyles
     };
 
     // If target mode already has a saved custom config, restore it
@@ -1717,7 +1762,7 @@ const App: React.FC = () => {
       const s = savedMap.get(w.id);
       const wVal = sane(roundSize(Number(w.colSpan)), 4);
       const hVal = sane(roundSize(Number(w.rowSpan)), 4);
-      
+
       if (s) {
         return { i: s.i, x: sane(Number(s.x), 0), y: sane(Number(s.y), 0), w: wVal, h: hVal };
       }
@@ -1830,8 +1875,9 @@ const App: React.FC = () => {
     setEditingProjectName("");
   };
 
-  const handleExportClick = () => {
+  const handleExportClick = (target: "full" | "base") => {
     setIsProjectDropdownOpen(false);
+    setExportTarget(target);
     setCapturingForExport(true);
     setIsPreviewMode(true);
   };
@@ -1858,24 +1904,67 @@ const App: React.FC = () => {
   const handleImportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (!file || !importTarget) return;
+
+    if (importTarget === 'full') {
+      setPendingImportFile(file);
+      setShowImportConfirm(true);
+      return;
+    }
+
+    await executeImport(file, 'base');
+  };
+
+  const executeImport = async (file: File, target: 'full' | 'base') => {
     setIsProjectDropdownOpen(false);
+    setIsImporting(true);
     try {
       const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
-      const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId });
-      const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
-      setProjects(nextProjects);
-      setLayoutStore((prev) => {
-        const next = { ...prev, [activeProjectId]: layoutPositions };
-        layoutStoreRef.current = next;
-        saveLayoutStore(next);
-        return next;
-      });
-      await saveProjectsState(nextProjects, activeProjectId);
-      showToast("불러오기 완료.");
+
+      if (target === "full") {
+        const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId });
+        const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
+        setProjects(nextProjects);
+        setLayoutStore((prev) => {
+          const next = { ...prev, [activeProjectId]: layoutPositions };
+          layoutStoreRef.current = next;
+          saveLayoutStore(next);
+          return next;
+        });
+        await saveProjectsState(nextProjects, activeProjectId);
+        showToast("Full Project loaded successfully.");
+      } else {
+        // Base Layout Only
+        const projectToApply = {
+          ...currentProject,
+          theme: { ...importedProject.theme },
+          pages: currentProject.pages.map((pg, idx) => {
+            const importedPage = importedProject.pages[idx] || importedProject.pages[0];
+            return {
+              ...pg,
+              layout: { ...importedPage.layout },
+              header: { ...importedPage.header, widgets: pg.header.widgets }
+            };
+          })
+        };
+        const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
+        setProjects(nextProjects);
+        setLayoutStore((prev) => {
+          const next = { ...prev, [activeProjectId]: layoutPositions };
+          layoutStoreRef.current = next;
+          saveLayoutStore(next);
+          return next;
+        });
+        await saveProjectsState(nextProjects, activeProjectId);
+        showToast("Base Layout applied successfully.");
+      }
     } catch (err) {
       console.error(err);
-      showToast(err instanceof Error ? err.message : "불러오기 실패", "error");
+      showToast(err instanceof Error ? err.message : "Import failed", "error");
+    } finally {
+      setIsImporting(false);
+      setImportTarget(null);
+      setPendingImportFile(null);
     }
   };
 
@@ -1955,17 +2044,17 @@ const App: React.FC = () => {
         });
         return cleaned;
       };
-      
+
       const cleanedData = newData.map(cleanRow);
       const firstRow = cleanedData[0];
       const excelKeys = Object.keys(firstRow);
-      
+
       const xAxisKey = (widget.config.xAxisKey || 'name').trim();
       let excelXKey = excelKeys.find(k => k.toLowerCase() === xAxisKey.toLowerCase()) || excelKeys[0];
 
       // Any column that is NOT the X-Axis and has numeric data (or just any other column) becomes a series
       const dataKeys = excelKeys.filter(k => k !== excelXKey);
-      
+
       // Build new series list from scratch based on Excel headers to be safe
       const newSeriesList = dataKeys.map((key, idx) => {
         // Try to preserve existing color if possible, else use palette
@@ -1985,13 +2074,13 @@ const App: React.FC = () => {
         return newRow;
       });
 
-      updateWidget(id, { 
-        data: normalizedData, 
-        config: { 
-          ...widget.config, 
+      updateWidget(id, {
+        data: normalizedData,
+        config: {
+          ...widget.config,
           xAxisKey: xAxisKey,
-          series: newSeriesList 
-        } 
+          series: newSeriesList
+        }
       });
 
       showToast(`Imported ${newSeriesList.length} data series: ${newSeriesList.map(s => s.label).join(', ')}`, "success");
@@ -2024,31 +2113,54 @@ const App: React.FC = () => {
       ref={appRootRef}
       className={`h-screen flex flex-col transition-colors duration-300 overflow-hidden bg-[var(--background)] text-[var(--text-main)] ${theme.mode !== ThemeMode.LIGHT ? "dark" : ""}`}
     >
+      <ConfirmModal
+        isOpen={showImportConfirm}
+        title="Replace Project?"
+        message="This will overwrite all widgets and pages in your current project. This action cannot be undone."
+        confirmText="Replace Everything"
+        cancelText="Cancel"
+        isDark={theme.mode === ThemeMode.DARK}
+        onConfirm={() => {
+          if (pendingImportFile) executeImport(pendingImportFile, 'full');
+          setShowImportConfirm(false);
+        }}
+        onCancel={() => {
+          setShowImportConfirm(false);
+          setPendingImportFile(null);
+          setImportTarget(null);
+        }}
+      />
+
       <DesignSystem theme={theme} />
 
-      {/* 내보내기 중 로딩 바 (캡처 순간에는 숨겨서 스크린샷에 안 나오게) */}
-      {capturingForExport && !hideBarForCapture && (
+      {/* 내보내기/불러오기 로딩 바 */}
+      {(capturingForExport || isImporting) && !hideBarForCapture && (
         <div className="fixed top-0 left-0 right-0 z-[100] flex flex-col bg-[var(--surface)] border-b border-[var(--border-base)] shadow-lg">
           <div className="flex items-center justify-between px-4 py-2">
             <span className="text-sm font-medium text-[var(--text-main)]">
-              {exportPhase === "waiting" && "내보내기 중… Preview 화면 렌더링 대기"}
-              {exportPhase === "capturing" && "내보내기 중… 미리보기 캡처"}
-              {exportPhase === "packing" && "내보내기 중… ZIP 파일 생성"}
-              {!exportPhase && "내보내기 중…"}
+              {isImporting ? "프로젝트 불러오기 중..." : (
+                <>
+                  {exportPhase === "waiting" && "내보내기 중… Preview 화면 렌더링 대기"}
+                  {exportPhase === "capturing" && "내보내기 중… 미리보기 캡처"}
+                  {exportPhase === "packing" && "내보내기 중… ZIP 파일 생성"}
+                  {!exportPhase && "내보내기 중…"}
+                </>
+              )}
             </span>
           </div>
           <div className="h-1 w-full bg-[var(--border-muted)] overflow-hidden">
             <div
-              className="h-full bg-[var(--primary-color)] transition-all duration-500 ease-out"
+              className={`h-full bg-[var(--primary-color)] transition-all duration-500 ease-out ${isImporting ? 'animate-pulse' : ''}`}
               style={{
-                width:
+                width: isImporting ? "100%" : (
                   exportPhase === "waiting"
                     ? "33%"
                     : exportPhase === "capturing"
                       ? "66%"
                       : exportPhase === "packing"
                         ? "95%"
-                        : "10%",
+                        : "10%"
+                ),
               }}
             />
           </div>
@@ -2064,14 +2176,14 @@ const App: React.FC = () => {
             // If the user toggled the mode in preview, make sure the project theme reflects it fully
             const currentMode = theme.mode;
             const currentName = theme.name;
-            updateProjectTheme({ 
-               mode: currentMode,
-               name: currentMode === ThemeMode.DARK ? "Dark Mode" : currentMode === ThemeMode.LIGHT ? "Light Mode" : currentName 
+            updateProjectTheme({
+              mode: currentMode,
+              name: currentMode === ThemeMode.DARK ? "Dark Mode" : currentMode === ThemeMode.LIGHT ? "Light Mode" : currentName
             });
           }}
           className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-premium group border-2 border-[var(--primary-color)]"
-          style={{ 
-            bottom: 'var(--spacing-xl)', 
+          style={{
+            bottom: 'var(--spacing-xl)',
             right: 'var(--spacing-xl)',
             width: 'var(--ai-fab-size)',
             height: 'var(--ai-fab-size)',
@@ -2083,18 +2195,18 @@ const App: React.FC = () => {
           title="Exit Preview"
         >
           <div className="absolute inset-0 bg-[var(--primary-color)]/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
-          <EyeOff 
-            className="w-7 h-7 text-[var(--primary-color)] drop-shadow-md" 
+          <EyeOff
+            className="w-7 h-7 text-[var(--primary-color)] drop-shadow-md"
           />
         </button>
       )}
 
       {/* Floating GNB Capsule (Triggered by AI FAB) */}
       {!isPreviewMode && (
-        <div 
+        <div
           className={`fixed z-[99] transition-all duration-500 flex items-center ${isFloatingGnbOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
-          style={{ 
-            bottom: 'var(--spacing-xl)', 
+          style={{
+            bottom: 'var(--spacing-xl)',
             right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
             height: 'var(--ai-fab-size)',
             backgroundColor: 'var(--gnb-bg)',
@@ -2107,10 +2219,10 @@ const App: React.FC = () => {
         >
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
-              <img 
-                src={theme.mode === ThemeMode.DARK ? logoW : logoB} 
-                className="h-7 w-auto object-contain" 
-                alt="STN Logo" 
+              <img
+                src={theme.mode === ThemeMode.DARK ? logoW : logoB}
+                className="h-7 w-auto object-contain"
+                alt="STN Logo"
               />
               <div className="flex items-center gap-4">
                 <div className="relative">
@@ -2179,7 +2291,7 @@ const App: React.FC = () => {
                                   </div>
                                 </button>
                               )}
-                              
+
                               <div className="hidden group-hover/proj:flex items-center gap-1 shrink-0">
                                 <button
                                   onClick={(e) => {
@@ -2208,29 +2320,63 @@ const App: React.FC = () => {
                             </div>
                           ))}
                         </div>
-                        <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-1">
-                          <button
-                            onClick={handleExportClick}
-                            disabled={capturingForExport}
-                            className="btn-base btn-ghost w-full px-4 py-2.5 rounded-sm flex items-center justify-center gap-2"
-                          >
-                            <Upload className="w-4 h-4 shrink-0" />
-                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                              Export
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => importInputRef.current?.click()}
-                            className="btn-base btn-ghost w-full px-4 py-2.5 rounded-sm flex items-center justify-center gap-2"
-                          >
-                            <Download className="w-4 h-4 shrink-0" />
-                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                              Import
-                            </span>
-                          </button>
+                        <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-2">
+                          <div className="flex flex-col gap-1.5 px-1 py-1">
+                            <span className="text-[9px] font-black text-muted uppercase tracking-[0.2em] pl-1">Project Sync</span>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <button
+                                onClick={() => handleExportClick('full')}
+                                disabled={capturingForExport}
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
+                              >
+                                <Upload className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
+                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  Full Export
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => handleExportClick('base')}
+                                disabled={capturingForExport}
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
+                              >
+                                <Palette className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
+                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  Base Export
+                                </span>
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                              <button
+                                onClick={() => {
+                                  setImportTarget('full');
+                                  importInputRef.current?.click();
+                                }}
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                              >
+                                <Download className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  Full Import
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setImportTarget('base');
+                                  importInputRef.current?.click();
+                                }}
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                              >
+                                <Palette className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  Base Import
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+
                           <button
                             onClick={addProject}
-                            className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm"
+                            className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
                           >
                             <Plus className="w-4 h-4" />{" "}
                             <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
@@ -2393,7 +2539,7 @@ const App: React.FC = () => {
               const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
               if (!hBg) return null;
               return (
-                <div 
+                <div
                   className="absolute inset-0 z-0 pointer-events-none"
                   style={{
                     backgroundImage: `url(${hBg})`,
@@ -2441,123 +2587,122 @@ const App: React.FC = () => {
             // @ts-ignore
             exportPreviewRef.current = el;
           }}
-          className={`flex-1 flex flex-col relative text-[var(--text-main)] transition-colors duration-300 ${
-            showUnifiedBg ? "bg-transparent" : "bg-[var(--background)]"
-          } ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
+          className={`flex-1 flex flex-col relative text-[var(--text-main)] transition-colors duration-300 ${showUnifiedBg ? "bg-transparent" : "bg-[var(--background)]"
+            } ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}
         >
-            {/* Top Header (if positioned TOP) */}
-            {header.show && header.position === HeaderPosition.TOP && (
-              <header
-                style={{
-                  height: `${header.height}px`,
-                  backgroundColor: (theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage)) ? 'transparent' : (header.backgroundColor === 'transparent' || (showUnifiedBg && header.backgroundColor === 'var(--background)') ? 'transparent' : header.backgroundColor),
-                  color: header.textColor,
-                  padding: `0 ${header.padding}px`,
-                  margin: `${header.margin}px`,
-                  position: 'relative',
-                  overflow: 'visible',
-                }}
-                className={`flex items-center transition-all shrink-0 z-30 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
-              >
-                {(() => {
-                  const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
-                  if (!hBg) return null;
-                  return (
-                    <img 
-                      src={hBg}
-                      className="absolute top-0 left-0 w-full h-auto z-0 pointer-events-none"
-                      alt="Header Background"
-                    />
-                  );
-                })()}
-                <HeaderWidgetLayer
-                  header={header}
-                  isEditMode={isEditMode}
-                  onUpdate={updateHeader}
-                  theme={theme}
-                  onModeSwitch={handleModeSwitch}
-                  isPreviewMode={isPreviewMode}
-                />
-                <div
-                  className={`flex items-center gap-8 w-full relative ${header.textAlignment === TextAlignment.CENTER
-                    ? "justify-between"
-                    : header.textAlignment === TextAlignment.RIGHT
-                      ? "flex-row-reverse"
-                      : "justify-between"
-                    }`}
-                >
-                  {/* Title & Toggle Section */}
-                  <div
-                    className={`flex items-center gap-6 ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
-                  >
-                    <div
-                      className={`flex items-center gap-3 ${header.textAlignment === TextAlignment.CENTER
-                        ? "absolute left-1/2 -translate-x-1/2 px-4"
-                        : ""
-                        } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
-                    >
-                      {/* Logo removed as requested to restore layout */}
-
-                      <h2 
-                        className="font-black tracking-tighter whitespace-nowrap"
-                        style={{ 
-                          fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : `${DEFAULT_HEADER.headerTitleSize}px`,
-                          color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor) 
-                        }}
-                      >
-                        {header.title}
-                      </h2>
-                    </div>
-                  </div>
-
-
-                </div>
-              </header>
-            )}
-
-            {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
-            <main
-              ref={mainAreaRef}
-              className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
-              style={layout?.glassmorphism ? (() => {
-                const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK ? 35 : 55)) / 100;
-                const alpha = Math.pow(p, 0.72);
-                const blurPx = Math.round(alpha * 12);
-                return {
-                  ['--glass-opacity' as string]: String(alpha),
-                  ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
-                  ['--glass-blur' as string]: `${blurPx}px`,
-                };
-              })() : undefined}
+          {/* Top Header (if positioned TOP) */}
+          {header.show && header.position === HeaderPosition.TOP && (
+            <header
+              style={{
+                height: `${header.height}px`,
+                backgroundColor: (theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage)) ? 'transparent' : (header.backgroundColor === 'transparent' || (showUnifiedBg && header.backgroundColor === 'var(--background)') ? 'transparent' : header.backgroundColor),
+                color: header.textColor,
+                padding: `0 ${header.padding}px`,
+                margin: `${header.margin}px`,
+                position: 'relative',
+                overflow: 'visible',
+              }}
+              className={`flex items-center transition-all shrink-0 z-30 ${header.backgroundColor !== "transparent" ? "shadow-sm" : ""} ${header.showDivider !== false && header.backgroundColor !== "transparent" ? "border-b border-[var(--border-base)]" : ""} ${layout?.backgroundGlobe ? "pointer-events-auto" : ""}`}
             >
-              <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
-                <DashboardGrid
-                  layout={layout}
-                  theme={theme}
-                  widgets={widgets}
-                  currentRglLayout={currentRglLayout}
-                  mainAreaHeight={mainAreaHeight}
-                  isEditMode={isEditMode}
-                  selectedWidgetId={selectedWidgetId}
-                  onLayoutChange={handleRglLayoutChange}
-                  responsiveLayouts={responsiveLayoutsForGrid}
-                  onResponsiveLayoutChange={handleResponsiveLayoutChange}
-                  onWidgetSelect={handleWidgetSelect}
-                  onUpdateWidget={updateWidget}
-                  onDeleteWidget={deleteWidget}
-                  onOpenExcel={(id) => setExcelWidgetId(id)}
-                  onOpenWidgetPicker={handleOpenWidgetPicker}
-                />
+              {(() => {
+                const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
+                if (!hBg) return null;
+                return (
+                  <img
+                    src={hBg}
+                    className="absolute top-0 left-0 w-full h-auto z-0 pointer-events-none"
+                    alt="Header Background"
+                  />
+                );
+              })()}
+              <HeaderWidgetLayer
+                header={header}
+                isEditMode={isEditMode}
+                onUpdate={updateHeader}
+                theme={theme}
+                onModeSwitch={handleModeSwitch}
+                isPreviewMode={isPreviewMode}
+              />
+              <div
+                className={`flex items-center gap-8 w-full relative ${header.textAlignment === TextAlignment.CENTER
+                  ? "justify-between"
+                  : header.textAlignment === TextAlignment.RIGHT
+                    ? "flex-row-reverse"
+                    : "justify-between"
+                  }`}
+              >
+                {/* Title & Toggle Section */}
+                <div
+                  className={`flex items-center gap-6 ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
+                >
+                  <div
+                    className={`flex items-center gap-3 ${header.textAlignment === TextAlignment.CENTER
+                      ? "absolute left-1/2 -translate-x-1/2 px-4"
+                      : ""
+                      } ${header.textAlignment === TextAlignment.RIGHT ? "flex-row-reverse" : ""}`}
+                  >
+                    {/* Logo removed as requested to restore layout */}
+
+                    <h2
+                      className="font-black tracking-tighter whitespace-nowrap"
+                      style={{
+                        fontSize: header.headerTitleSize ? `${header.headerTitleSize}px` : `${DEFAULT_HEADER.headerTitleSize}px`,
+                        color: theme.mode === ThemeMode.LIGHT ? (header.textColorLight || header.textColor) : (header.textColorDark || header.textColor)
+                      }}
+                    >
+                      {header.title}
+                    </h2>
+                  </div>
+                </div>
+
+
               </div>
-            </main>
-          </div>
+            </header>
+          )}
+
+          {/* Widgets Grid Container — 배경만 플리커, 위젯은 고정. backgroundGlobe 시 지구 배경 + 마우스 드래그 회전 */}
+          <main
+            ref={mainAreaRef}
+            className={`flex-1 relative custom-scrollbar transition-all ${layout.fitToScreen ? "h-full overflow-hidden" : "overflow-y-auto"} ${layout?.backgroundGlobe ? "globe-background-active pointer-events-none" : ""}`}
+            style={layout?.glassmorphism ? (() => {
+              const p = (layout.glassmorphismOpacity ?? (theme.mode === ThemeMode.DARK ? 35 : 55)) / 100;
+              const alpha = Math.pow(p, 0.72);
+              const blurPx = Math.round(alpha * 12);
+              return {
+                ['--glass-opacity' as string]: String(alpha),
+                ['--glass-bg' as string]: `rgba(var(--glass-bg-rgb), ${alpha})`,
+                ['--glass-blur' as string]: `${blurPx}px`,
+              };
+            })() : undefined}
+          >
+            <div className={`relative z-10 h-full min-h-0 ${layout?.backgroundGlobe ? "pointer-events-none" : ""}`}>
+              <DashboardGrid
+                layout={layout}
+                theme={theme}
+                widgets={widgets}
+                currentRglLayout={currentRglLayout}
+                mainAreaHeight={mainAreaHeight}
+                isEditMode={isEditMode}
+                selectedWidgetId={selectedWidgetId}
+                onLayoutChange={handleRglLayoutChange}
+                responsiveLayouts={responsiveLayoutsForGrid}
+                onResponsiveLayoutChange={handleResponsiveLayoutChange}
+                onWidgetSelect={handleWidgetSelect}
+                onUpdateWidget={updateWidget}
+                onDeleteWidget={deleteWidget}
+                onOpenExcel={(id) => setExcelWidgetId(id)}
+                onOpenWidgetPicker={handleOpenWidgetPicker}
+              />
+            </div>
+          </main>
+        </div>
 
         {/* 3. Floating Panel (Design or Settings) */}
         {showSidebar && (
-          <div 
+          <div
             className={`fixed z-50 transition-[transform,opacity,shadow] duration-200 ${isDraggingPanel ? 'transition-none pointer-events-none' : ''}`}
-            style={{ 
-              top: `${panelPos.y}px`, 
+            style={{
+              top: `${panelPos.y}px`,
               right: `${panelPos.x}px`,
               width: 'var(--panel-width)',
               cursor: isDraggingPanel ? 'move' : 'default'

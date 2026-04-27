@@ -14,11 +14,58 @@ interface WidgetPickerProps {
     isDark: boolean;
 }
 
-// Preview Assets Configuration
-const PREVIEW_ASSETS = {
-    CHART_BAR: {
+const PREVIEW_ASSETS: Record<string, { light: string; dark: string }> = {
+    [WidgetType.CHART_BAR]: {
         light: '/assets/widget/light/graph/bar_graph_light.png',
         dark: '/assets/widget/dark/graph/bar_graph_dark.png'
+    },
+    [WidgetType.CHART_BAR_HORIZONTAL]: {
+        light: '/assets/widget/light/graph/bar_horizontal_graph.png',
+        dark: '/assets/widget/dark/graph/bar_horizontal_graph.png'
+    },
+    [WidgetType.CHART_LINE]: {
+        light: '/assets/widget/light/graph/line_graph.png',
+        dark: '/assets/widget/dark/graph/line_graph.png'
+    },
+    [WidgetType.CHART_AREA]: {
+        light: '/assets/widget/light/graph/area_graph.png',
+        dark: '/assets/widget/dark/graph/area_graph.png'
+    },
+    [WidgetType.CHART_PIE]: {
+        light: '/assets/widget/light/graph/pie_chart.png',
+        dark: '/assets/widget/dark/graph/pie_chart.png'
+    },
+    [WidgetType.CHART_COMPOSED]: {
+        light: '/assets/widget/light/graph/composed_chart.png',
+        dark: '/assets/widget/dark/graph/composed_chart.png'
+    },
+    [WidgetType.CHART_SANKEY]: {
+        light: '/assets/widget/light/graph/sankey_diagram.png',
+        dark: '/assets/widget/dark/graph/sankey_diagram.png'
+    },
+    [WidgetType.SUMMARY]: {
+        light: '/assets/widget/light/premium/stat_summary.png',
+        dark: '/assets/widget/dark/premium/stat_summary.png'
+    },
+    [WidgetType.SUMMARY_CHART]: {
+        light: '/assets/widget/light/premium/trend_summary.png',
+        dark: '/assets/widget/dark/premium/trend_summary.png'
+    },
+    [WidgetType.DASH_FAILURE_STATUS]: {
+        light: '/assets/widget/light/premium/failure_status_kpi.png',
+        dark: '/assets/widget/dark/premium/failure_status_kpi.png'
+    },
+    [WidgetType.DASH_RESOURCE_USAGE]: {
+        light: '/assets/widget/light/premium/resource_usage.png',
+        dark: '/assets/widget/dark/premium/resource_usage.png'
+    },
+    [WidgetType.DASH_SECURITY_STATUS]: {
+        light: '/assets/widget/light/premium/security_status.png',
+        dark: '/assets/widget/dark/premium/security_status.png'
+    },
+    [WidgetType.CHART_RADAR]: {
+        light: '/assets/widget/light/graph/radar_chart.png',
+        dark: '/assets/widget/light/graph/radar_chart.png'
     }
 };
 
@@ -29,19 +76,14 @@ const CATEGORIES = [
         description: '데이터 분석용 기본 차트',
         icon: BarChart3,
         items: [
-            { 
-                id: WidgetType.CHART_BAR, 
-                icon: BarChart3, 
-                label: '세로 막대',
-                preview: PREVIEW_ASSETS.CHART_BAR
-            },
-            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대' },
-            { id: WidgetType.CHART_LINE, icon: LineChart, label: '선형 차트' },
-            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트' },
-            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트' },
-            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트' },
-            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트' },
-            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램' }
+            { id: WidgetType.CHART_BAR, icon: BarChart3, label: '세로 막대', preview: PREVIEW_ASSETS[WidgetType.CHART_BAR] },
+            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대', preview: PREVIEW_ASSETS[WidgetType.CHART_BAR_HORIZONTAL] },
+            { id: WidgetType.CHART_LINE, icon: LineChart, label: '선형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_LINE] },
+            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_AREA] },
+            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_PIE] },
+            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_RADAR] },
+            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_COMPOSED] },
+            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램', preview: PREVIEW_ASSETS[WidgetType.CHART_SANKEY] }
         ]
     },
     {
@@ -50,12 +92,12 @@ const CATEGORIES = [
         description: '고용량 데이터 최적화 템플릿',
         icon: LayoutGrid,
         items: [
-            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치 (STAT)' },
-            { id: WidgetType.EARNING_TREND, icon: Activity, label: '트렌드 요약' },
-            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)' },
+            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치 (STAT)', preview: PREVIEW_ASSETS[WidgetType.SUMMARY] },
+            { id: WidgetType.SUMMARY_CHART, icon: Activity, label: '트렌드 요약', preview: PREVIEW_ASSETS[WidgetType.SUMMARY_CHART] },
+            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)', preview: PREVIEW_ASSETS[WidgetType.DASH_FAILURE_STATUS] },
             { id: WidgetType.DASH_NET_TRAFFIC, icon: Activity, label: '네트워크 트래픽' },
-            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황' },
-            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률' },
+            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황', preview: PREVIEW_ASSETS[WidgetType.DASH_SECURITY_STATUS] },
+            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률', preview: PREVIEW_ASSETS[WidgetType.DASH_RESOURCE_USAGE] },
             { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황' },
             { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태' },
             { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
@@ -90,14 +132,14 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
             {/* Glass Backdrop */}
-            <div 
+            <div
                 className="absolute inset-0 bg-black/40 backdrop-blur-[10px] animate-in fade-in duration-500"
                 onClick={onClose}
             />
 
             {/* Modal Body: Slim-Sharp & Bezelless Preview V2.0 */}
-            <div 
-                className="relative w-full max-w-3xl h-[660px] overflow-hidden rounded-[var(--radius-modal,24px)] border animate-in zoom-in-95 duration-500 flex flex-col backdrop-blur-[40px]"
+            <div
+                className="relative w-full max-w-[810px] h-[660px] overflow-hidden rounded-[var(--radius-modal,24px)] border animate-in zoom-in-95 duration-500 flex flex-col backdrop-blur-[40px]"
                 style={{
                     backgroundColor: 'var(--modal-bg)',
                     borderColor: 'var(--modal-border)',
@@ -107,7 +149,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
             >
                 {/* Aurora Neon Top Highlight Line */}
                 <div className="absolute top-0 left-0 right-0 h-[1.2px] bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-60 z-20 shadow-[0_0_10px_var(--primary-color)]" />
-                
+
                 {/* Header Section: Tightened */}
                 <div className="px-6 py-4 border-b flex items-center justify-between shrink-0 z-10" style={{ borderColor: 'var(--modal-border)' }}>
                     <div className="flex items-center gap-3.5">
@@ -135,18 +177,18 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`relative flex items-center p-2.5 px-4 rounded-xl transition-all duration-300 group ${activeCategory === cat.id 
-                                    ? 'bg-[var(--primary-color)]/10 border border-[var(--primary-color)]/20 shadow-sm' 
+                                className={`relative flex items-center p-2.5 px-4 rounded-xl transition-all duration-300 group ${activeCategory === cat.id
+                                    ? 'bg-[var(--primary-color)]/10 border border-[var(--primary-color)]/20 shadow-sm'
                                     : 'hover:bg-black/5 dark:hover:bg-white/[0.03] border border-transparent opacity-40 hover:opacity-80'}`}
                             >
                                 {activeCategory === cat.id && (
                                     <div className="absolute left-0 w-1 h-5 bg-[var(--primary-color)] rounded-full shadow-[0_0_12px_var(--primary-color)]" />
                                 )}
-                                
+
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${activeCategory === cat.id ? 'bg-[var(--primary-color)] shadow-inner' : 'bg-black/5 dark:bg-white/5'}`}>
                                     <cat.icon className={`w-4 h-4 ${activeCategory === cat.id ? 'text-white' : 'opacity-40'}`} />
                                 </div>
-                                
+
                                 <div className="ml-4 flex flex-col items-start leading-tight">
                                     <span className={`font-bold uppercase tracking-tight ${activeCategory === cat.id ? 'text-[13.5px]' : 'text-[12.5px]'}`}>{cat.label}</span>
                                     <span className={`text-[9px] font-medium tracking-widest mt-1 ${activeCategory === cat.id ? 'text-[var(--primary-color)]' : 'opacity-15'}`}>
@@ -181,8 +223,8 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                     {(item as any).preview ? (
                                         /* Full Bleed Image */
                                         <div className="absolute inset-0">
-                                            <img 
-                                                src={isDark ? (item as any).preview.dark : (item as any).preview.light} 
+                                            <img
+                                                src={isDark ? (item as any).preview.dark : (item as any).preview.light}
                                                 alt={item.label}
                                                 className="w-full h-full object-cover filter transition-all duration-700 group-hover:scale-105"
                                             />
@@ -196,7 +238,7 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
 
                                     {/* Text Overlay: Ultra-Clear Translucent Glass Blur */}
                                     <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border border-white/20 dark:border-white/5"
-                                        style={{ 
+                                        style={{
                                             background: isDark ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)',
                                             backdropFilter: 'blur(2px) saturate(160%)',
                                             WebkitBackdropFilter: 'blur(2px) saturate(160%)',
@@ -220,8 +262,8 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                     <p className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-15">
                         AURORA CORE V2.0
                     </p>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-25 hover:opacity-100 transition-all underline underline-offset-4 decoration-current/20 hover:decoration-current"
                     >
                         TERMINAL EXIT
