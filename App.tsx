@@ -63,6 +63,7 @@ import GlobeBackground from "./components/GlobeBackground";
 import FloatingAssistantButton from "./components/FloatingAssistantButton";
 import { dbSave, dbLoad } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
+import { supabase, getProfile, getSession, Profile } from './lib/supabase';
 // Assets - Use safer path references to avoid Vite module transformation issues with spaces/special chars
 const logoB = new URL("./assets/logo-b-1 1.png", import.meta.url).href;
 const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
@@ -264,6 +265,9 @@ const DashboardGrid: React.FC<{
   onOpenWidgetPicker: () => void;
   responsiveLayouts?: Record<string, LayoutItem[]>;
   onResponsiveLayoutChange?: (layouts: Record<string, LayoutItem[]>) => void;
+  isPreviewMode: boolean;
+  onTogglePreview: () => void;
+  userRole?: string;
 }> = (props) => {
   const {
     layout,
@@ -281,6 +285,9 @@ const DashboardGrid: React.FC<{
     onOpenWidgetPicker,
     responsiveLayouts,
     onResponsiveLayoutChange,
+    isPreviewMode,
+    onTogglePreview,
+    userRole,
   } = props;
 
   const [resizingId, setResizingId] = useState<string | null>(null);
@@ -552,6 +559,9 @@ const DashboardGrid: React.FC<{
                         selected={selectedWidgetId === widget.id}
                         isResizing={isThisResizing}
                         isDragging={draggingId === widget.id}
+                        isPreviewMode={isPreviewMode}
+                        onTogglePreview={onTogglePreview}
+                        userRole={userRole}
                       />
                       {isEditMode && isThisResizing && liveSize && (
                         <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
@@ -635,6 +645,9 @@ const DashboardGrid: React.FC<{
                           selected={selectedWidgetId === widget.id}
                           isResizing={isThisResizing}
                           isDragging={draggingId === widget.id}
+                          isPreviewMode={isPreviewMode}
+                          onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
+                          userRole={profile?.role}
                         />
                         {isEditMode && isThisResizing && liveSize && (
                           <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
@@ -1112,6 +1125,74 @@ const App: React.FC = () => {
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
   const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
+
+  // ── Auth & Profile State ──
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  // ── 1. Supabase Auth Listener ──
+  useEffect(() => {
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const p = await getProfile(currentUser.id);
+        setProfile(p);
+      } else {
+        setProfile(null);
+      }
+    });
+  }, []);
+
+  // ── 2. Real-time Preview Simulation (1s updates) ──
+  useEffect(() => {
+    if (!isPreviewMode) return;
+
+    const interval = setInterval(() => {
+      setProjects((prev) => {
+        return prev.map((p) => {
+          if (p.id !== activeProjectId) return p;
+          const updatedPages = p.pages.map((pg) => {
+            if (pg.id !== p.activePageId) return pg;
+            const updatedWidgets = pg.widgets.map((w) => {
+              // Generate random data based on widget type
+              const newData = (w.data || []).map((d: any) => {
+                const nextD = { ...d };
+                if (w.config?.series) {
+                  w.config.series.forEach((s) => {
+                    const val = Number(nextD[s.key]);
+                    if (!isNaN(val)) {
+                      // Randomly vary by +/- 5%
+                      const variation = (Math.random() - 0.5) * 0.1;
+                      nextD[s.key] = Math.max(0, Math.floor(val * (1 + variation)));
+                    }
+                  });
+                }
+                return nextD;
+              });
+
+              // Special case for KPI/Summary main values
+              let newMainValue = w.mainValue;
+              if (w.mainValue) {
+                const mainValNum = parseFloat(w.mainValue.replace(/[^0-9.-]/g, ''));
+                if (!isNaN(mainValNum)) {
+                  const variation = (Math.random() - 0.5) * 2;
+                  const unit = w.mainValue.replace(/[0-9.-]/g, '');
+                  newMainValue = (mainValNum + variation).toFixed(1) + unit;
+                }
+              }
+
+              return { ...w, data: newData, mainValue: newMainValue };
+            });
+            return { ...pg, widgets: updatedWidgets };
+          });
+          return { ...p, pages: updatedPages };
+        });
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isPreviewMode, activeProjectId]);
 
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
@@ -2692,6 +2773,9 @@ const App: React.FC = () => {
                 onDeleteWidget={deleteWidget}
                 onOpenExcel={(id) => setExcelWidgetId(id)}
                 onOpenWidgetPicker={handleOpenWidgetPicker}
+                isPreviewMode={isPreviewMode}
+                onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
+                userRole={profile?.role}
               />
             </div>
           </main>

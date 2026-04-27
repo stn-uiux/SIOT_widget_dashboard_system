@@ -958,6 +958,9 @@ interface WidgetCardProps {
   isResizing?: boolean;
   /** Whether the widget is currently being dragged */
   isDragging?: boolean;
+  isPreviewMode?: boolean;
+  onTogglePreview?: () => void;
+  userRole?: string;
 }
 
 const WidgetCard: React.FC<WidgetCardProps> = ({
@@ -971,7 +974,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   glassStyle,
   selected,
   isResizing,
-  isDragging
+  isDragging,
+  isPreviewMode,
+  onTogglePreview,
+  userRole
 }) => {
   const isDark = theme.mode === ThemeMode.DARK;
 
@@ -2898,29 +2904,55 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 )}
               </div>
 
+              {/* Preview Toggle Button (Shown in View mode only) */}
+              {!isEditMode && onTogglePreview && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePreview();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-widest ${
+                    isPreviewMode
+                      ? 'bg-[var(--primary-color)] text-white shadow-[0_0_12px_rgba(var(--primary-rgb),0.4)] scale-105'
+                      : 'bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] border border-[var(--border-base)]'
+                  }`}
+                >
+                  <Activity className={`w-3 h-3 ${isPreviewMode ? 'animate-pulse' : ''}`} />
+                  {isPreviewMode ? 'Live' : 'Preview'}
+                </button>
+              )}
+
               {isEditMode && (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => onEdit(widget.id)}
-                    className="widget-action-btn"
-                    title="Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onOpenExcel(widget.id)}
-                    className="widget-action-btn"
-                    title="Open Data"
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(widget.id)}
-                    className="widget-action-btn widget-action-btn-danger"
-                    title="Delete"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  {userRole === 'admin' ? (
+                    <>
+                      <button
+                        onClick={() => onEdit(widget.id)}
+                        className="widget-action-btn"
+                        title="Settings"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onOpenExcel(widget.id)}
+                        className="widget-action-btn"
+                        title="Open Data"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(widget.id)}
+                        className="widget-action-btn widget-action-btn-danger"
+                        title="Delete"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="px-2 py-1 rounded bg-[var(--surface-muted)] border border-[var(--border-base)]">
+                      <span className="text-[9px] font-black uppercase tracking-tighter opacity-40">View Only</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
