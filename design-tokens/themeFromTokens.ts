@@ -46,6 +46,15 @@ export function getSemanticColorForMode(mode: ThemeMode, type: 'bg' | 'surface' 
   return getValue(semantic.text_main);
 }
 
+/** ThemeMode에 따라 적절한 시맨틱 컬러를 반환하는 유틸리티 */
+export function getSmartColorForMode(
+  hex: string,
+  mode: ThemeMode,
+  type: "bg" | "surface" | "text",
+): string {
+  return getSemanticColorForMode(mode, type === "bg" ? "bg" : type === "surface" ? "surface" : "text");
+}
+
 /**
  * design-tokens.json → DashboardTheme 변환
  * (앱 전용 필드: chartLibrary, mode, showPageTabs 등은 인자/기본값으로 채움)
