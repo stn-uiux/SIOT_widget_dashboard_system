@@ -1465,7 +1465,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
               </p>
             </div>
             <div className="absolute bottom-[-24px] left-[-24px] right-[-24px] h-[55%] pointer-events-none">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <AreaChart data={currentData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id={`grad-${widget.id}-${isSec ? 'sec' : 'main'}`} x1="0" y1="0" x2="0" y2="1">
@@ -1690,7 +1690,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
             </div>
             <div className="flex-1 min-h-[80px] flex flex-col overflow-hidden">
               {chartData.length > 0 && (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <LineChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                     <defs>
                       <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
@@ -1804,7 +1804,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <BarChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
@@ -1876,7 +1876,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <HorizontalBarChartYAxisMeasure currentData={currentData} xAxisKey={xAxisKey} contentSize={contentSize}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <BarChart layout="vertical" data={currentData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     {currentConfig.useGradient && (
                       <defs>
@@ -1941,7 +1941,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <LineChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
@@ -2017,7 +2017,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <AreaChart {...commonProps}>
                     {currentConfig.useGradient ? (
                       <defs>
@@ -2086,7 +2086,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       case WidgetType.CHART_PIE:
         return (
           <div className={`h-full`}>
-            <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
               <PieChart>
                 <Pie
                   data={currentData}
@@ -2141,7 +2141,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       case WidgetType.CHART_RADAR:
         return (
           <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={currentData}>
                 <PolarAngleAxis dataKey={xAxisKey} tick={{ fill: labelColor, fontSize: contentSize }} />
                 <PolarRadiusAxis stroke={strokeColor} tick={{ fill: labelColor, fontSize: contentSize }} />
@@ -2207,7 +2207,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
         return (
           <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <Sankey
                 data={sankeyData}
                 node={({ x, y, width, height, payload }) => (
@@ -2264,7 +2264,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" key={chartKey}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <ComposedChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
@@ -2546,7 +2546,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       case WidgetType.DASH_FAILURE_STATS:
         return (
           <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <AreaChart data={currentData} margin={commonProps.margin}>
                 <defs>
                   {localSeries.map((s, idx) => (
@@ -2616,7 +2616,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       case WidgetType.DASH_TRAFFIC_STATUS:
         return (
           <div className="h-full relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <TrafficStatusChart
                 currentData={currentData}
                 valueKey={currentConfig.series[0]?.key || 'value'}
@@ -2643,7 +2643,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
               <div className="h-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart data={currentData} margin={{ ...commonProps.margin, left: -24, right: -10 }}>
                     <defs>
                       {localSeries.map((s, idx) => (

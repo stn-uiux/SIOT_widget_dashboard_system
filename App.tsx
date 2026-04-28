@@ -23,7 +23,14 @@ import {
   Upload,
   LogOut,
 } from "lucide-react";
-import { getSemanticColorForMode } from "./design-tokens/themeFromTokens";
+import { 
+  getSemanticColorForMode, 
+  getSmartColorForMode,
+  tokensToDashboardTheme, 
+  getHeaderDefaultsFromTokens, 
+  getDefaultThemeFromTokens, 
+  getLightThemeFromTokens 
+} from "./design-tokens/themeFromTokens";
 import designTokens from "./design-tokens.json";
 import {
   INITIAL_PROJECT_LIST,
@@ -57,13 +64,29 @@ import DesignSidebar from "./components/DesignSidebar";
 import Sidebar from "./components/Sidebar";
 import ExcelModal from "./components/ExcelModal";
 import ConfirmModal from "./components/ConfirmModal";
+import { useAuth } from "./hooks/useAuth";
 import DesignDocs from "./components/DesignDocs";
 import DesignSystem from "./DesignSystem";
 import WidgetPicker from "./components/WidgetPicker";
 import ModeToggle from "./components/ModeToggle";
 import GlobeBackground from "./components/GlobeBackground";
 import FloatingAssistantButton from "./components/FloatingAssistantButton";
-import { dbSave, dbLoad } from "./lib/storage";
+import { 
+  dbSave, 
+  dbLoad, 
+  PROJECTS_STORAGE_KEY, 
+  LAYOUT_STORAGE_KEY, 
+  PRESETS_STORAGE_KEY,
+  getInitialProjectsState,
+  saveProjectsState,
+  loadProjectsStateSync,
+  migrateProjects,
+  loadPresetsSync,
+  savePresets,
+  saveLayoutStore,
+  loadLayoutStoreSync,
+  ProjectsState
+} from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
 import { supabase, getProfile, getSession, Profile } from './lib/supabase';
 import { User as AuthUser } from "@supabase/supabase-js";
@@ -77,152 +100,9 @@ const proj2Zip = new URL("./assets/new_project_2_2026-04-08.zip", import.meta.ur
 const proj3Zip = new URL("./assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
 const proj4Zip = new URL("./assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
 
-const LAYOUT_STORAGE_KEY = "siot_dashboard_rgl_layouts";
-const PROJECTS_STORAGE_KEY = "siot_dashboard_projects";
+import { useDashboard } from "./hooks/useDashboard";
 
-type LayoutStore = Record<string, Record<string, LayoutItem[] | Record<string, LayoutItem[]>>>;
 
-/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 빠르게 불러옴 (legacy 호환) */
-function loadLayoutStoreSync(): LayoutStore {
-  try {
-    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as LayoutStore;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-/** 비동기 저장 — IndexedDB + localStorage 백업 (새로고침 시 초기 로드에서 바로 복원) */
-async function saveLayoutStore(store: LayoutStore) {
-  await dbSave(LAYOUT_STORAGE_KEY, store);
-  try {
-    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(store));
-  } catch {
-    /* quota or size ok */
-  }
-}
-
-type ProjectsState = { projects: Project[]; activeProjectId: string };
-
-/** 저장된 프로젝트 데이터를 현재 스키마에 맞춰 보정하고 테마 설정을 검증 (Self-Healing 포함) */
-function migrateProjects(projects: Project[]): Project[] {
-  if (!Array.isArray(projects)) return [];
-
-  return projects.map((p) => {
-    // 1. 테마 보정 및 자가 치유
-    const isDefaultProject = p.id && String(p.id).startsWith('project_');
-    let theme = { ...DEFAULT_THEME, ...(p.theme || {}) };
-
-    // 테마 자가 교정: 배경색이 밝거나 모드가 라이트인 경우 강제로 다크 모드 동기화
-    const isLightBackground = theme.backgroundColor && (theme.backgroundColor.toLowerCase() === '#f8fafc' || theme.backgroundColor.toLowerCase() === '#ffffff');
-    if (theme.mode === ThemeMode.LIGHT || isLightBackground) {
-      console.log(`[STN] Theme mismatch detected for project ${p.id}. Forcing Dark Mode.`);
-      theme = {
-        ...theme,
-        name: "Dark Mode",
-        mode: ThemeMode.DARK,
-        backgroundColor: '#020617',
-        surfaceColor: '#0f172a',
-        titleColor: '#f8fafc',
-        textColor: '#94a3b8'
-      };
-    }
-
-    // 2. 페이지 및 헤더 마이그레이션
-    const mappedPages = (p.pages || []).map((pg) => {
-      const mergedHeader = { ...DEFAULT_HEADER, ...(pg.header || {}) };
-      // 배경색이 레거시 변수 형태면 투명으로 교정
-      if (mergedHeader.backgroundColor === 'var(--background)') {
-        mergedHeader.backgroundColor = 'transparent';
-      }
-      return {
-        ...pg,
-        layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-        header: mergedHeader,
-      };
-    });
-
-    const pages = mappedPages.length > 0
-      ? mappedPages
-      : [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
-
-    const activePageId = p.activePageId && pages.some((pg) => pg.id === p.activePageId)
-      ? p.activePageId
-      : pages[0].id;
-
-    return {
-      ...p,
-      theme,
-      pages,
-      activePageId,
-    };
-  });
-}
-
-/** 동기 로드 — 앱 최초 렌더 시 localStorage에서 불러옴 */
-function loadProjectsStateSync(initial: Project[]): ProjectsState {
-  try {
-    const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
-    if (!raw) return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
-    const parsed = JSON.parse(raw) as ProjectsState;
-
-    const projects = migrateProjects(parsed.projects || initial);
-    const activeProjectId = (parsed.activeProjectId && projects.some(p => p.id === parsed.activeProjectId))
-      ? parsed.activeProjectId
-      : (projects[0]?.id ?? "project_1");
-
-    return { projects, activeProjectId };
-  } catch {
-    return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
-  }
-}
-
-/** 비동기 저장 — IndexedDB (용량 제한 없음) */
-async function saveProjectsState(projects: Project[], activeProjectId: string): Promise<boolean> {
-  const ok = await dbSave(PROJECTS_STORAGE_KEY, { projects, activeProjectId });
-  if (!ok) console.error("[STN] Failed to save project state to IndexedDB");
-  // also try localStorage as fallback (may fail for large data, that's ok)
-  try { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify({ projects, activeProjectId })); } catch { /* quota ok */ }
-  return ok;
-}
-
-let _cachedProjectsState: ProjectsState | null = null;
-function getInitialProjectsState(): ProjectsState {
-  // 항상 최신 localStorage에서 읽음 (HMR 시 캐시로 인한 오래된 값 사용 방지)
-  if (!_cachedProjectsState) {
-    _cachedProjectsState = loadProjectsStateSync(INITIAL_PROJECT_LIST);
-  }
-  return _cachedProjectsState;
-}
-
-// HMR(핫 리로드) 또는 재시작 시 캐시 초기화 (항상 최신 localStorage 반영)
-(import.meta as any).hot?.on?.('vite:beforeUpdate', () => {
-  _cachedProjectsState = null;
-});
-
-const PRESETS_STORAGE_KEY = "siot_theme_presets";
-
-function loadPresetsSync(fallback: ThemePreset[]): ThemePreset[] {
-  try {
-    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return fallback;
-    return parsed;
-  } catch {
-    return fallback;
-  }
-}
-
-function savePresets(presets: ThemePreset[]) {
-  try {
-    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
-  } catch (e) {
-    console.error("Failed to save presets", e);
-  }
-}
 
 /** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
 const computeInitialLayout = (
@@ -834,13 +714,7 @@ const IsometricLogo: React.FC<{
   );
 };
 
-const getSmartColorForMode = (
-  hex: string,
-  mode: ThemeMode,
-  type: "bg" | "surface" | "text",
-): string => {
-  return getSemanticColorForMode(mode, type === "bg" ? "bg" : type === "surface" ? "surface" : "text");
-};
+
 
 /** Header-specific Widget Components */
 const HeaderClock = () => {
@@ -1140,39 +1014,58 @@ const LoadingScreen = ({ message }: { message: string }) => (
 );
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const { user, profile, logout } = useAuth();
+  const {
+    projects,
+    setProjects,
+    activeProjectId,
+    setActiveProjectId,
+    currentProject,
+    currentPage,
+    theme,
+    widgets,
+    layout,
+    layoutStore,
+    setLayoutStore,
+    isHydrated,
+    presets,
+    setPresets,
+    currentRglLayout,
+    responsiveLayoutsForGrid,
+    applyLayoutUpdate,
+    updateCurrentPage,
+    updateProjectTheme,
+    handlePageChange,
+    handleRglLayoutChange,
+    handleResponsiveLayoutChange,
+    addWidgetWithType,
+    updateWidget,
+    deleteWidget: performDeleteWidget,
+    updateHeader,
+    handleApplyPreset,
+    handleSavePreset,
+    handleThemeChange,
+    handleModeSwitch,
+    handleUpdateLayout,
+    addPage,
+    addProject,
+    deleteProject,
+    renameProject,
+    save
+  } = useDashboard();
+
+  const isAdmin = profile?.role === 'admin' || user?.email?.toLowerCase().startsWith('admin');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // User role logic: profile.role is the source of truth, but fallback to email prefix for development/demo convenience
   const userRole = profile?.role || (user?.email?.startsWith('admin') ? 'admin' : 'user');
 
-  // Auth & Profile Listener
+  // ── RBAC: Force Preview Mode for non-admin users ──
   useEffect(() => {
-    // Initial Session Check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        getProfile(currentUser.id).then(setProfile);
-      }
-    });
-
-    // Listen for Auth Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        const p = await getProfile(currentUser.id);
-        setProfile(p);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user && !isAdmin) {
+      setIsPreviewMode(true);
+    }
+  }, [user, isAdmin]);
 
   // 1. Immediate Reset Check (Pre-render)
   if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
@@ -1199,25 +1092,16 @@ const App: React.FC = () => {
   }
 
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
-  const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
-  const [activeProjectId, setActiveProjectId] = useState<string>(() => getInitialProjectsState().activeProjectId);
-
-  const currentProject = projects.find((p) => p.id === activeProjectId) || projects[0];
-  const theme = currentProject?.theme || DEFAULT_THEME;
-  const currentPage = currentProject?.pages?.find((p) => p.id === currentProject?.activePageId) || currentProject?.pages?.[0];
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDesignSidebarOpen, setIsDesignSidebarOpen] = useState(false);
   const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
-  const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
 
   // ── 2. Real-time Preview Simulation (1s updates) ──
   useEffect(() => {
     if (!isPreviewMode) return;
-
     const interval = setInterval(() => {
       setProjects((prev) => {
         return prev.map((p) => {
@@ -1225,14 +1109,12 @@ const App: React.FC = () => {
           const updatedPages = p.pages.map((pg) => {
             if (pg.id !== p.activePageId) return pg;
             const updatedWidgets = pg.widgets.map((w) => {
-              // Generate random data based on widget type
               const newData = (w.data || []).map((d: any) => {
                 const nextD = { ...d };
                 if (w.config?.series) {
                   w.config.series.forEach((s) => {
                     const val = Number(nextD[s.key]);
                     if (!isNaN(val)) {
-                      // Randomly vary by +/- 5%
                       const variation = (Math.random() - 0.5) * 0.1;
                       nextD[s.key] = Math.max(0, Math.floor(val * (1 + variation)));
                     }
@@ -1240,8 +1122,6 @@ const App: React.FC = () => {
                 }
                 return nextD;
               });
-
-              // Special case for KPI/Summary main values
               let newMainValue = w.mainValue;
               if (w.mainValue) {
                 const mainValNum = parseFloat(w.mainValue.replace(/[^0-9.-]/g, ''));
@@ -1251,7 +1131,6 @@ const App: React.FC = () => {
                   newMainValue = (mainValNum + variation).toFixed(1) + unit;
                 }
               }
-
               return { ...w, data: newData, mainValue: newMainValue };
             });
             return { ...pg, widgets: updatedWidgets };
@@ -1260,97 +1139,11 @@ const App: React.FC = () => {
         });
       });
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [isPreviewMode, activeProjectId]);
+  }, [isPreviewMode, activeProjectId, setProjects]);
 
   // Excel Modal State
   const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
-
-  // 레이아웃: projectId → pageId → LayoutItem[] (재시작 후에도 유지되도록 저장)
-  const [layoutStore, setLayoutStore] = useState<LayoutStore>(loadLayoutStoreSync);
-  const rglLayouts = useMemo(
-    () => layoutStore[activeProjectId] ?? {},
-    [layoutStore, activeProjectId],
-  );
-  const layoutStoreRef = useRef<LayoutStore>(layoutStore);
-  layoutStoreRef.current = layoutStore;
-  const projectsRef = useRef<Project[]>(projects);
-  projectsRef.current = projects;
-
-  const applyLayoutUpdate = useCallback(
-    (updater: (prev: Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => Record<string, LayoutItem[] | Record<string, LayoutItem[]>>) => {
-      setLayoutStore((prev) => {
-        const byProject = prev[activeProjectId] ?? {};
-        const nextByProject = updater(byProject);
-        const next = { ...prev, [activeProjectId]: nextByProject };
-        layoutStoreRef.current = next;
-        saveLayoutStore(next);
-        return next;
-      });
-    },
-    [activeProjectId],
-  );
-
-  // Consolidated Hydration & Onboarding
-  useEffect(() => {
-    let cancelled = false;
-    const hydrateAndOnboard = async () => {
-      try {
-        // 1. IndexedDB에서 최근 프로젝트 로드
-        const saved = await dbLoad<ProjectsState>(PROJECTS_STORAGE_KEY);
-        const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
-
-        if (!cancelled && saved?.projects?.length > 0) {
-          const migrated = migrateProjects(saved.projects);
-          setProjects(migrated);
-          if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
-        }
-        // 2. 데이터가 아예 없으면 초기 온보딩 (ZIP 로드)
-        else if (!cancelled && !projectsRaw) {
-          const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
-          const loadedProjects: Project[] = [];
-          const loadedLayouts: LayoutStore = {};
-
-          for (const url of zipUrls) {
-            try {
-              const res = await fetch(url);
-              if (!res.ok) continue;
-              const blob = await res.blob();
-              const file = new File([blob], "initial_project.zip", { type: "application/zip" });
-              const { project, layoutPositions } = await importProjectFromZip(file);
-              loadedProjects.push(project);
-              loadedLayouts[project.id] = layoutPositions;
-            } catch (e) {
-              console.error("[STN] Onboarding failed:", url, e);
-            }
-          }
-
-          if (!cancelled && loadedProjects.length > 0) {
-            const migrated = migrateProjects(loadedProjects);
-            setProjects(migrated);
-            setActiveProjectId(migrated[0].id);
-            setLayoutStore(prev => ({ ...prev, ...loadedLayouts }));
-            saveProjectsState(migrated, migrated[0].id);
-            saveLayoutStore(loadedLayouts);
-          }
-        }
-
-        // 3. 레이아웃 스토리지 복구
-        const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
-        if (!cancelled && savedLayout) {
-          setLayoutStore(prev => ({ ...prev, ...savedLayout }));
-        }
-
-        setIsHydrated(true);
-      } catch (err) {
-        console.error("[STN] Initialization error:", err);
-        setIsHydrated(true); // 에러가 나더라도 일단 화면은 보여줌
-      }
-    };
-    hydrateAndOnboard();
-    return () => { cancelled = true; };
-  }, []);
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
@@ -1523,9 +1316,8 @@ const App: React.FC = () => {
   }, [capturingForExport, isPreviewMode, currentProject, layoutStore, activeProjectId]);
 
   // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
-  // theme shortcuts are already initialized at the top 
   const _page = currentPage ?? (currentProject?.pages?.[0]);
-  const { widgets = [], layout = DEFAULT_PAGE.layout, header: pageHeader } = _page ?? { widgets: [], layout: DEFAULT_PAGE.layout, header: DEFAULT_HEADER };
+  const pageHeader = _page?.header ?? DEFAULT_HEADER;
   const header = pageHeader || DEFAULT_HEADER;
 
   const pageBgUrl = layout && (theme.mode === ThemeMode.LIGHT
@@ -1533,134 +1325,22 @@ const App: React.FC = () => {
     : (layout.backgroundImageDark || layout.backgroundImage));
   const showUnifiedBg = !!(layout?.backgroundGlobe || pageBgUrl);
 
-  const updateCurrentPage = (updates: Partial<DashboardPage>) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === activeProjectId) {
-          return {
-            ...p,
-            pages: p.pages.map((pg) => {
-              const effectiveActivePageId = p.activePageId || p.pages[0]?.id;
-              return pg.id === effectiveActivePageId ? { ...pg, ...updates } : pg;
-            }),
-          };
-        }
-        return p;
-      }),
-    );
-  };
-
-  const updateProjectTheme = (newTheme: Partial<DashboardTheme>) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === activeProjectId) {
-          return {
-            ...p,
-            theme: {
-              ...p.theme,
-              ...newTheme,
-            },
-          };
-        }
-        return p;
-      }),
-    );
-  };
+  // updateCurrentPage and updateProjectTheme are now in useDashboard
 
   const handleOpenWidgetPicker = () => {
     setIsWidgetPickerOpen(true);
   };
 
-  const addWidgetWithType = (type: WidgetType) => {
-    const defaultData = TYPE_DEFAULT_DATA[type];
-    const newId = `widget_${Date.now()}`;
+  // addWidgetWithType is now in useDashboard
 
-    // Find the bottom-most position in current layout
-    const bottomY =
-      currentRglLayout.length > 0
-        ? Math.max(...currentRglLayout.map((l) => l.y + l.h))
-        : 0;
-
-    const newWidget: Widget = {
-      id: newId,
-      type: type,
-      title: (defaultData as any)?.title ?? "New Analysis",
-      colSpan: 4,
-      rowSpan: 10, // Default to 200px (10 * 20px rowHeight)
-      config: defaultData?.config
-        ? JSON.parse(JSON.stringify(defaultData.config))
-        : {
-          xAxisKey: "name",
-          yAxisKey: "value",
-          series: [
-            { key: "value", label: "Value", color: "var(--primary-color)" },
-          ],
-          showLegend: true,
-          showGrid: true,
-          showXAxis: true,
-          showYAxis: true,
-          showUnit: false,
-          showUnitInLegend: false,
-          showLabels: false,
-          unit: "",
-        },
-      data: defaultData?.data
-        ? JSON.parse(JSON.stringify(defaultData.data))
-        : JSON.parse(JSON.stringify(MOCK_CHART_DATA)),
-      mainValue: defaultData?.mainValue,
-      subValue: defaultData?.subValue,
-      icon: defaultData?.icon,
-      progressValue: defaultData?.progressValue,
-      titleSize: (defaultData as any)?.titleSize,
-      titleWeight: (defaultData as any)?.titleWeight,
-      noBezel: false,
-      navItems: (defaultData as any)?.navItems ? JSON.parse(JSON.stringify((defaultData as any).navItems)) : undefined,
-    };
-    if (type === WidgetType.VERTICAL_NAV_CARD) {
-      newWidget.colSpan = 3;
-      newWidget.rowSpan = 14;
-    }
-
-    // Explicitly update RGL layout to place new widget at bottom
-    applyLayoutUpdate((byProject) => {
-      const cur = byProject[currentPage.id];
-      const newItem = { i: newId, x: 0, y: bottomY, w: newWidget.colSpan, h: newWidget.rowSpan } as LayoutItem;
-      if (layout.useResponsive) {
-        const layouts = (cur && !Array.isArray(cur) ? cur : { lg: Array.isArray(cur) ? (cur as LayoutItem[]) : [] }) as Record<string, LayoutItem[]>;
-        return { ...byProject, [currentPage.id]: { ...layouts, lg: [...(layouts.lg || []), newItem] } };
-      }
-      return { ...byProject, [currentPage.id]: [...(Array.isArray(cur) ? cur : []), newItem] };
-    });
-
-    updateCurrentPage({ widgets: [...widgets, newWidget] });
-    setIsWidgetPickerOpen(false);
-    showToast(`Added ${type} widget`);
-  };
-
-  const updateWidget = useCallback((id: string, updates: Partial<Widget>) => {
-    updateCurrentPage({
-      widgets: widgets.map((w) => (w.id === id ? { ...w, ...updates } : w)),
-    });
-  }, [widgets, updateCurrentPage]);
-
-  const deleteWidget = useCallback((id: string) => {
+  const deleteWidget = (id: string) => {
     setDeleteConfirmId(id);
-  }, []);
+  };
 
   const confirmDeleteWidget = () => {
     if (!deleteConfirmId) return;
     const keepIds = new Set(widgets.filter((w) => w.id !== deleteConfirmId).map((w) => w.id));
-    updateCurrentPage({
-      widgets: widgets.filter((w) => w.id !== deleteConfirmId),
-    });
-    applyLayoutUpdate((byProject) => {
-      const cur = byProject[currentPage.id];
-      if (!cur) return byProject;
-      if (Array.isArray(cur)) return { ...byProject, [currentPage.id]: cur.filter((l) => keepIds.has(l.i)) };
-      const filtered: Record<string, LayoutItem[]> = {};
-      for (const bp of Object.keys(cur)) filtered[bp] = (cur as Record<string, LayoutItem[]>)[bp].filter((l) => keepIds.has(l.i));
-      return { ...byProject, [currentPage.id]: filtered };
-    });
+    performDeleteWidget(deleteConfirmId, keepIds);
     setDeleteConfirmId(null);
     showToast("Widget removed successfully", "success");
   };
@@ -1676,10 +1356,8 @@ const App: React.FC = () => {
     setSelectedWidgetId(null);
   };
 
-  const handleToggleDesignSidebar = () => {
+  const handleOpenDesignSidebar = () => {
     if (isEditMode) {
-      // If we are opening, ask for save? Actually let's just toggle normally for now 
-      // but user specifically asked for confirmation when switching.
       if (!isDesignSidebarOpen && isLayoutSidebarOpen) {
         setPendingPanelSwitch('design');
         return;
@@ -1704,353 +1382,29 @@ const App: React.FC = () => {
 
 
   const handleLogout = async () => {
-    try {
-      setShowLogoutModal(false);
-      showToast("Logging out...", "info");
-      
-      // Force clear potential session residues in localStorage
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Attempt signOut with a timeout fallback
-      const signOutPromise = supabase.auth.signOut();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
-      
-      await Promise.race([signOutPromise, timeoutPromise]).catch(err => {
-        console.warn("SignOut timed out or failed, forcing local state reset:", err);
-      });
-
-      setUser(null);
-      setProfile(null);
+    setShowLogoutModal(false);
+    showToast("Logging out...", "info");
+    const result = await logout();
+    if (result.success) {
       showToast("Successfully logged out", "success");
-    } catch (error) {
-      console.error("Logout error:", error);
-      setUser(null);
-      setProfile(null);
-      setShowLogoutModal(false);
-    }
-  };
-
-  // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      saveProjectsState(projects, activeProjectId);
-    }, 400); // 0.4초 후 저장 (저장 누락 방지를 위해 단축)
-
-    const handleBeforeUnload = () => {
-      saveProjectsState(projects, activeProjectId);
-      savePresets(presets);
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [projects, activeProjectId, presets]);
-
-  const handleApplyPreset = (preset: ThemePreset) => {
-    const currentTheme = currentProject.theme;
-
-    // 1. Snapshot CURRENT colors before overwriting
-    const currentSnapshot = {
-      backgroundColor: currentTheme.backgroundColor,
-      surfaceColor: currentTheme.surfaceColor,
-      primaryColor: currentTheme.primaryColor,
-      titleColor: currentTheme.titleColor,
-      textColor: currentTheme.textColor,
-    };
-
-    const newModeStyles = {
-      ...(currentTheme.modeStyles || {}),
-      [currentTheme.mode]: currentSnapshot,
-    };
-
-    // 2. Prepare updates from preset
-    const {
-      mode,
-      backgroundColor,
-      surfaceColor,
-      primaryColor,
-      titleColor,
-      textColor,
-      chartPalette,
-      cardShadow,
-      borderColor
-    } = preset.theme;
-
-    const updates: Partial<DashboardTheme> = {
-      name: preset.name,
-      mode,
-      modeStyles: newModeStyles,
-      backgroundColor,
-      surfaceColor,
-      primaryColor,
-      titleColor,
-      textColor,
-      chartPalette,
-      cardShadow,
-      borderColor
-    };
-
-    // 3. If target mode has a saved custom config, AND we are essentially 
-    // just switching to that mode via a default preset, we might want to restore it.
-    // However, if the user explicitly clicks a preset, they usually want that preset's colors.
-    // BUT! For the default "Light Mode" / "Dark Mode" presets, they act like mode switches.
-    const isDefaultModePreset = preset.name === "Light Mode" || preset.name === "Dark Mode";
-    const targetSaved = (newModeStyles as any)[mode];
-    if (isDefaultModePreset && targetSaved && Object.keys(targetSaved).length > 0) {
-      Object.assign(updates, targetSaved);
-    }
-
-    updateProjectTheme(updates);
-    showToast(`Applied ${preset.name}`);
-  };
-
-  const handleSavePreset = (name: string) => {
-    const newPreset: ThemePreset = {
-      id: `preset_${Date.now()}`,
-      name,
-      theme: { ...currentProject.theme, name },
-    };
-    setPresets((prev) => {
-      const next = [...prev, newPreset];
-      savePresets(next);
-      return next;
-    });
-    showToast(`Saved new preset: ${name}`);
-  };
-
-  const handleThemeChange = useCallback((newTheme: Partial<DashboardTheme>) => {
-    updateProjectTheme(newTheme);
-  }, [updateProjectTheme]);
-
-  const handleModeSwitch = (mode: ThemeMode) => {
-    const currentTheme = currentProject.theme;
-    if (currentTheme.mode === mode) return;
-
-    // Current snapshot to save
-    const currentSnapshot = {
-      backgroundColor: currentTheme.backgroundColor,
-      surfaceColor: currentTheme.surfaceColor,
-      primaryColor: currentTheme.primaryColor,
-      titleColor: currentTheme.titleColor,
-      textColor: currentTheme.textColor,
-    };
-
-    const newModeStyles = {
-      ...(currentTheme.modeStyles || {}),
-      [currentTheme.mode]: currentSnapshot,
-    };
-
-    const updates: Partial<DashboardTheme> = {
-      mode,
-      name: mode === ThemeMode.DARK ? "Dark Mode" : mode === ThemeMode.LIGHT ? "Light Mode" : currentTheme.name,
-      modeStyles: newModeStyles
-    };
-
-    // If target mode already has a saved custom config, restore it
-    const targetSaved = (newModeStyles as any)[mode];
-    if (targetSaved && Object.keys(targetSaved).length > 0) {
-      Object.assign(updates, targetSaved);
     } else {
-      // Otherwise, fallback to smart conversion
-      updates.backgroundColor = getSmartColorForMode(currentTheme.backgroundColor, mode, "bg");
-      updates.surfaceColor = getSmartColorForMode(currentTheme.surfaceColor, mode, "surface");
-      updates.titleColor = getSmartColorForMode(currentTheme.titleColor, mode, "text");
+      showToast("Logout failed. Please try again.", "error");
     }
-
-    // Header Mode Sync: If current page has mode-specific header styles, apply them
-    const h = currentPage.header;
-    if (h && h.modeStyles) {
-      const hTarget = h.modeStyles[mode];
-      if (hTarget) {
-        updateHeader(hTarget);
-      } else {
-        // Smart adjust header colors if no snapshot
-        const newHTextColor = getSmartColorForMode(h.textColor, mode, "text");
-        const newHBgColor = h.backgroundColor !== 'transparent' ? getSmartColorForMode(h.backgroundColor, mode, "bg") : 'transparent';
-        updateHeader({ textColor: newHTextColor, backgroundColor: newHBgColor });
-      }
-    } else if (h) {
-      const newHTextColor = getSmartColorForMode(h.textColor, mode, "text");
-      const newHBgColor = h.backgroundColor !== 'transparent' ? getSmartColorForMode(h.backgroundColor, mode, "bg") : 'transparent';
-      updateHeader({ textColor: newHTextColor, backgroundColor: newHBgColor });
-    }
-
-    updateProjectTheme(updates);
   };
 
-  const handleUpdateLayout = (updates: Partial<LayoutConfig>) => {
-    updateCurrentPage({ layout: { ...layout, ...updates } });
-  };
+  // sync logic moved to useDashboard
 
+  // Theme and Layout management now via useDashboard hooks/functions
 
-  const handlePageChange = (pageId: string) => {
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === activeProjectId ? { ...p, activePageId: pageId } : p,
-      ),
-    );
-    setSelectedWidgetId(null);
-  };
-
-  const addPage = () => {
-    const newId = `page_${Date.now()}`;
-    const newPage: DashboardPage = {
-      ...DEFAULT_PAGE,
-      id: newId,
-      name: `New Page ${currentProject.pages.length + 1}`,
-      header: { ...currentPage.header },
-    };
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === activeProjectId
-          ? { ...p, pages: [...p.pages, newPage], activePageId: newId }
-          : p,
-      ),
-    );
-  };
-
-  // ── react-grid-layout helpers ─────────────────────────────────────────
-  const sane = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
-  const currentRglLayout = useMemo<LayoutItem[]>(() => {
-    const raw = rglLayouts[currentPage.id];
-    const saved: LayoutItem[] = !raw ? [] : Array.isArray(raw) ? raw : (raw as Record<string, LayoutItem[]>).lg ?? [];
-    const savedMap = new Map<string, LayoutItem>(saved.map((l) => [l.i, l]));
-    const usePixelGrid = layout.useGrid === false;
-    const roundSize = (v: number) => (usePixelGrid ? v : Math.round(v));
-    const cols = Math.max(1, layout.columns);
-
-    if (saved.length === 0) return computeInitialLayout(widgets, cols);
-
-    // Some widgets have saved positions, others might not. 
-    // We need to keep saved ones and place the rest without overlapping (simple flow).
-    let nextX = 0;
-    let nextY = 0;
-    let maxHInRow = 0;
-
-    // Find the current "bottom" to avoid placing new items on top of old ones if possible
-    // simplified: just find max Y + H
-    saved.forEach(l => {
-      const bottom = (Number(l.y) || 0) + (Number(l.h) || 0);
-      if (bottom > nextY) nextY = bottom;
-    });
-
-    return widgets.map((w): LayoutItem => {
-      const s = savedMap.get(w.id);
-      const wVal = sane(roundSize(Number(w.colSpan)), 4);
-      const hVal = sane(roundSize(Number(w.rowSpan)), 4);
-
-      if (s) {
-        return { i: s.i, x: sane(Number(s.x), 0), y: sane(Number(s.y), 0), w: wVal, h: hVal };
-      }
-
-      // Fallback for new widgets: Flow positioning
-      if (nextX + wVal > cols) {
-        nextX = 0;
-        nextY += maxHInRow || hVal;
-        maxHInRow = 0;
-      }
-      const item = { i: w.id, x: nextX, y: nextY, w: wVal, h: hVal };
-      nextX += wVal;
-      maxHInRow = Math.max(maxHInRow, hVal);
-      return item;
-    });
-  }, [rglLayouts, currentPage.id, widgets, layout.columns, layout.useGrid]);
-
-  const saneNum = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
-  const handleRglLayoutChange = useCallback(
-    (newLayout: readonly LayoutItem[]) => {
-      const widgetIds = new Set(widgets.map((w) => w.id));
-      const filtered = Array.from(newLayout).filter((l) => widgetIds.has(l.i));
-      applyLayoutUpdate((byProject) => ({ ...byProject, [currentPage.id]: filtered }));
-      updateCurrentPage({
-        widgets: widgets.map((w) => {
-          const item = filtered.find((l) => l.i === w.id);
-          if (!item) return w;
-          return { ...w, colSpan: saneNum(Number(item.w), w.colSpan ?? 4), rowSpan: saneNum(Number(item.h), w.rowSpan ?? 4) };
-        }),
-      });
-    },
-    [widgets, currentPage.id, applyLayoutUpdate],
-  );
-
-  const handleResponsiveLayoutChange = useCallback(
-    (layouts: Record<string, LayoutItem[]>) => {
-      const widgetIds = new Set(widgets.map((w) => w.id));
-      const filteredLayouts: Record<string, LayoutItem[]> = {};
-      for (const bp of Object.keys(layouts)) {
-        filteredLayouts[bp] = layouts[bp].filter((l) => widgetIds.has(l.i));
-      }
-      applyLayoutUpdate((byProject) => ({ ...byProject, [currentPage.id]: filteredLayouts }));
-      const lg = filteredLayouts.lg ?? [];
-      updateCurrentPage({
-        widgets: widgets.map((w) => {
-          const item = lg.find((l) => l.i === w.id);
-          if (!item) return w;
-          return { ...w, colSpan: saneNum(Number(item.w), w.colSpan ?? 4), rowSpan: saneNum(Number(item.h), w.rowSpan ?? 4) };
-        }),
-      });
-    },
-    [widgets, currentPage.id, applyLayoutUpdate],
-  );
-
-  const responsiveLayoutsForGrid = useMemo(() => {
-    if (!layout.useResponsive) return undefined;
-    const raw = rglLayouts[currentPage.id];
-    if (!raw) return { lg: currentRglLayout, md: currentRglLayout, sm: currentRglLayout, xs: currentRglLayout };
-    if (Array.isArray(raw)) return { lg: raw, md: raw, sm: raw, xs: raw };
-    const obj = raw as Record<string, LayoutItem[]>;
-    return { lg: obj.lg ?? [], md: obj.md ?? [], sm: obj.sm ?? [], xs: obj.xs ?? [] };
-  }, [layout.useResponsive, rglLayouts, currentPage.id, currentRglLayout]);
+  // Layout handlers and state moved to useDashboard
   // ─────────────────────────────────────────────────────────────────────
-
-  const addProject = () => {
-    const newId = `project_${Date.now()}`;
-    const newProject: Project = {
-      id: newId,
-      name: `New Project ${projects.length + 1}`,
-      pages: [{ ...DEFAULT_PAGE, id: "page_1", name: "Dashboard" }],
-      activePageId: "page_1",
-      theme: DEFAULT_THEME,
-    };
-    setProjects((prev) => [...prev, newProject]);
-    setActiveProjectId(newId);
-    setIsProjectDropdownOpen(false);
-  };
 
   const confirmDeleteProject = () => {
     if (!deleteProjectId) return;
-    if (projects.length <= 1) {
-      showToast("마지막 프로젝트는 삭제할 수 없습니다.", "error");
-      setDeleteProjectId(null);
-      return;
-    }
-    setProjects((prev) => prev.filter((p) => p.id !== deleteProjectId));
-    setLayoutStore((prev) => {
-      const next = { ...prev };
-      delete next[deleteProjectId];
-      layoutStoreRef.current = next;
-      saveLayoutStore(next);
-      return next;
-    });
-    if (activeProjectId === deleteProjectId) {
-      const remaining = projects.filter((p) => p.id !== deleteProjectId);
-      setActiveProjectId(remaining[0]?.id ?? "project_1");
-    }
+    deleteProject(deleteProjectId);
     setDeleteProjectId(null);
     setIsProjectDropdownOpen(false);
-    showToast("프로젝트가 삭제되었습니다.");
-  };
-
-  const renameProject = (projectId: string, newName: string) => {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    setProjects((prev) =>
-      prev.map((p) => (p.id === projectId ? { ...p, name: trimmed } : p)),
-    );
-    setEditingProjectId(null);
-    setEditingProjectName("");
+    showToast("Project deleted successfully.");
   };
 
   const handleExportClick = (target: "full" | "base") => {
@@ -2101,15 +1455,8 @@ const App: React.FC = () => {
 
       if (target === "full") {
         const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId });
-        const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
-        setProjects(nextProjects);
-        setLayoutStore((prev) => {
-          const next = { ...prev, [activeProjectId]: layoutPositions };
-          layoutStoreRef.current = next;
-          saveLayoutStore(next);
-          return next;
-        });
-        await saveProjectsState(nextProjects, activeProjectId);
+        updateCurrentPage(projectToApply);
+        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
         showToast("Full Project loaded successfully.");
       } else {
         // Base Layout Only
@@ -2125,15 +1472,8 @@ const App: React.FC = () => {
             };
           })
         };
-        const nextProjects = projects.map((p) => (p.id === activeProjectId ? projectToApply : p));
-        setProjects(nextProjects);
-        setLayoutStore((prev) => {
-          const next = { ...prev, [activeProjectId]: layoutPositions };
-          layoutStoreRef.current = next;
-          saveLayoutStore(next);
-          return next;
-        });
-        await saveProjectsState(nextProjects, activeProjectId);
+        updateCurrentPage(projectToApply);
+        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
         showToast("Base Layout applied successfully.");
       }
     } catch (err) {
@@ -2146,24 +1486,9 @@ const App: React.FC = () => {
     }
   };
 
-  const persistActiveProject = async (showNotification = true) => {
-    const latestProjects = projectsRef.current;
-    const latestLayoutStore = layoutStoreRef.current;
-    const savedProjects = await saveProjectsState(latestProjects, activeProjectId);
-    await saveLayoutStore(latestLayoutStore);
-    if (showNotification) {
-      if (savedProjects) {
-        showToast("Project configuration saved successfully");
-      } else {
-        showToast("Failed to save — please check browser storage.", "error");
-      }
-    }
-    return savedProjects;
-  };
-
   const handleProjectSave = async () => {
     if (isEditMode) {
-      await persistActiveProject();
+      await save();
       setIsEditMode(false);
       setIsDesignSidebarOpen(false);
       setIsLayoutSidebarOpen(false);
@@ -2173,38 +1498,7 @@ const App: React.FC = () => {
     }
   };
 
-  /** 헤더(포지션 등)는 프로젝트 단위: 변경 시 해당 프로젝트의 모든 탭(페이지)에 동일 적용 */
-  const updateHeader = (newHeader: Partial<HeaderConfig>) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== activeProjectId) return p;
-        const mode = p.theme.mode;
-
-        // 현재 페이지 헤더 기준으로 머지
-        const effectivePageId = p.activePageId || p.pages[0]?.id;
-        const activePage = p.pages.find(pg => pg.id === effectivePageId) || p.pages[0];
-        const baseHeader = activePage?.header || DEFAULT_HEADER;
-        const mergedHeader = { ...baseHeader, ...newHeader };
-
-        // 라이트/다크 모드별 색상 스냅샷 업데이트 (하나 바꾸면 다 적용되게)
-        // 단, backgroundColor가 transparent면 modeStyles에 저장하지 않음 (나중에 덮어쓰는 버그 방지)
-        if (newHeader.textColor || (newHeader.backgroundColor && newHeader.backgroundColor !== 'transparent')) {
-          mergedHeader.modeStyles = {
-            ...(mergedHeader.modeStyles || {}),
-            [mode]: {
-              textColor: mergedHeader.textColor,
-              backgroundColor: mergedHeader.backgroundColor === 'transparent' ? 'transparent' : mergedHeader.backgroundColor
-            }
-          };
-        }
-
-        return {
-          ...p,
-          pages: p.pages.map((pg) => ({ ...pg, header: mergedHeader })),
-        };
-      }),
-    );
-  };
+  // updateHeader is now in useDashboard
 
   const handleExcelUpload = (id: string, newData: any[]) => {
     const widget = widgets.find(w => w.id === id);
@@ -2385,7 +1679,7 @@ const App: React.FC = () => {
       )}
 
       {/* Floating GNB Capsule (Triggered by AI FAB) */}
-      {!isPreviewMode && (
+      {user && (
         <div
           className={`fixed z-[99] transition-all duration-500 flex items-center ${isFloatingGnbOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
           style={{
@@ -2407,28 +1701,20 @@ const App: React.FC = () => {
                 className="h-7 w-auto object-contain"
                 alt="STN Logo"
               />
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setIsProjectDropdownOpen(!isProjectDropdownOpen)
-                    }
-                    className="flex items-center gap-1.5 group"
-                  >
-                    <span className="uppercase font-bold transition-colors whitespace-nowrap" style={{ fontSize: 'var(--text-caption)', color: theme.titleColor }}>
-                      {currentProject.name}
-                    </span>
-                    <ChevronDown
-                      className={`w-3 h-3 transition-transform ${isProjectDropdownOpen ? "rotate-180" : ""} text-muted`}
-                    />
-                  </button>
-
-                  {isProjectDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsProjectDropdownOpen(false)}
+              
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                      className="flex items-center gap-1.5 group"
+                    >
+                      <span className="uppercase font-bold transition-colors whitespace-nowrap" style={{ fontSize: 'var(--text-caption)', color: theme.titleColor }}>
+                        {currentProject.name}
+                      </span>
+                      <ChevronDown
+                        className={`w-3 h-3 transition-transform ${isProjectDropdownOpen ? "rotate-180" : ""} text-muted`}
                       />
+<<<<<<< HEAD
                       <div
                         className="absolute bottom-full left-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
                         style={{ 
@@ -2485,29 +1771,117 @@ const App: React.FC = () => {
                                   </div>
                                 </button>
                               )}
+=======
+                    </button>
+>>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
 
-                              <div className="hidden group-hover/proj:flex items-center gap-1 shrink-0">
+                    {isProjectDropdownOpen && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsProjectDropdownOpen(false)}
+                        />
+                        <div
+                          className="absolute bottom-full left-0 mb-4 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
+                          style={{ borderRadius: 'var(--radius-panel)' }}
+                        >
+                          <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
+                            <p className="uppercase font-bold text-muted tracking-widest" style={{ fontSize: 'var(--text-caption)' }}>
+                              Select Project
+                            </p>
+                          </div>
+                          <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                            {projects.map((p) => (
+                              <div
+                                key={p.id}
+                                className={`flex items-center group/proj gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                              >
+                                {editingProjectId === p.id ? (
+                                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      value={editingProjectName}
+                                      onChange={(e) => setEditingProjectName(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") renameProject(p.id, editingProjectName);
+                                        if (e.key === "Escape") setEditingProjectId(null);
+                                      }}
+                                      onBlur={() => renameProject(p.id, editingProjectName)}
+                                      className="flex-1 min-w-0 bg-transparent border-b border-[var(--primary-color)] text-xs font-bold outline-none uppercase tracking-tight text-[var(--text-main)] w-full"
+                                    />
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setActiveProjectId(p.id);
+                                      setIsProjectDropdownOpen(false);
+                                    }}
+                                    className="flex-1 min-w-0 text-left"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                        {p.name}
+                                      </p>
+                                    </div>
+                                  </button>
+                                )}
+
+                                  <div className="hidden group-hover/proj:flex items-center gap-1 shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingProjectId(p.id);
+                                        setEditingProjectName(p.name);
+                                      }}
+                                      className="p-1 text-muted hover:text-[var(--primary-color)] transition-colors inline-block"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteProjectId(p.id);
+                                      }}
+                                      className="p-1 text-muted hover:text-[var(--error)] transition-colors inline-block"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+
+                                {activeProjectId === p.id && editingProjectId !== p.id && (
+                                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--primary-color)] group-hover/proj:hidden" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                           <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-2">
+                            <div className="flex flex-col gap-1.5 px-1 py-1">
+                              <span className="text-[9px] font-black text-muted uppercase tracking-[0.2em] pl-1">Project Sync</span>
+                              <div className="grid grid-cols-2 gap-1.5">
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingProjectId(p.id);
-                                    setEditingProjectName(p.name);
-                                  }}
-                                  className="p-1 text-muted hover:text-[var(--primary-color)] transition-colors inline-block"
+                                  onClick={() => handleExportClick('full')}
+                                  disabled={capturingForExport}
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
                                 >
-                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <Upload className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                    Full Export
+                                  </span>
                                 </button>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteProjectId(p.id);
-                                  }}
-                                  className="p-1 text-muted hover:text-[var(--error)] transition-colors inline-block"
+                                  onClick={() => handleExportClick('base')}
+                                  disabled={capturingForExport}
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Palette className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                    Base Export
+                                  </span>
                                 </button>
                               </div>
 
+<<<<<<< HEAD
                               {activeProjectId === p.id && editingProjectId !== p.id && (
                                 <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--primary-color)] group-hover/proj:hidden" />
                               )}
@@ -2538,10 +1912,39 @@ const App: React.FC = () => {
                                   Base Export
                                 </span>
                               </button>
+=======
+                              <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                                <button
+                                  onClick={() => {
+                                    setImportTarget('full');
+                                    importInputRef.current?.click();
+                                  }}
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                >
+                                  <Download className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                    Full Import
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setImportTarget('base');
+                                    importInputRef.current?.click();
+                                  }}
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                >
+                                  <Palette className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                    Base Import
+                                  </span>
+                                </button>
+                              </div>
+>>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
                             </div>
 
-                            <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                            {isAdmin && (
                               <button
+<<<<<<< HEAD
                                 onClick={() => {
                                   setImportTarget('full');
                                   importInputRef.current?.click();
@@ -2566,26 +1969,26 @@ const App: React.FC = () => {
                                 </span>
                               </button>
                             </div>
+=======
+                                onClick={addProject}
+                                className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
+                              >
+                                <Plus className="w-4 h-4" />{" "}
+                                <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
+                                  New Project
+                                </span>
+                              </button>
+                            )}
+>>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
                           </div>
-
-                          <button
-                            onClick={addProject}
-                            className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
-                          >
-                            <Plus className="w-4 h-4" />{" "}
-                            <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                              New Project
-                            </span>
-                          </button>
                         </div>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
                 </div>
               </div>
             </div>
-          </div>
 
+<<<<<<< HEAD
           <div className="h-6 w-px bg-[var(--border-base)] mx-4" />
 
           <div className="flex items-center gap-2">
@@ -2694,12 +2097,97 @@ const App: React.FC = () => {
             >
               <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
             </button>
+=======
+            {isAdmin && (
+              <>
+                <div className="h-6 w-px bg-[var(--border-base)] mx-4" />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
+                      className={`btn-base btn-surface h-10 px-4 rounded-full ${isLibraryDropdownOpen ? "active" : ""}`}
+                      style={{ backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                    >
+                      <div
+                        className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
+                        style={{ backgroundColor: `color-mix(in srgb, var(${currentLibrary.colorVar}) 12%, transparent)`, color: `var(${currentLibrary.colorVar})` }}
+                      >
+                        <currentLibrary.icon className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold">{currentLibrary.label}</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-muted/60 group-hover:text-primary`} />
+                    </button>
+
+                    {isLibraryDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsLibraryDropdownOpen(false)} />
+                        <div
+                          className="absolute bottom-full right-0 mb-4 w-52 p-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow shadow-premium"
+                          style={{ borderRadius: 'var(--radius-panel)' }}
+                        >
+                          {libraryOptions.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => {
+                                handleThemeChange({ ...theme, chartLibrary: opt.value as ChartLibrary });
+                                setIsLibraryDropdownOpen(false);
+                              }}
+                              className={`w-full justify-between px-3 py-2.5 flex items-center transition-all btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <opt.icon className="w-4 h-4" style={{ color: `var(${opt.colorVar})` }} />
+                                <span className="font-bold text-xs uppercase tracking-tight">{opt.label}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleOpenDesignSidebar}
+                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
+                    style={{ backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                  >
+                    <Palette className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Design</span>
+                  </button>
+                  <button
+                    onClick={handleOpenLayoutSidebar}
+                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
+                    style={{ backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                  >
+                    <LayoutGrid className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Layout</span>
+                  </button>
+                  <button
+                    onClick={handleToggleEditMode}
+                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
+                    style={{ backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)' }}
+                  >
+                    <Edit3 className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Edit</span>
+                  </button>
+                  <button
+                    disabled={isEditMode}
+                    onClick={() => {
+                      setIsPreviewMode(true);
+                      setIsFloatingGnbOpen(false);
+                    }}
+                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+                    style={{ backgroundColor: 'var(--gnb-btn-bg)' }}
+                  >
+                    <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
+                  </button>
+                </div>
+              </>
+            )}
+>>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
 
             {/* User Info & Logout */}
             <div className="h-6 w-px bg-[var(--border-base)] mx-2" />
             <div className="flex items-center gap-3 pl-2 pr-1">
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 mb-0.5">
+<<<<<<< HEAD
                   {userRole === 'admin' && (
                     <span 
                       className="px-1.5 py-0.5 border rounded-full text-[8px] font-black tracking-widest leading-none"
@@ -2711,6 +2199,10 @@ const App: React.FC = () => {
                     >
                       ADMIN
                     </span>
+=======
+                  {isAdmin && (
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-[8px] font-black text-blue-500 tracking-widest leading-none">ADMIN</span>
+>>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
                   )}
                   <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
                 </div>
@@ -2980,7 +2472,7 @@ const App: React.FC = () => {
                   onClose={() => setIsDesignSidebarOpen(false)}
                   onModeSwitch={handleModeSwitch}
                   onDragStart={handleDragStart}
-                  onSave={() => persistActiveProject()}
+                  onSave={() => save()}
                 />
               ) : selectedWidgetId ? (
                 <Sidebar
@@ -3002,7 +2494,7 @@ const App: React.FC = () => {
                   }}
                   onClose={() => setSelectedWidgetId(null)}
                   onDragStart={handleDragStart}
-                  onSave={() => persistActiveProject()}
+                  onSave={() => save()}
                 />
               ) : isLayoutSidebarOpen ? (
                 <Sidebar
@@ -3020,7 +2512,7 @@ const App: React.FC = () => {
                   }}
                   onClose={() => setIsLayoutSidebarOpen(false)}
                   onDragStart={handleDragStart}
-                  onSave={() => persistActiveProject()}
+                  onSave={() => save()}
                 />
               ) : null}
             </div>
@@ -3078,7 +2570,7 @@ const App: React.FC = () => {
         confirmText="저장 후 전환"
         cancelText="그냥 전환"
         onConfirm={async () => {
-          await persistActiveProject();
+          await save();
           if (pendingPanelSwitch === 'design') {
             setIsDesignSidebarOpen(true);
             setIsLayoutSidebarOpen(false);
@@ -3142,7 +2634,7 @@ const App: React.FC = () => {
         isDark={theme.mode === 'dark'}
       />
 
-      {!isPreviewMode && (
+      {user && (
         <FloatingAssistantButton onClick={() => setIsFloatingGnbOpen(!isFloatingGnbOpen)} />
       )}
     </div>
