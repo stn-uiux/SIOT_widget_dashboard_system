@@ -1803,20 +1803,42 @@ const App: React.FC = () => {
                                 <button
                                   onClick={() => handleExportClick('full')}
                                   disabled={capturingForExport}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent transition-all"
+                                  style={{
+                                    borderColor: 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--gnb-export-hover-border)';
+                                    e.currentTarget.style.backgroundColor = 'var(--gnb-export-hover-bg)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'transparent';
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                  }}
                                 >
-                                  <Upload className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  <Upload className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-export-text)' }} />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                     Full Export
                                   </span>
                                 </button>
                                 <button
                                   onClick={() => handleExportClick('base')}
                                   disabled={capturingForExport}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent transition-all"
+                                  style={{
+                                    borderColor: 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--gnb-export-hover-border)';
+                                    e.currentTarget.style.backgroundColor = 'var(--gnb-export-hover-bg)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'transparent';
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                  }}
                                 >
-                                  <Palette className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  <Palette className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-export-text)' }} />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                     Base Export
                                   </span>
                                 </button>
@@ -1825,10 +1847,21 @@ const App: React.FC = () => {
                                     setImportTarget('full');
                                     importInputRef.current?.click();
                                   }}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent transition-all"
+                                  style={{
+                                    borderColor: 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--gnb-import-hover-border)';
+                                    e.currentTarget.style.backgroundColor = 'var(--gnb-import-hover-bg)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'transparent';
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                  }}
                                 >
-                                  <Download className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  <Download className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-import-text)' }} />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                     Full Import
                                   </span>
                                 </button>
@@ -1837,10 +1870,21 @@ const App: React.FC = () => {
                                     setImportTarget('base');
                                     importInputRef.current?.click();
                                   }}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent transition-all"
+                                  style={{
+                                    borderColor: 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = 'var(--gnb-import-hover-border)';
+                                    e.currentTarget.style.backgroundColor = 'var(--gnb-import-hover-bg)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'transparent';
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                  }}
                                 >
-                                  <Palette className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
+                                  <Palette className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-import-text)' }} />
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
                                     Base Import
                                   </span>
                                 </button>
