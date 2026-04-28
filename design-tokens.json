@@ -499,7 +499,10 @@
                 "import_hover_bg": { "value": "rgba(16, 185, 129, 0.05)", "type": "color" },
                 "import_hover_border": { "value": "rgba(16, 185, 129, 0.3)", "type": "color" },
                 "import_text": { "value": "#10b981", "type": "color" },
-                "user_label_color": { "value": "rgba(255, 255, 255, 0.4)", "type": "color" }
+                "user_label_color_light": { "value": "rgba(15, 23, 42, 0.5)", "type": "color" },
+                "user_label_color_dark": { "value": "rgba(255, 255, 255, 0.4)", "type": "color" },
+                "user_id_color_light": { "value": "#0f172a", "type": "color" },
+                "user_id_color_dark": { "value": "#f8fafc", "type": "color" }
             },
             "panel": {
                 "width": { "value": "320px", "type": "dimension" },

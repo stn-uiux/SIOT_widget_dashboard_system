@@ -202,7 +202,8 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--gnb-import-hover-bg', tokenValue(gnbTokens.import_hover_bg));
                 root.style.setProperty('--gnb-import-hover-border', tokenValue(gnbTokens.import_hover_border));
                 root.style.setProperty('--gnb-import-text', tokenValue(gnbTokens.import_text));
-                root.style.setProperty('--gnb-user-label-color', tokenValue(gnbTokens.user_label_color));
+                root.style.setProperty('--gnb-user-label-color', isDark ? tokenValue(gnbTokens.user_label_color_dark) : tokenValue(gnbTokens.user_label_color_light));
+                root.style.setProperty('--gnb-user-id-color', isDark ? tokenValue(gnbTokens.user_id_color_dark) : tokenValue(gnbTokens.user_id_color_light));
             }
 
             // Global Panel

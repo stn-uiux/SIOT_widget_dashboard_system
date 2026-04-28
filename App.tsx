@@ -2007,9 +2007,19 @@ const App: React.FC = () => {
                       ADMIN
                     </span>
                   )}
-                  <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
+                  <span 
+                    className="text-[10px] font-black leading-none tracking-widest uppercase"
+                    style={{ color: 'var(--gnb-user-label-color)' }}
+                  >
+                    System User
+                  </span>
                 </div>
-                <span className="font-bold text-main" style={{ fontSize: 'var(--text-small)' }}>{user?.email?.split('@')[0]}</span>
+                <span 
+                  className="font-bold" 
+                  style={{ fontSize: 'var(--text-small)', color: 'var(--gnb-user-id-color)' }}
+                >
+                  {user?.email?.split('@')[0]}
+                </span>
               </div>
               <button
                 onClick={() => setShowLogoutModal(true)}
