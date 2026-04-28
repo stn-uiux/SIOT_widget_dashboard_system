@@ -29,12 +29,24 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                style={{ backgroundColor: 'var(--login-overlay-opacity)' }}
                 onClick={onCancel}
             />
 
-            <div className="relative w-full max-w-sm rounded-[var(--border-radius)] shadow-premium overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300 bg-[var(--surface)] border border-[var(--border-base)]">
+            <div 
+                className="relative w-full max-w-sm shadow-premium overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                style={{ 
+                    backgroundColor: 'var(--surface)', 
+                    borderColor: 'var(--border-base)',
+                    borderWidth: '1px',
+                    borderRadius: 'var(--radius-modal)'
+                }}
+            >
                 <div className="p-6 text-center space-y-4">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-[var(--error)]/10 flex items-center justify-center text-[var(--error)] mb-2">
+                    <div 
+                        className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-2"
+                        style={{ backgroundColor: 'var(--action-danger-subtle)', color: 'var(--error)' }}
+                    >
                         <AlertTriangle size={32} />
                     </div>
 
@@ -50,13 +62,23 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <div className="grid grid-cols-2 gap-3 pt-2">
                         <button
                             onClick={onCancel}
-                            className="py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-widest transition-all bg-[var(--border-muted)] text-muted hover:bg-[var(--border-base)]"
+                            className="py-3.5 px-6 font-bold text-xs uppercase tracking-widest transition-all"
+                            style={{ 
+                                backgroundColor: 'var(--border-muted)', 
+                                color: 'var(--text-muted)',
+                                borderRadius: 'var(--radius-md)'
+                            }}
                         >
                             {cancelText}
                         </button>
                         <button
                             onClick={onConfirm}
-                            className="py-3.5 px-6 rounded-xl bg-[var(--error)] text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 shadow-lg shadow-red-500/25 transition-all"
+                            className="py-3.5 px-6 text-white font-bold text-xs uppercase tracking-widest hover:brightness-110 transition-all"
+                            style={{ 
+                                backgroundColor: 'var(--error)', 
+                                borderRadius: 'var(--radius-md)',
+                                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.25)' 
+                            }}
                         >
                             {confirmText}
                         </button>
