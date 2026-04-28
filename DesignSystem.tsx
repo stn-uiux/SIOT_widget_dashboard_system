@@ -61,6 +61,18 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         root.style.setProperty('--text-lg', `${theme.textLg}px`);
         root.style.setProperty('--text-hero', `${theme.textHero ?? 48}px`);
 
+        // Extra Typography Tokens from JSON
+        const typography = (designTokens as any).tokens?.typography;
+        if (typography) {
+            Object.entries(typography).forEach(([key, data]: [string, any]) => {
+                const cssVarName = `--${key.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`;
+                // Only set if not already set by theme props to avoid overriding manual panel adjustments
+                if (!root.style.getPropertyValue(cssVarName)) {
+                    root.style.setProperty(cssVarName, tokenValue(data));
+                }
+            });
+        }
+
         // Header & Component Tokens (from design-tokens.json)
         const components = (designTokens as any).tokens?.components;
         if (components) {

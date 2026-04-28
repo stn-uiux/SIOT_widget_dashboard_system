@@ -104,6 +104,12 @@
     --title-size: 18px;
     --title-weight: 700;
     --content-size: 14px;
+    --text-tiny: 10px;
+    --text-small: 12px;
+    --text-base: 14px;
+    --text-md: 16px;
+    --text-lg: 24px;
+    --text-hero: 48px;
 
     /* Edit Mode Indicators */
     --edit-mode-border-color: rgba(var(--primary-color-rgb), 0.4);
@@ -115,6 +121,17 @@
     --selected-glow-intense: 0 0 35px rgba(var(--primary-color-rgb, 59, 130, 246), 0.35);
     --selected-overlay-bg: rgba(var(--primary-color-rgb, 59, 130, 246), 0.08);
     --selected-inner-glow: inset 0 0 22px rgba(var(--primary-color-rgb, 59, 130, 246), 0.1);
+
+    /* Loading Screen Defaults (to prevent white flash before hydration) */
+    --loading-bg: #020617;
+    --loading-z: 9999;
+    --loading-glow-1: rgba(59, 130, 246, 0.2);
+    --loading-glow-2: rgba(99, 102, 241, 0.1);
+    --loading-blur-1: 100px;
+    --loading-blur-2: 60px;
+    --loading-spinner-color: #3b82f6;
+    --loading-text-1: #ffffff;
+    --loading-text-2: #94a3b8;
 
     --action-hover-bg: var(--border-muted);
     --action-hover-text: var(--primary-color);

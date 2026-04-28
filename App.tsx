@@ -651,7 +651,7 @@ const DashboardGrid: React.FC<{
                           isDragging={draggingId === widget.id}
                           isPreviewMode={isPreviewMode}
                           onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
-                          userRole={profile?.role}
+                          userRole={userRole}
                         />
                         {isEditMode && isThisResizing && liveSize && (
                           <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
@@ -1141,17 +1141,31 @@ const LoadingScreen = ({ message }: { message: string }) => (
 
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Auth Listener
+  // Auth & Profile Listener
   useEffect(() => {
+    // Initial Session Check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        getProfile(currentUser.id).then(setProfile);
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    // Listen for Auth Changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const p = await getProfile(currentUser.id);
+        setProfile(p);
+      } else {
+        setProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -1196,24 +1210,6 @@ const App: React.FC = () => {
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
   const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
-
-  // ── Auth & Profile State ──
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  // ── 1. Supabase Auth Listener ──
-  useEffect(() => {
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        const p = await getProfile(currentUser.id);
-        setProfile(p);
-      } else {
-        setProfile(null);
-      }
-    });
-  }, []);
 
   // ── 2. Real-time Preview Simulation (1s updates) ──
   useEffect(() => {
@@ -1705,9 +1701,30 @@ const App: React.FC = () => {
 
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setShowLogoutModal(false);
-    showToast("Successfully logged out", "success");
+    try {
+      setShowLogoutModal(false);
+      showToast("Logging out...", "info");
+      
+      // Force clear potential session residues in localStorage
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Attempt signOut with a timeout fallback
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
+      
+      await Promise.race([signOutPromise, timeoutPromise]).catch(err => {
+        console.warn("SignOut timed out or failed, forcing local state reset:", err);
+      });
+
+      setUser(null);
+      setProfile(null);
+      showToast("Successfully logged out", "success");
+    } catch (error) {
+      console.error("Logout error:", error);
+      setUser(null);
+      setProfile(null);
+      setShowLogoutModal(false);
+    }
   };
 
   // 프로젝트·위젯 내용 변경 시 IndexedDB에 저장 (새로고침 후에도 유지)
@@ -2614,21 +2631,21 @@ const App: React.FC = () => {
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
               style={{ backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
             >
-              <Palette className="w-4 h-4" /> <span className="text-xs">Design</span>
+              <Palette className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Design</span>
             </button>
             <button
               onClick={handleOpenLayoutSidebar}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
               style={{ backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
             >
-              <LayoutGrid className="w-4 h-4" /> <span className="text-xs">Layout</span>
+              <LayoutGrid className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Layout</span>
             </button>
             <button
               onClick={handleProjectSave}
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
               style={{ backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)' }}
             >
-              <Edit3 className="w-4 h-4" /> <span className="text-xs">Edit</span>
+              <Edit3 className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Edit</span>
             </button>
             <button
               disabled={isEditMode}
@@ -2639,7 +2656,7 @@ const App: React.FC = () => {
               className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
               style={{ backgroundColor: 'var(--gnb-btn-bg)' }}
             >
-              <Eye className="w-4 h-4" /> <span className="text-xs">Preview</span>
+              <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
             </button>
 
             {/* User Info & Logout */}
@@ -2652,7 +2669,7 @@ const App: React.FC = () => {
                   )}
                   <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
                 </div>
-                <span className="text-xs font-bold text-main">{user?.email?.split('@')[0]}</span>
+                <span className="font-bold text-main" style={{ fontSize: 'var(--text-small)' }}>{user?.email?.split('@')[0]}</span>
               </div>
               <button
                 onClick={() => setShowLogoutModal(true)}

@@ -1836,7 +1836,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                             position="insideBottom"
                             offset={-10}
                             style={{
-                              fontSize: '10px',
+                              fontSize: 'var(--text-tiny)',
                               fontWeight: '900',
                               textTransform: 'uppercase',
                               letterSpacing: '0.1em',
@@ -1972,7 +1972,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                             position="insideBottom"
                             offset={-10}
                             style={{
-                              fontSize: '10px',
+                              fontSize: 'var(--text-tiny)',
                               fontWeight: '900',
                               textTransform: 'uppercase',
                               letterSpacing: '0.1em',
@@ -2048,7 +2048,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                             position="insideBottom"
                             offset={-10}
                             style={{
-                              fontSize: '10px',
+                              fontSize: 'var(--text-tiny)',
                               fontWeight: '900',
                               textTransform: 'uppercase',
                               letterSpacing: '0.1em',
@@ -2305,7 +2305,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                             position="insideBottom"
                             offset={-10}
                             style={{
-                              fontSize: '10px',
+                              fontSize: 'var(--text-tiny)',
                               fontWeight: '900',
                               textTransform: 'uppercase',
                               letterSpacing: '0.1em',
@@ -2890,10 +2890,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     value={widget.title}
                     onChange={(e) => onUpdate?.(widget.id, { title: e.target.value })}
                     className="widget-header-title-input bg-transparent border-none p-0 font-bold focus:ring-0 outline-none w-full truncate text-main"
-                    style={{ fontSize: `${titleSize}px`, fontWeight: titleWeight }}
+                    style={{ fontSize: widget.titleSize ? `${widget.titleSize}px` : 'var(--title-size)', fontWeight: widget.titleWeight || 'var(--title-weight)' }}
                   />
                 ) : (
-                  <h3 className="font-bold truncate text-main" style={{ fontSize: `${titleSize}px`, fontWeight: titleWeight }}>
+                  <h3 className="font-bold truncate text-main" style={{ fontSize: widget.titleSize ? `${widget.titleSize}px` : 'var(--title-size)', fontWeight: widget.titleWeight || 'var(--title-weight)' }}>
                     {widget.title}
                   </h3>
                 )}
@@ -2904,23 +2904,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 )}
               </div>
 
-              {/* Preview Toggle Button (Shown in View mode only) */}
-              {!isEditMode && onTogglePreview && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTogglePreview();
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-widest ${
-                    isPreviewMode
-                      ? 'bg-[var(--primary-color)] text-white shadow-[0_0_12px_rgba(var(--primary-rgb),0.4)] scale-105'
-                      : 'bg-[var(--surface-muted)] text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] border border-[var(--border-base)]'
-                  }`}
-                >
-                  <Activity className={`w-3 h-3 ${isPreviewMode ? 'animate-pulse' : ''}`} />
-                  {isPreviewMode ? 'Live' : 'Preview'}
-                </button>
-              )}
+
 
               {isEditMode && (
                 <div className="flex items-center gap-1 flex-shrink-0">
