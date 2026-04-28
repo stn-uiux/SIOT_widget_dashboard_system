@@ -1930,7 +1930,7 @@ const App: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={handleToggleDesignSidebar}
+                    onClick={handleOpenDesignSidebar}
                     className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
                     style={{ 
                       backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)',
