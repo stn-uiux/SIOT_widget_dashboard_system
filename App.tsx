@@ -1971,19 +1971,20 @@ const App: React.FC = () => {
                   <button
                     disabled={isEditMode}
                     onClick={() => {
-                      setIsPreviewMode(true);
-                      setIsFloatingGnbOpen(false);
+                      setIsPreviewMode(!isPreviewMode);
+                      if (!isPreviewMode) setIsFloatingGnbOpen(false);
                     }}
-                    className={`btn-base btn-surface ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+                    className={`btn-base btn-surface ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""} ${isPreviewMode ? "active" : ""}`}
                     style={{ 
-                      backgroundColor: 'var(--gnb-btn-bg)',
+                      backgroundColor: isPreviewMode ? undefined : 'var(--gnb-btn-bg)',
                       height: 'var(--gnb-btn-height)',
                       paddingLeft: 'var(--gnb-btn-padding-x)',
                       paddingRight: 'var(--gnb-btn-padding-x)',
                       borderRadius: 'var(--gnb-btn-radius)'
                     }}
                   >
-                    <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
+                    {isPreviewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <span style={{ fontSize: 'var(--text-small)' }}>{isPreviewMode ? "Exit Preview" : "Preview"}</span>
                   </button>
                 </div>
               </>
