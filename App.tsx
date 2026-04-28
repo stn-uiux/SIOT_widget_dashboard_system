@@ -24,6 +24,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { getSemanticColorForMode } from "./design-tokens/themeFromTokens";
+import designTokens from "./design-tokens.json";
 import {
   INITIAL_PROJECT_LIST,
   MOCK_CHART_DATA,
@@ -848,6 +849,7 @@ const HeaderClock = () => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
   const h = time.getHours().toString().padStart(2, "0");
   const m = time.getMinutes().toString().padStart(2, "0");
   const dateStr = time.toLocaleDateString("en-US", {
@@ -858,20 +860,33 @@ const HeaderClock = () => {
   });
   const [day, datePart] = dateStr.split(", ");
   return (
-    <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 text-[var(--text-main)] font-mono whitespace-nowrap overflow-hidden">
-      <span className="text-lg font-bold tracking-tighter shrink-0">{h}:{m}</span>
+    <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 font-mono whitespace-nowrap overflow-hidden" style={{ color: 'var(--h-clock-color)' }}>
+      <span className="font-bold tracking-tighter shrink-0" style={{ fontSize: 'var(--h-clock-time-size)' }}>{h}:{m}</span>
       <div className="flex flex-col leading-none shrink-0">
-        <span className="font-bold opacity-70 uppercase" style={{ fontSize: 'var(--text-nano)' }}>{day}</span>
-        <span className="font-black" style={{ fontSize: 'var(--text-micro)' }}>{datePart?.replace(/\//g, "-")}</span>
+        <span className="font-bold opacity-70 uppercase" style={{ fontSize: 'var(--h-clock-day-size)' }}>{day}</span>
+        <span className="font-black" style={{ fontSize: 'var(--h-clock-date-size)' }}>{datePart?.replace(/\//g, "-")}</span>
       </div>
     </div>
   );
 };
 
 const HeaderMonitor = () => (
-  <div className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 bg-white dark:bg-[var(--surface-elevated)] border border-[var(--border-base)] dark:border-white/5 shadow-sm rounded-full text-[var(--text-main)] whitespace-nowrap overflow-hidden">
-    <span className="font-bold tracking-tight uppercase" style={{ fontSize: 'var(--text-caption)' }}>시스템 감시</span>
-    <div className="w-2 h-2 rounded-full bg-[var(--error)] animate-pulse shadow-[var(--shadow-error-glow)] shrink-0" />
+  <div 
+    className="w-full h-full flex items-center justify-center gap-2 px-3 py-1 border whitespace-nowrap overflow-hidden shadow-sm" 
+    style={{ 
+      backgroundColor: 'var(--h-monitor-bg)', 
+      borderColor: 'var(--h-monitor-border)', 
+      borderRadius: 'var(--h-monitor-radius)' 
+    }}
+  >
+    <span className="font-bold tracking-tight uppercase" style={{ fontSize: 'var(--h-monitor-text-size)', color: 'var(--text-main)' }}>시스템 감시</span>
+    <div 
+      className="w-2 h-2 rounded-full animate-pulse shrink-0" 
+      style={{ 
+        backgroundColor: 'var(--h-monitor-dot-color)', 
+        boxShadow: 'var(--h-monitor-dot-glow)' 
+      }} 
+    />
   </div>
 );
 
@@ -982,8 +997,16 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
     const xPx = e.clientX - rect.left;
     const yPx = e.clientY - rect.top;
 
-    const colWidth = rect.width / 60;
-    const rowHeight = header.position === HeaderPosition.TOP ? (header.height / 12) : 40;
+    const layoutTokens = (designTokens as any).tokens?.layout;
+    const hGrid = layoutTokens?.header_grid;
+    const gridCols = hGrid?.cols?.value ?? 60;
+    const gridRows = hGrid?.rows?.value ?? 12;
+    const tokenRowHeight = hGrid?.rowHeight?.value ?? 4.8;
+    const gapX = hGrid?.gap_x?.value ?? 4;
+    const gapY = hGrid?.gap_y?.value ?? 2;
+
+    const colWidth = rect.width / gridCols;
+    const rowHeight = header.position === HeaderPosition.TOP ? (header.height / gridRows) : 40;
 
     const x = Math.floor(xPx / colWidth);
     const y = Math.floor(yPx / rowHeight);
@@ -991,8 +1014,8 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
     const newWidget: HeaderWidget = {
       id: `hw_${Date.now()}`,
       type,
-      x: Math.max(0, Math.min(x, 54)),
-      y: Math.max(0, Math.min(y, 11)),
+      x: Math.max(0, Math.min(x, gridCols - 6)),
+      y: Math.max(0, Math.min(y, gridRows - 1)),
       w: type === HeaderWidgetType.CLOCK
         ? 4
         : (type === HeaderWidgetType.MONITOR
@@ -1008,6 +1031,13 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
 
     onUpdate({ widgets: [...widgets, newWidget] });
   };
+
+  const layoutTokens = (designTokens as any).tokens?.layout;
+  const hGrid = layoutTokens?.header_grid;
+  const gridCols = hGrid?.cols?.value ?? 60;
+  const gridRows = hGrid?.rows?.value ?? 12;
+  const gapX = hGrid?.gap_x?.value ?? 4;
+  const gapY = hGrid?.gap_y?.value ?? 2;
 
   return (
     <div
@@ -1027,9 +1057,9 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
         }))}
         width={gridWidth}
         gridConfig={{
-          cols: 60,
-          rowHeight: header.position === HeaderPosition.TOP ? (header.height / 12 - 2) : 40,
-          margin: [4, 2],
+          cols: gridCols,
+          rowHeight: header.position === HeaderPosition.TOP ? (header.height / gridRows - (gapY)) : 40,
+          margin: [gapX, gapY],
           containerPadding: [0, 0],
         }}
         dragConfig={{ enabled: isEditMode }}
@@ -1068,17 +1098,39 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
 
 // Loading UI Component (Reusable)
 const LoadingScreen = ({ message }: { message: string }) => (
-  <div className="fixed inset-0 bg-[#020617] flex items-center justify-center z-[9999]">
+  <div className="fixed inset-0 bg-[var(--loading-bg)] flex items-center justify-center" style={{ zIndex: 'var(--loading-z)' }}>
     <div className="relative flex flex-col items-center">
-      <div className="absolute -inset-20 bg-blue-500/20 blur-[100px] rounded-full animate-pulse" />
-      <div className="absolute -inset-10 bg-indigo-500/10 blur-[60px] rounded-full animate-pulse [animation-delay:700ms]" />
+      <div 
+        className="absolute rounded-full animate-pulse" 
+        style={{ 
+          inset: '-80px', 
+          backgroundColor: 'var(--loading-glow-1)', 
+          filter: 'blur(var(--loading-blur-1))' 
+        }} 
+      />
+      <div 
+        className="absolute rounded-full animate-pulse [animation-delay:700ms]" 
+        style={{ 
+          inset: '-40px', 
+          backgroundColor: 'var(--loading-glow-2)', 
+          filter: 'blur(var(--loading-blur-2))' 
+        }} 
+      />
       <div className="flex flex-col items-center">
-        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-8" />
+        <div 
+          className="border-4 rounded-full animate-spin mb-8" 
+          style={{ 
+            width: 'var(--loading-spinner-size)', 
+            height: 'var(--loading-spinner-size)',
+            borderColor: 'rgba(var(--primary-color-rgb), 0.2)',
+            borderTopColor: 'var(--loading-spinner-color)'
+          }} 
+        />
         <div className="text-center">
-          <span className="text-sm uppercase tracking-[0.4em] font-black text-white animate-pulse">
+          <span className="text-sm uppercase tracking-[0.4em] font-black animate-pulse" style={{ color: 'var(--loading-text-1)' }}>
             STN Dashboard
           </span>
-          <p className="text-[10px] text-slate-400 mt-2 tracking-widest uppercase">
+          <p className="mt-2 tracking-widest uppercase" style={{ fontSize: 'var(--text-tiny)', color: 'var(--loading-text-2)' }}>
             {message}
           </p>
         </div>
@@ -2738,12 +2790,16 @@ const App: React.FC = () => {
             >
               {(() => {
                 const hBg = theme.mode === ThemeMode.LIGHT ? (header.backgroundImageLight || header.backgroundImage) : (header.backgroundImageDark || header.backgroundImage);
-                if (!hBg) return null;
+                if (!hBg || hBg === 'none') return null;
                 return (
-                  <img
-                    src={hBg}
-                    className="absolute top-0 left-0 w-full h-auto z-0 pointer-events-none"
-                    alt="Header Background"
+                  <div
+                    className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+                    style={{
+                      backgroundImage: `url(${hBg})`,
+                      backgroundPosition: 'var(--header-bg-position, top left)',
+                      backgroundSize: 'var(--header-bg-size, 100% auto)',
+                      backgroundRepeat: 'var(--header-bg-repeat, no-repeat)',
+                    }}
                   />
                 );
               })()}

@@ -248,6 +248,19 @@
                 "value": "32px",
                 "type": "dimension"
             },
+            "header_grid": {
+                "cols": { "value": 60, "type": "number" },
+                "rows": { "value": 12, "type": "number" },
+                "rowHeight": { "value": 4.8, "type": "number" },
+                "gap_x": { "value": 4, "type": "number" },
+                "gap_y": { "value": 2, "type": "number" }
+            },
+            "header_widget_defaults": {
+                "clock": { "x": 56, "y": 3, "w": 4, "h": 6 },
+                "monitor": { "x": 0, "y": 3, "w": 5, "h": 6 },
+                "theme_toggle": { "x": 53, "y": 3, "w": 3, "h": 6 },
+                "logo": { "x": 2, "y": 3, "w": 6, "h": 6 }
+            },
             "shadowBaseLight": {
                 "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 "type": "string"
@@ -374,209 +387,98 @@
             }
         },
         "components": {
-            "button": {
-                "height": {
-                    "value": "44px",
-                    "type": "dimension"
+            "header": {
+                "height": { "value": "64px", "type": "dimension" },
+                "padding": { "value": "16px", "type": "dimension" },
+                "title_size": { "value": "18px", "type": "dimension" },
+                "project_name_color": { "value": "var(--text-main)", "type": "color" },
+                "background_image_light": { "value": "", "type": "string" },
+                "background_image_dark": { "value": "", "type": "string" },
+                "background_position": { "value": "top left", "type": "string" },
+                "background_size": { "value": "100% auto", "type": "string" },
+                "background_repeat": { "value": "no-repeat", "type": "string" }
+            },
+            "header_widgets": {
+                "clock": {
+                    "time_size": { "value": "18px", "type": "dimension" },
+                    "date_size": { "value": "10px", "type": "dimension" },
+                    "day_size": { "value": "9px", "type": "dimension" },
+                    "color": { "value": "var(--text-main)", "type": "color" }
                 },
-                "padding_x": {
-                    "value": "20px",
-                    "type": "dimension"
-                },
-                "padding_y": {
-                    "value": "10px",
-                    "type": "dimension"
-                },
-                "radius_pill": {
-                    "value": "9999px",
-                    "type": "dimension",
-                    "description": "Pill-shaped buttons"
-                },
-                "gap": {
-                    "value": "8px",
-                    "type": "dimension",
-                    "description": "Gap between icon and label"
-                },
-                "font_size": {
-                    "value": "14px",
-                    "type": "dimension"
-                },
-                "font_weight": {
-                    "value": "600",
-                    "type": "string"
-                },
-                "background_default_light": {
-                    "value": "#f1f5f9",
-                    "type": "color"
-                },
-                "background_default_dark": {
-                    "value": "#1a1936",
-                    "type": "color",
-                    "description": "Default/inactive button fill"
-                },
-                "background_active_dark": {
-                    "value": "#1a1936",
-                    "type": "color",
-                    "description": "Active state same fill, border glows"
-                },
-                "icon_only_size": {
-                    "value": "40px",
-                    "type": "dimension"
-                },
-                "icon_only_radius": {
-                    "value": "12px",
-                    "type": "dimension"
+                "monitor": {
+                    "bg_light": { "value": "#ffffff", "type": "color" },
+                    "bg_dark": { "value": "var(--surface-elevated)", "type": "color" },
+                    "border_color_light": { "value": "var(--border-base)", "type": "color" },
+                    "border_color_dark": { "value": "rgba(255, 255, 255, 0.05)", "type": "color" },
+                    "radius": { "value": "9999px", "type": "dimension" },
+                    "text_size": { "value": "var(--text-caption)", "type": "dimension" },
+                    "dot_color": { "value": "var(--error)", "type": "color" },
+                    "dot_glow": { "value": "var(--shadow-error-glow)", "type": "string" }
                 }
+            },
+            "loading_screen": {
+                "background": { "value": "#020617", "type": "color" },
+                "z_index": { "value": 9999, "type": "number" },
+                "glow_primary": { "value": "rgba(59, 130, 246, 0.2)", "type": "color" },
+                "glow_secondary": { "value": "rgba(99, 102, 241, 0.1)", "type": "color" },
+                "blur_primary": { "value": "100px", "type": "dimension" },
+                "blur_secondary": { "value": "60px", "type": "dimension" },
+                "spinner_size": { "value": "48px", "type": "dimension" },
+                "spinner_color": { "value": "#3b82f6", "type": "color" },
+                "text_primary": { "value": "#ffffff", "type": "color" },
+                "text_secondary": { "value": "#94a3b8", "type": "color" }
+            },
+            "button": {
+                "height": { "value": "44px", "type": "dimension" },
+                "padding_x": { "value": "20px", "type": "dimension" },
+                "padding_y": { "value": "10px", "type": "dimension" },
+                "radius_pill": { "value": "9999px", "type": "dimension" },
+                "gap": { "value": "8px", "type": "dimension" },
+                "font_size": { "value": "14px", "type": "dimension" },
+                "font_weight": { "value": "600", "type": "string" },
+                "background_default_light": { "value": "#f1f5f9", "type": "color" },
+                "background_default_dark": { "value": "#1a1936", "type": "color" },
+                "background_active_dark": { "value": "#1a1936", "type": "color" },
+                "icon_only_size": { "value": "40px", "type": "dimension" },
+                "icon_only_radius": { "value": "12px", "type": "dimension" }
             },
             "widget_card": {
-                "action_hover_bg": {
-                    "value": "rgba(0, 0, 0, 0.05)",
-                    "type": "color"
-                },
-                "edit_handle_color": {
-                    "value": "#64748b",
-                    "type": "color"
-                },
-                "border_width": {
-                    "value": "1",
-                    "type": "dimension"
-                },
-                "border_color_light": {
-                    "value": "#e2e8f0",
-                    "type": "color"
-                },
-                "border_color_dark": {
-                    "value": "#1e293b",
-                    "type": "color"
-                },
-                "header_color": {
-                    "value": "transparent",
-                    "type": "color"
-                },
-                "edit_mode_border_color": {
-                    "value": "rgba(59, 130, 246, 0.4)",
-                    "type": "color",
-                    "description": "Border color for widgets in Edit Mode"
-                },
-                "edit_mode_border_style": {
-                    "value": "dashed",
-                    "type": "string",
-                    "description": "Border style for widgets in Edit Mode"
-                },
-                "selected_border_color": {
-                    "value": "#3b82f6",
-                    "type": "color",
-                    "description": "Brand blue border for selected widget"
-                },
-                "selected_shadow_glow": {
-                    "value": "0 0 35px rgba(59, 130, 246, 0.4)",
-                    "type": "string"
-                },
-                "action_hover_text": {
-                    "value": "var(--primary-color)",
-                    "type": "color"
-                },
-                "action_danger_hover_bg": {
-                    "value": "rgba(239, 68, 68, 0.1)",
-                    "type": "color"
-                },
-                "action_danger_hover_text": {
-                    "value": "var(--error)",
-                    "type": "color"
-                },
-                "selected_overlay_bg": {
-                    "value": "rgba(59, 130, 246, 0.08)",
-                    "type": "color"
-                },
-                "selected_inner_glow": {
-                    "value": "inset 0 0 25px rgba(59, 130, 246, 0.15)",
-                    "type": "string"
-                },
-                "bar_width_default": {
-                    "value": "60",
-                    "type": "number",
-                    "description": "Default bar thickness percentage (0-100)"
-                }
+                "action_hover_bg": { "value": "rgba(0, 0, 0, 0.05)", "type": "color" },
+                "edit_handle_color": { "value": "#64748b", "type": "color" },
+                "border_width": { "value": "1", "type": "dimension" },
+                "border_color_light": { "value": "#e2e8f0", "type": "color" },
+                "border_color_dark": { "value": "#1e293b", "type": "color" },
+                "header_color": { "value": "transparent", "type": "color" },
+                "edit_mode_border_color": { "value": "rgba(59, 130, 246, 0.4)", "type": "color" },
+                "edit_mode_border_style": { "value": "dashed", "type": "string" },
+                "selected_border_color": { "value": "#3b82f6", "type": "color" },
+                "selected_shadow_glow": { "value": "0 0 35px rgba(59, 130, 246, 0.4)", "type": "string" },
+                "action_hover_text": { "value": "var(--primary-color)", "type": "color" },
+                "action_danger_hover_bg": { "value": "rgba(239, 68, 68, 0.1)", "type": "color" },
+                "action_danger_hover_text": { "value": "var(--error)", "type": "color" },
+                "selected_overlay_bg": { "value": "rgba(59, 130, 246, 0.08)", "type": "color" },
+                "selected_inner_glow": { "value": "inset 0 0 25px rgba(59, 130, 246, 0.15)", "type": "string" },
+                "bar_width_default": { "value": "60", "type": "number" }
             },
             "glassmorphism": {
-                "blur": {
-                    "value": "12px",
-                    "type": "dimension",
-                    "description": "Backdrop blur amount for glass cards"
-                },
+                "blur": { "value": "12px", "type": "dimension" },
                 "light": {
-                    "background": {
-                        "value": "rgba(255, 255, 255, 0.55)",
-                        "type": "color",
-                        "description": "Light mode glass background"
-                    },
-                    "border": {
-                        "value": "1px solid rgba(255, 255, 255, 0.6)",
-                        "type": "string",
-                        "description": "Light mode glass border"
-                    },
-                    "shadow": {
-                        "value": "0 8px 32px rgba(0, 0, 0, 0.08)",
-                        "type": "string",
-                        "description": "Light mode glass shadow"
-                    }
+                    "background": { "value": "rgba(255, 255, 255, 0.55)", "type": "color" },
+                    "border": { "value": "1px solid rgba(255, 255, 255, 0.6)", "type": "string" },
+                    "shadow": { "value": "0 8px 32px rgba(0, 0, 0, 0.08)", "type": "string" }
                 },
                 "dark": {
-                    "background": {
-                        "value": "rgba(15, 23, 42, 0.35)",
-                        "type": "color",
-                        "description": "Dark mode glass background"
-                    },
-                    "border": {
-                        "value": "1px solid rgba(255, 255, 255, 0.12)",
-                        "type": "string",
-                        "description": "Dark mode glass border"
-                    },
-                    "shadow": {
-                        "value": "0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                        "type": "string",
-                        "description": "Dark mode glass shadow"
-                    }
-                }
-            },
-            "header": {
-                "title_size": {
-                    "value": "18px",
-                    "type": "dimension",
-                    "description": "Default font size for the project title in the dashboard header"
-                },
-                "project_name_color": {
-                    "value": "var(--text-main)",
-                    "type": "color",
-                    "description": "GNB 캡슐 내 프로젝트 이름 텍스트 색상"
-                },
-                "height": {
-                    "value": "64px",
-                    "type": "dimension"
+                    "background": { "value": "rgba(15, 23, 42, 0.35)", "type": "color" },
+                    "border": { "value": "1px solid rgba(255, 255, 255, 0.12)", "type": "string" },
+                    "shadow": { "value": "0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)", "type": "string" }
                 }
             },
             "ai_fab": {
-                "size": {
-                    "value": "72px",
-                    "type": "dimension",
-                    "description": "AI Assistant FAB size"
-                },
-                "gradient": {
-                    "value": "linear-gradient(135deg, #00f2ff, #7000ff, #00f2ff)",
-                    "type": "string"
-                },
-                "glow": {
-                    "value": "0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2)",
-                    "type": "string"
-                },
-                "inner_glow": {
-                    "value": "inset 0 0 15px rgba(255, 255, 255, 0.3)",
-                    "type": "string"
-                },
-                "blur": {
-                    "value": "12px",
-                    "type": "dimension"
-                }
+                "size": { "value": "72px", "type": "dimension" },
+                "gradient": { "value": "linear-gradient(135deg, #00f2ff, #7000ff, #00f2ff)", "type": "string" },
+                "glow": { "value": "0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2)", "type": "string" },
+                "inner_glow": { "value": "inset 0 0 15px rgba(255, 255, 255, 0.3)", "type": "string" },
+                "blur": { "value": "12px", "type": "dimension" }
             }
         },
         "icons": {

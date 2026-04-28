@@ -29,6 +29,7 @@ interface DesignSystemProps {
 const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
     useEffect(() => {
         const root = targetRef?.current ?? document.documentElement;
+        const isDark = theme.mode === ThemeMode.DARK;
 
         // Apply Primary Palette
         applyColorPalette(root, 'primary', theme.primaryColor);
@@ -60,32 +61,80 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
         root.style.setProperty('--text-lg', `${theme.textLg}px`);
         root.style.setProperty('--text-hero', `${theme.textHero ?? 48}px`);
 
-        // Glassmorphism (from design-tokens.json by theme mode)
-        type GlassVariant = { background?: TokenObj; border?: TokenObj; shadow?: TokenObj };
-        const components = (designTokens as { tokens?: { components?: { glassmorphism?: { blur?: TokenObj; light?: GlassVariant; dark?: GlassVariant } } } }).tokens?.components;
-        const glass = components?.glassmorphism;
-        const isDark = theme.mode === ThemeMode.DARK;
-        const variant: GlassVariant | undefined = glass && isDark ? glass.dark : glass?.light;
-        const blur = glass?.blur?.value ?? '12px';
-        const defBgKey = isDark ? '--glass-default-bg-dark' : '--glass-default-bg-light';
-        const defBg = getComputedStyle(document.documentElement).getPropertyValue(defBgKey).trim() || (isDark ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)');
-        const defOpacity = isDark ? 0.35 : 0.55;
-        const defBorderKey = isDark ? '--glass-default-border-dark' : '--glass-default-border-light';
-        const defBorder = getComputedStyle(document.documentElement).getPropertyValue(defBorderKey).trim() || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)');
-        const defShadowKey = isDark ? '--glass-default-shadow-dark' : '--glass-default-shadow-light';
-        const defShadow = getComputedStyle(document.documentElement).getPropertyValue(defShadowKey).trim() || (isDark ? '0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)' : '0 8px 32px rgba(0, 0, 0, 0.08)');
-        const tokenBg = variant && tokenValue(variant.background);
-        const parsed = tokenBg ? parseRgba(tokenBg) : null;
-        // Prioritize theme.surfaceColor for the RGB part of glassmorphism
-        const glassRgb = hexToRgb(theme.surfaceColor);
-        const glassOpacity = parsed?.opacity ?? defOpacity;
-        
-        root.style.setProperty('--glass-bg-rgb', glassRgb);
-        root.style.setProperty('--glass-opacity', String(glassOpacity));
-        root.style.setProperty('--glass-bg', `rgba(${glassRgb}, ${glassOpacity})`);
-        root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || defBorder);
-        root.style.setProperty('--glass-shadow', (variant && tokenValue(variant.shadow)) || defShadow);
-        root.style.setProperty('--glass-blur', blur);
+        // Header & Component Tokens (from design-tokens.json)
+        const components = (designTokens as any).tokens?.components;
+        if (components) {
+            // Header
+            const headerTokens = components.header;
+            if (headerTokens) {
+                root.style.setProperty('--header-height', tokenValue(headerTokens.height));
+                root.style.setProperty('--header-bg-position', tokenValue(headerTokens.background_position));
+                root.style.setProperty('--header-bg-size', tokenValue(headerTokens.background_size));
+                root.style.setProperty('--header-bg-repeat', tokenValue(headerTokens.background_repeat));
+            }
+
+            // Header Grid
+            const layoutTokens = (designTokens as any).tokens?.layout;
+            const hGrid = layoutTokens?.header_grid;
+            if (hGrid) {
+                root.style.setProperty('--header-grid-cols', String(hGrid.cols?.value ?? 60));
+                root.style.setProperty('--header-grid-rows', String(hGrid.rows?.value ?? 12));
+                root.style.setProperty('--header-row-height', `${tokenValue(hGrid.rowHeight)}px`);
+                root.style.setProperty('--header-grid-gap-x', `${hGrid.gap_x?.value ?? 4}px`);
+                root.style.setProperty('--header-grid-gap-y', `${hGrid.gap_y?.value ?? 2}px`);
+            }
+
+            // Loading Screen
+            const loadingTokens = components.loading_screen;
+            if (loadingTokens) {
+                root.style.setProperty('--loading-bg', tokenValue(loadingTokens.background));
+                root.style.setProperty('--loading-z', String(loadingTokens.z_index?.value ?? 9999));
+                root.style.setProperty('--loading-glow-1', tokenValue(loadingTokens.glow_primary));
+                root.style.setProperty('--loading-glow-2', tokenValue(loadingTokens.glow_secondary));
+                root.style.setProperty('--loading-blur-1', tokenValue(loadingTokens.blur_primary));
+                root.style.setProperty('--loading-blur-2', tokenValue(loadingTokens.blur_secondary));
+                root.style.setProperty('--loading-spinner-size', tokenValue(loadingTokens.spinner_size));
+                root.style.setProperty('--loading-spinner-color', tokenValue(loadingTokens.spinner_color));
+                root.style.setProperty('--loading-text-1', tokenValue(loadingTokens.text_primary));
+                root.style.setProperty('--loading-text-2', tokenValue(loadingTokens.text_secondary));
+            }
+
+            // Header Widgets
+            const hWidgetTokens = components.header_widgets;
+            if (hWidgetTokens) {
+                // Clock
+                const clock = hWidgetTokens.clock;
+                root.style.setProperty('--h-clock-time-size', tokenValue(clock?.time_size));
+                root.style.setProperty('--h-clock-date-size', tokenValue(clock?.date_size));
+                root.style.setProperty('--h-clock-day-size', tokenValue(clock?.day_size));
+                root.style.setProperty('--h-clock-color', tokenValue(clock?.color));
+
+                // Monitor
+                const monitor = hWidgetTokens.monitor;
+                root.style.setProperty('--h-monitor-bg', isDark ? tokenValue(monitor?.bg_dark) : tokenValue(monitor?.bg_light));
+                root.style.setProperty('--h-monitor-border', isDark ? tokenValue(monitor?.border_color_dark) : tokenValue(monitor?.border_color_light));
+                root.style.setProperty('--h-monitor-radius', tokenValue(monitor?.radius));
+                root.style.setProperty('--h-monitor-text-size', tokenValue(monitor?.text_size));
+                root.style.setProperty('--h-monitor-dot-color', tokenValue(monitor?.dot_color));
+                root.style.setProperty('--h-monitor-dot-glow', tokenValue(monitor?.dot_glow));
+            }
+
+            // Glassmorphism
+            const glass = components.glassmorphism;
+            const variant = glass && isDark ? glass.dark : glass?.light;
+            const blur = glass?.blur?.value ?? '12px';
+            const defOpacity = isDark ? 0.35 : 0.55;
+            const glassRgb = hexToRgb(theme.surfaceColor);
+            const tokenBg = variant && tokenValue(variant.background);
+            const parsed = tokenBg ? parseRgba(tokenBg) : null;
+            const glassOpacity = parsed?.opacity ?? defOpacity;
+            
+            root.style.setProperty('--glass-bg-rgb', glassRgb);
+            root.style.setProperty('--glass-opacity', String(glassOpacity));
+            root.style.setProperty('--glass-bg', `rgba(${glassRgb}, ${glassOpacity})`);
+            root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)'));
+            root.style.setProperty('--glass-blur', blur);
+        }
 
         // Dedicated GNB background to decouple it from widgets
         const gnbBg = isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)';
