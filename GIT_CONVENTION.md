@@ -58,11 +58,22 @@ git tag checkpoint-2026-05-01-v2   # DB 연동 완료 후 백업
 
 ---
 
-## ✅ 기본 Push 순서
+## ✅ Git Push 승인 필수 (중요)
+
+> **AI 어시스턴트 필수 준수 사항**: 
+> 1. 로컬 커밋(`git commit`)은 자유롭게 하되, 원격 저장소로의 **`git push`는 반드시 사용자의 명시적인 허락**을 받은 후에만 실행합니다.
+> 2. 사용자가 "깃에 올려줘" 또는 "push 해줘"라고 말하지 않은 상태에서 임의로 push하는 것은 엄격히 금지됩니다.
+> 3. 모든 작업 완료 후 "수정 사항을 원격지에 반영(push)할까요?"라고 먼저 물어보아야 합니다.
+
+---
+
+## ✅ 기본 작업 순서
 
 ```bash
 git add .
 git commit -m "feat: (한국어로 설명)"
+# 🛑 여기서 중단! 사용자에게 push 허락을 먼저 구함
+# 허락 후 실행:
 git push origin main
-git push origin --tags   # 태그 있을 경우
+git push origin --tags
 ```
