@@ -1714,66 +1714,7 @@ const App: React.FC = () => {
                       <ChevronDown
                         className={`w-3 h-3 transition-transform ${isProjectDropdownOpen ? "rotate-180" : ""} text-muted`}
                       />
-<<<<<<< HEAD
-                      <div
-                        className="absolute bottom-full left-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
-                        style={{ 
-                          width: 'var(--gnb-dropdown-width)',
-                          borderRadius: 'var(--gnb-dropdown-radius)',
-                          padding: 'var(--gnb-dropdown-padding)'
-                        }}
-                      >
-                        <div className="px-3 py-2 mb-1 border-b" style={{ borderColor: 'var(--gnb-header-sep-color)' }}>
-                          <p className="uppercase text-muted tracking-widest" style={{ fontSize: 'var(--gnb-header-font-size)', fontWeight: 'var(--gnb-header-font-weight)' }}>
-                            Select Project
-                          </p>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
-                          {projects.map((p) => (
-                            <div
-                              key={p.id}
-                              className={`flex items-center group/proj w-full mb-1 border transition-all ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
-                              style={{ 
-                                height: 'var(--gnb-item-height)',
-                                borderRadius: 'var(--gnb-item-radius)',
-                                paddingLeft: 'var(--gnb-item-padding-x)',
-                                paddingRight: 'var(--gnb-item-padding-x)',
-                                gap: 'var(--gnb-item-gap)'
-                              }}
-                            >
-                              {editingProjectId === p.id ? (
-                                <div className="flex-1 flex items-center gap-2 min-w-0">
-                                  <input
-                                    autoFocus
-                                    type="text"
-                                    value={editingProjectName}
-                                    onChange={(e) => setEditingProjectName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") renameProject(p.id, editingProjectName);
-                                      if (e.key === "Escape") setEditingProjectId(null);
-                                    }}
-                                    onBlur={() => renameProject(p.id, editingProjectName)}
-                                    className="flex-1 min-w-0 bg-transparent border-b border-[var(--primary-color)] text-xs font-bold outline-none uppercase tracking-tight text-[var(--text-main)] w-full"
-                                  />
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setActiveProjectId(p.id);
-                                    setIsProjectDropdownOpen(false);
-                                  }}
-                                  className="flex-1 min-w-0 text-left"
-                                >
-                                  <div className="flex-1 min-w-0">
-                                    <p className="uppercase tracking-tight truncate" style={{ fontSize: 'var(--gnb-item-font-size)', fontWeight: 'var(--gnb-item-font-weight)' }}>
-                                      {p.name}
-                                    </p>
-                                  </div>
-                                </button>
-                              )}
-=======
                     </button>
->>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
 
                     {isProjectDropdownOpen && (
                       <>
@@ -1879,49 +1820,14 @@ const App: React.FC = () => {
                                     Base Export
                                   </span>
                                 </button>
-                              </div>
-
-<<<<<<< HEAD
-                              {activeProjectId === p.id && editingProjectId !== p.id && (
-                                <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--primary-color)] group-hover/proj:hidden" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-2">
-                          <div className="flex flex-col gap-1.5 px-1 py-1">
-                            <span className="uppercase text-muted tracking-widest pl-1" style={{ fontSize: 'var(--gnb-header-font-size)', fontWeight: 'var(--gnb-header-font-weight)' }}>Project Sync</span>
-                            <div className="grid grid-cols-2 gap-1.5">
-                              <button
-                                onClick={() => handleExportClick('full')}
-                                disabled={capturingForExport}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
-                              >
-                                <Upload className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
-                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
-                                  Full Export
-                                </span>
-                              </button>
-                              <button
-                                onClick={() => handleExportClick('base')}
-                                disabled={capturingForExport}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--primary-color)]/30 hover:bg-[var(--primary-color)]/5"
-                              >
-                                <Palette className="w-3.5 h-3.5 text-primary group-hover/btn:scale-110 transition-transform" />
-                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
-                                  Base Export
-                                </span>
-                              </button>
-=======
-                              <div className="grid grid-cols-2 gap-1.5 mt-0.5">
                                 <button
                                   onClick={() => {
                                     setImportTarget('full');
                                     importInputRef.current?.click();
                                   }}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
                                 >
-                                  <Download className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                  <Download className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
                                   <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
                                     Full Import
                                   </span>
@@ -1931,55 +1837,28 @@ const App: React.FC = () => {
                                     setImportTarget('base');
                                     importInputRef.current?.click();
                                   }}
-                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                  className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
                                 >
-                                  <Palette className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                  <Palette className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
                                   <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
                                     Base Import
                                   </span>
                                 </button>
                               </div>
->>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
-                            </div>
 
-                            {isAdmin && (
-                              <button
-<<<<<<< HEAD
-                                onClick={() => {
-                                  setImportTarget('full');
-                                  importInputRef.current?.click();
-                                }}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
-                              >
-                                <Download className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
-                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
-                                  Full Import
-                                </span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setImportTarget('base');
-                                  importInputRef.current?.click();
-                                }}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
-                              >
-                                <Palette className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
-                                <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
-                                  Base Import
-                                </span>
-                              </button>
+                              {isAdmin && (
+                                <button
+                                  onClick={addProject}
+                                  className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
+                                >
+                                  <Plus className="w-4 h-4" />{" "}
+                                  <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
+                                    New Project
+                                  </span>
+                                </button>
+                              )}
                             </div>
-=======
-                                onClick={addProject}
-                                className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
-                              >
-                                <Plus className="w-4 h-4" />{" "}
-                                <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                                  New Project
-                                </span>
-                              </button>
-                            )}
->>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
+                          </div>
                           </div>
                         </div>
                       </>
@@ -1988,125 +1867,21 @@ const App: React.FC = () => {
               </div>
             </div>
 
-<<<<<<< HEAD
-          <div className="h-6 w-px bg-[var(--border-base)] mx-4" />
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <button
-                onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
-                className={`btn-base btn-surface ${isLibraryDropdownOpen ? "active" : ""}`}
-                style={{ 
-                  backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)',
-                  height: 'var(--gnb-btn-height)',
-                  paddingLeft: 'var(--gnb-btn-padding-x)',
-                  paddingRight: 'var(--gnb-btn-padding-x)',
-                  borderRadius: 'var(--gnb-btn-radius)'
-                }}
-              >
-                <div
-                  className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: `color-mix(in srgb, var(${currentLibrary.colorVar}) 12%, transparent)`, color: `var(${currentLibrary.colorVar})` }}
-                >
-                  <currentLibrary.icon
-                    className="w-3.5 h-3.5"
-                  />
-                </div>
-                <span className="text-xs font-bold">{currentLibrary.label}</span>
-                <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-muted/60 group-hover:text-primary`} />
-              </button>
-
-              {isLibraryDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsLibraryDropdownOpen(false)}
-                  />
-                  <div
-                    className="absolute bottom-full right-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
-                    style={{ 
-                      width: 'var(--gnb-dropdown-width)',
-                      borderRadius: 'var(--gnb-dropdown-radius)',
-                      padding: 'var(--gnb-dropdown-padding)'
-                    }}
-                  >
-                    {libraryOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          handleThemeChange({
-                            ...theme,
-                            chartLibrary: opt.value as ChartLibrary,
-                          });
-                          setIsLibraryDropdownOpen(false);
-                        }}
-                        className={`w-full justify-between flex items-center transition-all btn-base btn-ghost mb-1 ${theme.chartLibrary === opt.value ? "active" : ""}`}
-                        style={{ 
-                          height: 'var(--gnb-item-height)',
-                          borderRadius: 'var(--gnb-item-radius)',
-                          paddingLeft: 'var(--gnb-item-padding-x)',
-                          paddingRight: 'var(--gnb-item-padding-x)'
-                        }}
-                      >
-                        <div className="flex items-center" style={{ gap: 'var(--gnb-item-gap)' }}>
-                          <opt.icon className="w-4 h-4" style={{ color: `var(${opt.colorVar})` }} />
-                          <span className="uppercase tracking-tight" style={{ fontSize: 'var(--gnb-item-font-size)', fontWeight: 'var(--gnb-item-font-weight)' }}>{opt.label}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button
-              onClick={handleToggleDesignSidebar}
-              className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
-              style={{ 
-                backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)',
-                height: 'var(--gnb-btn-height)',
-                paddingLeft: 'var(--gnb-btn-padding-x)',
-                paddingRight: 'var(--gnb-btn-padding-x)',
-                borderRadius: 'var(--gnb-btn-radius)'
-              }}
-            >
-              <Palette className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Design</span>
-            </button>
-            <button
-              onClick={handleOpenLayoutSidebar}
-              className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
-              style={{ backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
-            >
-              <LayoutGrid className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Layout</span>
-            </button>
-            <button
-              onClick={handleProjectSave}
-              className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
-              style={{ backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)' }}
-            >
-              <Edit3 className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Edit</span>
-            </button>
-            <button
-              disabled={isEditMode}
-              onClick={() => {
-                setIsPreviewMode(true);
-                setIsFloatingGnbOpen(false);
-              }}
-              className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
-              style={{ backgroundColor: 'var(--gnb-btn-bg)' }}
-            >
-              <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
-            </button>
-=======
-            {isAdmin && (
+            {userRole === 'admin' && (
               <>
                 <div className="h-6 w-px bg-[var(--border-base)] mx-4" />
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <button
                       onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
-                      className={`btn-base btn-surface h-10 px-4 rounded-full ${isLibraryDropdownOpen ? "active" : ""}`}
-                      style={{ backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                      className={`btn-base btn-surface ${isLibraryDropdownOpen ? "active" : ""}`}
+                      style={{ 
+                        backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)',
+                        height: 'var(--gnb-btn-height)',
+                        paddingLeft: 'var(--gnb-btn-padding-x)',
+                        paddingRight: 'var(--gnb-btn-padding-x)',
+                        borderRadius: 'var(--gnb-btn-radius)'
+                      }}
                     >
                       <div
                         className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
@@ -2122,8 +1897,12 @@ const App: React.FC = () => {
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setIsLibraryDropdownOpen(false)} />
                         <div
-                          className="absolute bottom-full right-0 mb-4 w-52 p-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow shadow-premium"
-                          style={{ borderRadius: 'var(--radius-panel)' }}
+                          className="absolute bottom-full right-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
+                          style={{ 
+                            width: 'var(--gnb-dropdown-width)',
+                            borderRadius: 'var(--gnb-dropdown-radius)',
+                            padding: 'var(--gnb-dropdown-padding)'
+                          }}
                         >
                           {libraryOptions.map((opt) => (
                             <button
@@ -2132,11 +1911,17 @@ const App: React.FC = () => {
                                 handleThemeChange({ ...theme, chartLibrary: opt.value as ChartLibrary });
                                 setIsLibraryDropdownOpen(false);
                               }}
-                              className={`w-full justify-between px-3 py-2.5 flex items-center transition-all btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`}
+                              className={`w-full justify-between flex items-center transition-all btn-base btn-ghost mb-1 ${theme.chartLibrary === opt.value ? "active" : ""}`}
+                              style={{ 
+                                height: 'var(--gnb-item-height)',
+                                borderRadius: 'var(--gnb-item-radius)',
+                                paddingLeft: 'var(--gnb-item-padding-x)',
+                                paddingRight: 'var(--gnb-item-padding-x)'
+                              }}
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center" style={{ gap: 'var(--gnb-item-gap)' }}>
                                 <opt.icon className="w-4 h-4" style={{ color: `var(${opt.colorVar})` }} />
-                                <span className="font-bold text-xs uppercase tracking-tight">{opt.label}</span>
+                                <span className="uppercase tracking-tight" style={{ fontSize: 'var(--gnb-item-font-size)', fontWeight: 'var(--gnb-item-font-weight)' }}>{opt.label}</span>
                               </div>
                             </button>
                           ))}
@@ -2146,23 +1931,41 @@ const App: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={handleOpenDesignSidebar}
-                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
-                    style={{ backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                    onClick={handleToggleDesignSidebar}
+                    className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
+                    style={{ 
+                      backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)',
+                      height: 'var(--gnb-btn-height)',
+                      paddingLeft: 'var(--gnb-btn-padding-x)',
+                      paddingRight: 'var(--gnb-btn-padding-x)',
+                      borderRadius: 'var(--gnb-btn-radius)'
+                    }}
                   >
                     <Palette className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Design</span>
                   </button>
                   <button
                     onClick={handleOpenLayoutSidebar}
-                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isLayoutSidebarOpen ? "active" : ""}`}
-                    style={{ backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                    className={`btn-base btn-surface ${isLayoutSidebarOpen ? "active" : ""}`}
+                    style={{ 
+                      backgroundColor: isLayoutSidebarOpen ? undefined : 'var(--gnb-btn-bg)',
+                      height: 'var(--gnb-btn-height)',
+                      paddingLeft: 'var(--gnb-btn-padding-x)',
+                      paddingRight: 'var(--gnb-btn-padding-x)',
+                      borderRadius: 'var(--gnb-btn-radius)'
+                    }}
                   >
                     <LayoutGrid className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Layout</span>
                   </button>
                   <button
-                    onClick={handleToggleEditMode}
-                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "active" : ""}`}
-                    style={{ backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)' }}
+                    onClick={() => setIsEditMode(!isEditMode)}
+                    className={`btn-base btn-surface ${isEditMode ? "active" : ""}`}
+                    style={{ 
+                      backgroundColor: isEditMode ? undefined : 'var(--gnb-btn-bg)',
+                      height: 'var(--gnb-btn-height)',
+                      paddingLeft: 'var(--gnb-btn-padding-x)',
+                      paddingRight: 'var(--gnb-btn-padding-x)',
+                      borderRadius: 'var(--gnb-btn-radius)'
+                    }}
                   >
                     <Edit3 className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Edit</span>
                   </button>
@@ -2172,22 +1975,26 @@ const App: React.FC = () => {
                       setIsPreviewMode(true);
                       setIsFloatingGnbOpen(false);
                     }}
-                    className={`btn-base btn-surface h-10 px-4 rounded-full ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
-                    style={{ backgroundColor: 'var(--gnb-btn-bg)' }}
+                    className={`btn-base btn-surface ${isEditMode ? "opacity-40 grayscale pointer-events-none" : ""}`}
+                    style={{ 
+                      backgroundColor: 'var(--gnb-btn-bg)',
+                      height: 'var(--gnb-btn-height)',
+                      paddingLeft: 'var(--gnb-btn-padding-x)',
+                      paddingRight: 'var(--gnb-btn-padding-x)',
+                      borderRadius: 'var(--gnb-btn-radius)'
+                    }}
                   >
                     <Eye className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Preview</span>
                   </button>
                 </div>
               </>
             )}
->>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
 
             {/* User Info & Logout */}
             <div className="h-6 w-px bg-[var(--border-base)] mx-2" />
             <div className="flex items-center gap-3 pl-2 pr-1">
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 mb-0.5">
-<<<<<<< HEAD
                   {userRole === 'admin' && (
                     <span 
                       className="px-1.5 py-0.5 border rounded-full text-[8px] font-black tracking-widest leading-none"
@@ -2199,10 +2006,6 @@ const App: React.FC = () => {
                     >
                       ADMIN
                     </span>
-=======
-                  {isAdmin && (
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-[8px] font-black text-blue-500 tracking-widest leading-none">ADMIN</span>
->>>>>>> 61d1008f5af786a87f84b4033c9fa45d90eb562e
                   )}
                   <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
                 </div>
