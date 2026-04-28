@@ -205,6 +205,9 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--gnb-export-hover-bg', tokenValue(gnbTokens.export_hover_bg));
                 root.style.setProperty('--gnb-export-hover-border', tokenValue(gnbTokens.export_hover_border));
                 root.style.setProperty('--gnb-export-text', tokenValue(gnbTokens.export_text));
+                root.style.setProperty('--gnb-icon-size', tokenValue(gnbTokens.icon_size));
+                root.style.setProperty('--gnb-icon-color', tokenValue(gnbTokens.icon_color));
+                root.style.setProperty('--gnb-icon-active-color', tokenValue(gnbTokens.icon_active_color));
                 root.style.setProperty('--gnb-user-label-color', isDark ? tokenValue(gnbTokens.user_label_color_dark) : tokenValue(gnbTokens.user_label_color_light));
                 root.style.setProperty('--gnb-user-id-color', isDark ? tokenValue(gnbTokens.user_id_color_dark) : tokenValue(gnbTokens.user_id_color_light));
             }

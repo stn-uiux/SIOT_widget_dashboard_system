@@ -417,10 +417,10 @@ export const TYPE_DEFAULT_DATA: Record<string, {
     mainValue: '8',
     subValue: '4354',
     data: [
-      { name: 'Critical', value: 1443, color: '#ef4444' },
-      { name: 'Major', value: 1179, color: '#f59e0b' },
-      { name: 'Minor', value: 963, color: '#eab308' },
-      { name: 'Warning', value: 727, color: '#06b6d4' }
+      { name: 'Critical', value: 1443, color: 'var(--error)' },
+      { name: 'Major', value: 1179, color: 'var(--warning)' },
+      { name: 'Minor', value: 963, color: 'var(--primary-color)' },
+      { name: 'Warning', value: 727, color: 'var(--secondary-color)' }
     ],
     config: {
       xAxisKey: 'name',

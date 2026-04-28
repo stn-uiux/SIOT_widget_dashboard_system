@@ -2682,15 +2682,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           <div className="h-full flex items-center gap-6">
             <div className="flex flex-col items-center gap-3">
               <div
-                className="relative rounded-full border-4 border-dashed border-blue-500/30 flex items-center justify-center group cursor-pointer transition-all hover:border-blue-500 hover:rotate-12"
+                className="relative rounded-full border-4 border-dashed border-[var(--primary-color)]/30 flex items-center justify-center group cursor-pointer transition-all hover:border-[var(--primary-color)] hover:rotate-12"
                 style={{
                   width: widget.iconSize ? `${widget.iconSize}px` : '8rem',
                   height: widget.iconSize ? `${widget.iconSize}px` : '8rem'
                 }}
               >
-                <div className="absolute inset-2 rounded-full bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
-                <span className="material-symbols-outlined text-blue-500" style={{ fontSize: widget.iconSize ? `${widget.iconSize * 0.4}px` : '2.25rem' }}>verified_user</span>
-                <div className="absolute -bottom-2 bg-blue-600 text-white px-3 py-1 rounded-full font-black shadow-lg shadow-blue-500/40" style={{ fontSize: 'var(--text-tiny)' }}>{currentMainValue}</div>
+                <div className="absolute inset-2 rounded-full bg-[var(--primary-color)]/5 group-hover:bg-[var(--primary-color)]/10 transition-colors" />
+                <span className="material-symbols-outlined text-[var(--primary-color)]" style={{ fontSize: widget.iconSize ? `${widget.iconSize * 0.4}px` : '2.25rem' }}>verified_user</span>
+                <div className="absolute -bottom-2 bg-[var(--primary-color)] text-white px-3 py-1 rounded-full font-black shadow-lg shadow-[var(--primary-color)]/40" style={{ fontSize: 'var(--text-tiny)' }}>{currentMainValue}</div>
               </div>
               <span className="font-black text-muted uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>보안성공/탐지</span>
             </div>
