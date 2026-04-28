@@ -2211,12 +2211,13 @@ const App: React.FC = () => {
                 if (!hBg || hBg === 'none') return null;
                 return (
                   <div
-                    className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+                    className="absolute top-0 left-0 right-0 z-0 pointer-events-none"
                     style={{
                       backgroundImage: `url(${hBg})`,
                       backgroundPosition: 'var(--header-bg-position, top left)',
-                      backgroundSize: 'var(--header-bg-size, 100% auto)',
+                      backgroundSize: 'var(--header-bg-size, cover)',
                       backgroundRepeat: 'var(--header-bg-repeat, no-repeat)',
+                      height: '100vh',
                     }}
                   />
                 );
@@ -2499,7 +2500,10 @@ const App: React.FC = () => {
       />
 
       {user && (
-        <FloatingAssistantButton onClick={() => setIsFloatingGnbOpen(!isFloatingGnbOpen)} />
+        <FloatingAssistantButton 
+          isPreview={isPreviewMode}
+          onClick={isPreviewMode ? () => setIsPreviewMode(false) : () => setIsFloatingGnbOpen(!isFloatingGnbOpen)} 
+        />
       )}
     </div>
   );

@@ -1,16 +1,17 @@
 
 import React from 'react';
-import { Sparkles as SparklesIcon } from 'lucide-react';
+import { Sparkles as SparklesIcon, Eye } from 'lucide-react';
 
 interface FloatingAssistantButtonProps {
     onClick?: () => void;
+    isPreview?: boolean;
 }
 
 /**
  * FloatingAssistantButton Component
  * A premium, glowing AI assistant button that follows the Aurora design system.
  */
-const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onClick }) => {
+const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onClick, isPreview }) => {
     return (
         <div 
             className="fixed z-[100] group"
@@ -32,7 +33,7 @@ const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onCli
                     width: 'var(--ai-fab-size)',
                     height: 'var(--ai-fab-size)',
                     borderRadius: 'var(--layout-borderRadius-full, 9999px)',
-                    background: 'var(--ai-fab-gradient)',
+                    background: isPreview ? 'var(--primary-gradient)' : 'var(--ai-fab-gradient)',
                     boxShadow: 'var(--ai-fab-glow)',
                 }}
             >
@@ -55,10 +56,17 @@ const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onCli
 
                 {/* Center Icon */}
                 <div className="relative z-10 flex items-center justify-center">
-                    <SparklesIcon 
-                        className="text-white drop-shadow-lg scale-110 transition-transform group-hover:rotate-12" 
-                        style={{ width: 'calc(var(--ai-fab-size) * 0.45)', height: 'calc(var(--ai-fab-size) * 0.45)' }}
-                    />
+                    {isPreview ? (
+                        <Eye 
+                            className="text-white drop-shadow-lg scale-110 transition-transform group-hover:scale-125" 
+                            style={{ width: 'calc(var(--ai-fab-size) * 0.45)', height: 'calc(var(--ai-fab-size) * 0.45)' }}
+                        />
+                    ) : (
+                        <SparklesIcon 
+                            className="text-white drop-shadow-lg scale-110 transition-transform group-hover:rotate-12" 
+                            style={{ width: 'calc(var(--ai-fab-size) * 0.45)', height: 'calc(var(--ai-fab-size) * 0.45)' }}
+                        />
+                    )}
                 </div>
 
                 {/* Hover Highlight Ring */}
