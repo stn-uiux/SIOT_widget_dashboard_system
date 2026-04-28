@@ -280,7 +280,7 @@ const DesignDocs: React.FC<DesignDocsProps> = ({ theme, onClose }) => {
                                 <div className="docs-section">
                                     <h3 className="text-xs font-black text-muted uppercase mb-4 tracking-widest">Status Buttons</h3>
                                     <div className="preview-box">
-                                        <button className="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all bg-[var(--success)] shadow-lg shadow-emerald-500/20">Success</button>
+                                        <button className="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all bg-[var(--success)] shadow-lg shadow-[var(--success)]/20">Success</button>
                                         <button className="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all bg-[var(--error)] shadow-lg shadow-red-500/20">Error Action</button>
                                         <button className="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all bg-[var(--warning)] shadow-lg shadow-amber-500/20">Warning</button>
                                         <button className="px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all bg-[var(--info)] shadow-lg shadow-blue-500/20">Info State</button>

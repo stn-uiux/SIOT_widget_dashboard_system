@@ -37,9 +37,9 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange, disabled, isEdi
                 <div className="toggle-thumb">
                     <div className="icon-wrapper">
                         {isDark ? (
-                            <Moon className="w-3.5 h-3.5 text-cyan-400" />
+                            <Moon className="w-3.5 h-3.5 moon-icon" />
                         ) : (
-                            <Sun className="w-3.5 h-3.5 text-amber-500" />
+                            <Sun className="w-3.5 h-3.5 sun-icon" />
                         )}
                     </div>
                     <div className="glow-effect" />

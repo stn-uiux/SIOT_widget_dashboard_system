@@ -83,6 +83,9 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--header-bg-position', tokenValue(headerTokens.background_position));
                 root.style.setProperty('--header-bg-size', tokenValue(headerTokens.background_size));
                 root.style.setProperty('--header-bg-repeat', tokenValue(headerTokens.background_repeat));
+                root.style.setProperty('--gnb-btn-height', tokenValue(headerTokens.btn_height));
+                root.style.setProperty('--gnb-btn-padding-x', tokenValue(headerTokens.btn_padding_x));
+                root.style.setProperty('--gnb-btn-radius', tokenValue(headerTokens.btn_radius));
             }
 
             // Header Grid
@@ -131,28 +134,124 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--h-monitor-dot-glow', tokenValue(monitor?.dot_glow));
             }
 
+            // Login Screen
+            const loginTokens = components.login;
+            if (loginTokens) {
+                root.style.setProperty('--login-bg', tokenValue(loginTokens.background));
+                root.style.setProperty('--login-overlay-opacity', String(loginTokens.overlay_opacity?.value ?? 0.2));
+                root.style.setProperty('--login-card-bg', tokenValue(loginTokens.card_bg));
+                root.style.setProperty('--login-card-blur', tokenValue(loginTokens.card_blur));
+                root.style.setProperty('--login-card-border', tokenValue(loginTokens.card_border));
+                root.style.setProperty('--login-card-radius', tokenValue(loginTokens.card_radius));
+                root.style.setProperty('--login-card-shadow', tokenValue(loginTokens.card_shadow));
+                root.style.setProperty('--login-label-color', tokenValue(loginTokens.label_color));
+                root.style.setProperty('--login-input-bg', tokenValue(loginTokens.input_bg));
+                root.style.setProperty('--login-input-border', tokenValue(loginTokens.input_border));
+                root.style.setProperty('--login-input-placeholder', tokenValue(loginTokens.input_placeholder));
+                root.style.setProperty('--login-input-focus-ring', tokenValue(loginTokens.input_focus_ring));
+                root.style.setProperty('--login-button-gradient', tokenValue(loginTokens.button_gradient));
+                root.style.setProperty('--login-button-shadow', tokenValue(loginTokens.button_shadow));
+                root.style.setProperty('--login-card-padding', tokenValue(loginTokens.card_padding));
+                root.style.setProperty('--login-logo-margin-bottom', tokenValue(loginTokens.logo_margin_bottom));
+                root.style.setProperty('--login-input-radius', tokenValue(loginTokens.input_radius));
+                root.style.setProperty('--login-input-padding-y', tokenValue(loginTokens.input_padding_y));
+                root.style.setProperty('--login-input-padding-x', tokenValue(loginTokens.input_padding_x));
+                root.style.setProperty('--login-input-gap', tokenValue(loginTokens.input_gap));
+                root.style.setProperty('--login-label-margin-bottom', tokenValue(loginTokens.label_margin_bottom));
+                root.style.setProperty('--login-label-margin-left', tokenValue(loginTokens.label_margin_left));
+                root.style.setProperty('--login-icon-color', tokenValue(loginTokens.icon_color));
+                root.style.setProperty('--login-error-bg', tokenValue(loginTokens.error_bg));
+                root.style.setProperty('--login-error-border', tokenValue(loginTokens.error_border));
+                root.style.setProperty('--login-error-text', tokenValue(loginTokens.error_text));
+                root.style.setProperty('--login-footer-text', tokenValue(loginTokens.footer_text));
+                root.style.setProperty('--login-link-text', tokenValue(loginTokens.link_text));
+                root.style.setProperty('--login-link-hover', tokenValue(loginTokens.link_hover));
+                root.style.setProperty('--login-input-icon-size', tokenValue(loginTokens.input_icon_size));
+                root.style.setProperty('--login-input-icon-left', tokenValue(loginTokens.input_icon_left));
+                root.style.setProperty('--login-input-padding-with-icon', tokenValue(loginTokens.input_padding_with_icon));
+            }
+
+            // GNB Capsule
+            const gnbTokens = components.gnb;
+            if (gnbTokens) {
+                root.style.setProperty('--gnb-height', tokenValue(gnbTokens.height));
+                root.style.setProperty('--gnb-radius', tokenValue(gnbTokens.radius));
+                root.style.setProperty('--gnb-padding-x', tokenValue(gnbTokens.padding_x));
+                root.style.setProperty('--gnb-blur', tokenValue(gnbTokens.blur));
+                root.style.setProperty('--gnb-bg', isDark ? tokenValue(gnbTokens.bg_dark) : tokenValue(gnbTokens.bg_light));
+                root.style.setProperty('--gnb-btn-bg', isDark ? tokenValue(gnbTokens.btn_bg_dark) : tokenValue(gnbTokens.btn_bg_light));
+                root.style.setProperty('--gnb-shadow', tokenValue(gnbTokens.shadow));
+                root.style.setProperty('--gnb-logo-height', tokenValue(gnbTokens.logo_height));
+                root.style.setProperty('--gnb-dropdown-width', tokenValue(gnbTokens.dropdown_width));
+                root.style.setProperty('--gnb-dropdown-radius', tokenValue(gnbTokens.dropdown_radius));
+                root.style.setProperty('--gnb-dropdown-padding', tokenValue(gnbTokens.dropdown_padding));
+                root.style.setProperty('--gnb-item-height', tokenValue(gnbTokens.item_height));
+                root.style.setProperty('--gnb-item-radius', tokenValue(gnbTokens.item_radius));
+                root.style.setProperty('--gnb-item-padding-x', tokenValue(gnbTokens.item_padding_x));
+                root.style.setProperty('--gnb-item-gap', tokenValue(gnbTokens.item_gap));
+                root.style.setProperty('--gnb-item-font-size', tokenValue(gnbTokens.item_font_size));
+                root.style.setProperty('--gnb-item-font-weight', tokenValue(gnbTokens.item_font_weight));
+                root.style.setProperty('--gnb-header-font-size', tokenValue(gnbTokens.header_font_size));
+                root.style.setProperty('--gnb-header-font-weight', tokenValue(gnbTokens.header_font_weight));
+                root.style.setProperty('--gnb-header-sep-color', tokenValue(gnbTokens.header_sep_color));
+                root.style.setProperty('--gnb-user-badge-bg', tokenValue(gnbTokens.user_badge_bg));
+                root.style.setProperty('--gnb-user-badge-text', tokenValue(gnbTokens.user_badge_text));
+                root.style.setProperty('--gnb-logout-bg', tokenValue(gnbTokens.logout_bg));
+                root.style.setProperty('--gnb-logout-hover-bg', tokenValue(gnbTokens.logout_hover_bg));
+                root.style.setProperty('--gnb-logout-hover-text', tokenValue(gnbTokens.logout_hover_text));
+                root.style.setProperty('--gnb-import-hover-bg', tokenValue(gnbTokens.import_hover_bg));
+                root.style.setProperty('--gnb-import-hover-border', tokenValue(gnbTokens.import_hover_border));
+                root.style.setProperty('--gnb-import-text', tokenValue(gnbTokens.import_text));
+                root.style.setProperty('--gnb-user-label-color', tokenValue(gnbTokens.user_label_color));
+            }
+
+            // Global Panel
+            const panelTokens = components.panel;
+            if (panelTokens) {
+                root.style.setProperty('--panel-width', tokenValue(panelTokens.width));
+                root.style.setProperty('--panel-radius', tokenValue(panelTokens.radius));
+                root.style.setProperty('--panel-header-height', tokenValue(panelTokens.header_height));
+                root.style.setProperty('--panel-padding', tokenValue(panelTokens.padding));
+                root.style.setProperty('--panel-header-padding-x', tokenValue(panelTokens.header_padding_x));
+                root.style.setProperty('--panel-content-gap', tokenValue(panelTokens.content_gap));
+                root.style.setProperty('--panel-item-gap', tokenValue(panelTokens.item_gap));
+                root.style.setProperty('--panel-shadow', tokenValue(panelTokens.shadow));
+                root.style.setProperty('--panel-glow-start', tokenValue(panelTokens.glow_start));
+                root.style.setProperty('--panel-glow-end', tokenValue(panelTokens.glow_end));
+            }
+
+            // Mode Toggle
+            const toggleTokens = components.mode_toggle;
+            if (toggleTokens) {
+                root.style.setProperty('--toggle-width', tokenValue(toggleTokens.width));
+                root.style.setProperty('--toggle-height', tokenValue(toggleTokens.height));
+                root.style.setProperty('--toggle-thumb-size', tokenValue(toggleTokens.thumb_size));
+                root.style.setProperty('--toggle-track-bg', isDark ? tokenValue(toggleTokens.track_bg_dark) : tokenValue(toggleTokens.track_bg_light));
+                root.style.setProperty('--toggle-thumb-bg', isDark ? tokenValue(toggleTokens.thumb_bg_dark) : tokenValue(toggleTokens.thumb_bg_light));
+                root.style.setProperty('--toggle-glow', tokenValue(toggleTokens.glow_color));
+                root.style.setProperty('--toggle-sun', tokenValue(toggleTokens.sun_color));
+                root.style.setProperty('--toggle-moon', tokenValue(toggleTokens.moon_color));
+                root.style.setProperty('--toggle-inactive', tokenValue(toggleTokens.inactive_color));
+            }
+
             // Glassmorphism
             const glass = components.glassmorphism;
-            const variant = glass && isDark ? glass.dark : glass?.light;
-            const blur = glass?.blur?.value ?? '12px';
-            const defOpacity = isDark ? 0.35 : 0.55;
-            const glassRgb = hexToRgb(theme.surfaceColor);
-            const tokenBg = variant && tokenValue(variant.background);
-            const parsed = tokenBg ? parseRgba(tokenBg) : null;
-            const glassOpacity = parsed?.opacity ?? defOpacity;
-            
-            root.style.setProperty('--glass-bg-rgb', glassRgb);
-            root.style.setProperty('--glass-opacity', String(glassOpacity));
-            root.style.setProperty('--glass-bg', `rgba(${glassRgb}, ${glassOpacity})`);
-            root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)'));
-            root.style.setProperty('--glass-blur', blur);
+            if (glass) {
+                const variant = isDark ? glass.dark : glass.light;
+                const blur = glass.blur?.value ?? '12px';
+                const defOpacity = isDark ? 0.35 : 0.55;
+                const glassRgb = hexToRgb(theme.surfaceColor);
+                const tokenBg = variant && tokenValue(variant.background);
+                const parsed = tokenBg ? parseRgba(tokenBg) : null;
+                const glassOpacity = parsed?.opacity ?? defOpacity;
+                
+                root.style.setProperty('--glass-bg-rgb', glassRgb);
+                root.style.setProperty('--glass-opacity', String(glassOpacity));
+                root.style.setProperty('--glass-bg', `rgba(${glassRgb}, ${glassOpacity})`);
+                root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)'));
+                root.style.setProperty('--glass-blur', blur);
+            }
         }
-
-        // Dedicated GNB background to decouple it from widgets
-        const gnbBg = isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)';
-        const gnbBtnBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.7)';
-        root.style.setProperty('--gnb-bg', gnbBg);
-        root.style.setProperty('--gnb-btn-bg', gnbBtnBg);
 
         // Mode Classes (on the same element we're theming)
         root.classList.remove('dark', 'midnight-pro');

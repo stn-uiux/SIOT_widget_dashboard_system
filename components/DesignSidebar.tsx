@@ -106,13 +106,22 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
   ];
 
   return (
-    <div className={`w-80 max-h-[85vh] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
+    <div className={`flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${
       theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
     }`} style={{
-      borderRadius: 'var(--radius-panel)',
+      width: 'var(--panel-width)',
+      maxHeight: '100%',
+      borderRadius: 'var(--panel-radius)',
       border: 'var(--floating-panel-border)',
     }}>
-      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
+      <header className="flex items-center justify-between border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" 
+        style={{ 
+          height: 'var(--panel-header-height)',
+          paddingLeft: 'var(--panel-header-padding-x)',
+          paddingRight: 'var(--panel-header-padding-x)'
+        }}
+        onMouseDown={onDragStart}
+      >
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30" />
           <Palette className="w-5 h-5 text-primary" />
@@ -128,7 +137,7 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
               <BookOpen className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:brightness-110 shadow-lg shadow-[var(--success)]/20" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
             <Check className="w-4 h-4" />
           </button>
           <button
@@ -155,7 +164,12 @@ const DesignSidebar: React.FC<DesignSidebarProps> = ({
         ))}
       </div>
 
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+        padding: 'var(--panel-padding)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--panel-content-gap)'
+      }}>
         {activeTab === 'mode' && (
           <div className="space-y-4 animate-in fade-in duration-300">
             <section className="space-y-3">

@@ -698,7 +698,7 @@ const DashboardGrid: React.FC<{
                     </div>
 
                     {/* Text with letter spacing animation */}
-                    <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-slate-700" : "text-white"}`}>
+                    <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-[var(--text-main)]" : "text-white"}`}>
                       Add Widget
                     </span>
 
@@ -1084,7 +1084,7 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
             {isEditMode && (
               <button
                 onClick={() => onUpdate({ widgets: widgets.filter((item) => item.id !== w.id) })}
-                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute -top-2 -right-2 w-5 h-5 bg-[var(--error)] text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -1144,6 +1144,9 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // User role logic: profile.role is the source of truth, but fallback to email prefix for development/demo convenience
+  const userRole = profile?.role || (user?.email?.startsWith('admin') ? 'admin' : 'user');
 
   // Auth & Profile Listener
   useEffect(() => {
@@ -2368,9 +2371,9 @@ const App: React.FC = () => {
             width: 'var(--ai-fab-size)',
             height: 'var(--ai-fab-size)',
             backgroundColor: 'var(--gnb-bg)',
-            backdropFilter: 'blur(24px)',
+            backdropFilter: 'blur(var(--gnb-blur))',
             borderRadius: '9999px',
-            boxShadow: '0 12px 48px rgba(0,0,0,0.3), 0 0 20px var(--primary-color-20)',
+            boxShadow: 'var(--gnb-shadow)',
           }}
           title="Exit Preview"
         >
@@ -2388,13 +2391,13 @@ const App: React.FC = () => {
           style={{
             bottom: 'var(--spacing-xl)',
             right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
-            height: 'var(--ai-fab-size)',
+            height: 'var(--gnb-height)',
             backgroundColor: 'var(--gnb-bg)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: '9999px',
-            padding: '0 24px',
+            backdropFilter: 'blur(var(--gnb-blur))',
+            borderRadius: 'var(--gnb-radius)',
+            padding: '0 var(--gnb-padding-x)',
             border: '1px solid var(--border-base)',
-            boxShadow: 'var(--shadow-premium), 0 10px 40px rgba(0,0,0,0.2)',
+            boxShadow: 'var(--gnb-shadow)',
           }}
         >
           <div className="flex items-center gap-6">
@@ -2427,11 +2430,15 @@ const App: React.FC = () => {
                         onClick={() => setIsProjectDropdownOpen(false)}
                       />
                       <div
-                        className="absolute bottom-full left-0 mb-4 w-64 p-2 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
-                        style={{ borderRadius: 'var(--radius-panel)' }}
+                        className="absolute bottom-full left-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
+                        style={{ 
+                          width: 'var(--gnb-dropdown-width)',
+                          borderRadius: 'var(--gnb-dropdown-radius)',
+                          padding: 'var(--gnb-dropdown-padding)'
+                        }}
                       >
-                        <div className="px-3 py-2 mb-1 border-b border-[var(--border-muted)]">
-                          <p className="uppercase font-bold text-muted tracking-widest" style={{ fontSize: 'var(--text-caption)' }}>
+                        <div className="px-3 py-2 mb-1 border-b" style={{ borderColor: 'var(--gnb-header-sep-color)' }}>
+                          <p className="uppercase text-muted tracking-widest" style={{ fontSize: 'var(--gnb-header-font-size)', fontWeight: 'var(--gnb-header-font-weight)' }}>
                             Select Project
                           </p>
                         </div>
@@ -2439,7 +2446,14 @@ const App: React.FC = () => {
                           {projects.map((p) => (
                             <div
                               key={p.id}
-                              className={`flex items-center group/proj gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                              className={`flex items-center group/proj w-full mb-1 border transition-all ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                              style={{ 
+                                height: 'var(--gnb-item-height)',
+                                borderRadius: 'var(--gnb-item-radius)',
+                                paddingLeft: 'var(--gnb-item-padding-x)',
+                                paddingRight: 'var(--gnb-item-padding-x)',
+                                gap: 'var(--gnb-item-gap)'
+                              }}
                             >
                               {editingProjectId === p.id ? (
                                 <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -2465,7 +2479,7 @@ const App: React.FC = () => {
                                   className="flex-1 min-w-0 text-left"
                                 >
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                    <p className="uppercase tracking-tight truncate" style={{ fontSize: 'var(--gnb-item-font-size)', fontWeight: 'var(--gnb-item-font-weight)' }}>
                                       {p.name}
                                     </p>
                                   </div>
@@ -2502,7 +2516,7 @@ const App: React.FC = () => {
                         </div>
                         <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-2">
                           <div className="flex flex-col gap-1.5 px-1 py-1">
-                            <span className="text-[9px] font-black text-muted uppercase tracking-[0.2em] pl-1">Project Sync</span>
+                            <span className="uppercase text-muted tracking-widest pl-1" style={{ fontSize: 'var(--gnb-header-font-size)', fontWeight: 'var(--gnb-header-font-weight)' }}>Project Sync</span>
                             <div className="grid grid-cols-2 gap-1.5">
                               <button
                                 onClick={() => handleExportClick('full')}
@@ -2532,9 +2546,9 @@ const App: React.FC = () => {
                                   setImportTarget('full');
                                   importInputRef.current?.click();
                                 }}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
                               >
-                                <Download className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                <Download className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
                                 <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
                                   Full Import
                                 </span>
@@ -2544,9 +2558,9 @@ const App: React.FC = () => {
                                   setImportTarget('base');
                                   importInputRef.current?.click();
                                 }}
-                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 text-secondary"
+                                className="btn-base btn-ghost p-2 rounded-lg flex flex-col items-center justify-center gap-1 group/btn border border-transparent hover:border-[var(--gnb-import-hover-border)] hover:bg-[var(--gnb-import-hover-bg)] text-secondary"
                               >
-                                <Palette className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:scale-110 transition-transform" />
+                                <Palette className="w-3.5 h-3.5 text-[var(--gnb-import-text)] group-hover/btn:scale-110 transition-transform" />
                                 <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px' }}>
                                   Base Import
                                 </span>
@@ -2578,8 +2592,14 @@ const App: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsLibraryDropdownOpen(!isLibraryDropdownOpen)}
-                className={`btn-base btn-surface h-10 px-4 rounded-full ${isLibraryDropdownOpen ? "active" : ""}`}
-                style={{ backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)' }}
+                className={`btn-base btn-surface ${isLibraryDropdownOpen ? "active" : ""}`}
+                style={{ 
+                  backgroundColor: isLibraryDropdownOpen ? undefined : 'var(--gnb-btn-bg)',
+                  height: 'var(--gnb-btn-height)',
+                  paddingLeft: 'var(--gnb-btn-padding-x)',
+                  paddingRight: 'var(--gnb-btn-padding-x)',
+                  borderRadius: 'var(--gnb-btn-radius)'
+                }}
               >
                 <div
                   className="icon-box w-5 h-5 rounded-md flex items-center justify-center shadow-sm"
@@ -2600,8 +2620,12 @@ const App: React.FC = () => {
                     onClick={() => setIsLibraryDropdownOpen(false)}
                   />
                   <div
-                    className="absolute bottom-full right-0 mb-4 w-52 p-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow shadow-premium"
-                    style={{ borderRadius: 'var(--radius-panel)' }}
+                    className="absolute bottom-full right-0 mb-4 shadow-premium z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 floating-panel-glow"
+                    style={{ 
+                      width: 'var(--gnb-dropdown-width)',
+                      borderRadius: 'var(--gnb-dropdown-radius)',
+                      padding: 'var(--gnb-dropdown-padding)'
+                    }}
                   >
                     {libraryOptions.map((opt) => (
                       <button
@@ -2613,11 +2637,17 @@ const App: React.FC = () => {
                           });
                           setIsLibraryDropdownOpen(false);
                         }}
-                        className={`w-full justify-between px-3 py-2.5 flex items-center transition-all btn-base btn-ghost rounded-sm ${theme.chartLibrary === opt.value ? "active" : ""}`}
+                        className={`w-full justify-between flex items-center transition-all btn-base btn-ghost mb-1 ${theme.chartLibrary === opt.value ? "active" : ""}`}
+                        style={{ 
+                          height: 'var(--gnb-item-height)',
+                          borderRadius: 'var(--gnb-item-radius)',
+                          paddingLeft: 'var(--gnb-item-padding-x)',
+                          paddingRight: 'var(--gnb-item-padding-x)'
+                        }}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center" style={{ gap: 'var(--gnb-item-gap)' }}>
                           <opt.icon className="w-4 h-4" style={{ color: `var(${opt.colorVar})` }} />
-                          <span className="font-bold text-xs uppercase tracking-tight">{opt.label}</span>
+                          <span className="uppercase tracking-tight" style={{ fontSize: 'var(--gnb-item-font-size)', fontWeight: 'var(--gnb-item-font-weight)' }}>{opt.label}</span>
                         </div>
                       </button>
                     ))}
@@ -2628,8 +2658,14 @@ const App: React.FC = () => {
 
             <button
               onClick={handleToggleDesignSidebar}
-              className={`btn-base btn-surface h-10 px-4 rounded-full ${isDesignSidebarOpen ? "active" : ""}`}
-              style={{ backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)' }}
+              className={`btn-base btn-surface ${isDesignSidebarOpen ? "active" : ""}`}
+              style={{ 
+                backgroundColor: isDesignSidebarOpen ? undefined : 'var(--gnb-btn-bg)',
+                height: 'var(--gnb-btn-height)',
+                paddingLeft: 'var(--gnb-btn-padding-x)',
+                paddingRight: 'var(--gnb-btn-padding-x)',
+                borderRadius: 'var(--gnb-btn-radius)'
+              }}
             >
               <Palette className="w-4 h-4" /> <span style={{ fontSize: 'var(--text-small)' }}>Design</span>
             </button>
@@ -2664,8 +2700,17 @@ const App: React.FC = () => {
             <div className="flex items-center gap-3 pl-2 pr-1">
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  {user?.email?.startsWith('admin') && (
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-[8px] font-black text-blue-500 tracking-widest leading-none">ADMIN</span>
+                  {userRole === 'admin' && (
+                    <span 
+                      className="px-1.5 py-0.5 border rounded-full text-[8px] font-black tracking-widest leading-none"
+                      style={{ 
+                        backgroundColor: 'var(--gnb-user-badge-bg)', 
+                        borderColor: 'color-mix(in srgb, var(--gnb-user-badge-text) 30%, transparent)',
+                        color: 'var(--gnb-user-badge-text)'
+                      }}
+                    >
+                      ADMIN
+                    </span>
                   )}
                   <span className="text-[10px] font-black text-white/40 leading-none tracking-widest uppercase">System User</span>
                 </div>
@@ -2673,7 +2718,7 @@ const App: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowLogoutModal(true)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-muted hover:text-red-500 transition-all active:scale-90"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 gnb-logout-btn"
                 title="로그아웃"
               >
                 <LogOut className="w-4 h-4" />
@@ -2899,7 +2944,7 @@ const App: React.FC = () => {
                 onOpenWidgetPicker={handleOpenWidgetPicker}
                 isPreviewMode={isPreviewMode}
                 onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
-                userRole={profile?.role}
+                userRole={userRole}
               />
             </div>
           </main>
@@ -2913,10 +2958,13 @@ const App: React.FC = () => {
               top: `${panelPos.y}px`,
               right: `${panelPos.x}px`,
               width: 'var(--panel-width)',
+              maxHeight: 'calc(100vh - 120px)',
+              display: 'flex',
+              flexDirection: 'column',
               cursor: isDraggingPanel ? 'move' : 'default'
             }}
           >
-            <div className={`pointer-events-auto overflow-hidden shadow-2xl floating-panel-glow`} style={{ borderRadius: 'var(--radius-panel)' }}>
+            <div className={`pointer-events-auto flex flex-col overflow-hidden shadow-2xl floating-panel-glow`} style={{ borderRadius: 'var(--panel-radius)', maxHeight: '100%' }}>
               {isDesignSidebarOpen ? (
                 <DesignSidebar
                   theme={theme}

@@ -57,19 +57,28 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
   if (!selectedWidget) return (
-    <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
+    <div className={`flex flex-col overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
       }`} style={{
-        borderRadius: 'var(--radius-panel)',
+        width: 'var(--panel-width)',
+        maxHeight: '100%',
+        borderRadius: 'var(--panel-radius)',
         border: 'var(--floating-panel-border)',
       }}>
-      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
+      <header className="flex items-center justify-between border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" 
+        style={{ 
+          height: 'var(--panel-header-height)',
+          paddingLeft: 'var(--panel-header-padding-x)',
+          paddingRight: 'var(--panel-header-padding-x)'
+        }}
+        onMouseDown={onDragStart}
+      >
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
           <LayoutGrid className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Layout Settings</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기">
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:brightness-110 shadow-lg shadow-[var(--success)]/20" title="저장하기">
             <Check className="w-4 h-4" />
           </button>
           <button
@@ -80,7 +89,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </button>
         </div>
       </header>
-      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+        padding: 'var(--panel-padding)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--panel-content-gap)',
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
       }}>
@@ -505,7 +518,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Widget Settings</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:brightness-110 shadow-lg shadow-[var(--success)]/20" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
             <Check className="w-4 h-4" />
           </button>
           <button
@@ -517,7 +530,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </button>
         </div>
       </header>
-      <div className="flex-1 p-5 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
+        padding: 'var(--panel-padding)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--panel-content-gap)',
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
       }}>
