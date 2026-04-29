@@ -241,6 +241,12 @@
     --login-input-icon-size: 18px;
     --login-input-icon-left: 16px;
     --login-input-padding-with-icon: 54px;
+    --login-input-text: #ffffff;
+    --login-input-autofill-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.05) inset;
+    --login-overlay-bg: #000000;
+    --login-input-border-width: 1px;
+    --login-logo-height: 48px;
+    --login-label-font-size: 10px;
 }
 
 .dark {
@@ -1376,3 +1382,14 @@ body {
 .duration-300 { animation-duration: 300ms; }
 .duration-500 { animation-duration: 500ms; }
 .duration-700 { animation-duration: 700ms; }
+
+/* Browser Autofill Overrides (to prevent black text on dark themes) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--login-input-text, #ffffff) !important;
+    -webkit-box-shadow: var(--login-input-autofill-shadow) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    font-weight: inherit !important;
+}

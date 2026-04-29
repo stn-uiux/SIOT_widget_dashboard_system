@@ -465,7 +465,13 @@
                 "button_shadow": { "value": "0 10px 15px -3px rgba(59, 130, 246, 0.25)", "type": "string" },
                 "input_icon_size": { "value": "18px", "type": "dimension" },
                 "input_icon_left": { "value": "16px", "type": "dimension" },
-                "input_padding_with_icon": { "value": "54px", "type": "dimension" }
+                "input_padding_with_icon": { "value": "54px", "type": "dimension" },
+                "input_text": { "value": "#ffffff", "type": "color" },
+                "input_autofill_shadow": { "value": "0 0 0px 1000px rgba(255, 255, 255, 0.05) inset", "type": "string" },
+                "overlay_bg": { "value": "#000000", "type": "color" },
+                "input_border_width": { "value": "1px", "type": "dimension" },
+                "logo_height": { "value": "48px", "type": "dimension" },
+                "label_font_size": { "value": "10px", "type": "dimension" }
             },
             "gnb": {
                 "height": { "value": "var(--ai-fab-size)", "type": "dimension" },

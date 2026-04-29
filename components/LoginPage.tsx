@@ -74,7 +74,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         }}
       >
         {/* Subtle Overlays */}
-        <div className="absolute inset-0" style={{ backgroundColor: 'black', opacity: 'var(--login-overlay-opacity)' }} />
+        <div className="absolute inset-0" style={{ backgroundColor: 'var(--login-overlay-bg)', opacity: 'var(--login-overlay-opacity)' }} />
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
       </div>
 
@@ -82,9 +82,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div className="flex flex-col items-center" style={{ marginBottom: 'var(--login-logo-margin-bottom)' }}>
           <div className="relative inline-block">
             <img 
-              src={new URL('../assets/logo-w-1 1.png', import.meta.url).href} 
+              src={new URL('../assets/logo-w-1.png', import.meta.url).href} 
               alt="STN Logo" 
-              className="h-12 w-auto object-contain opacity-90"
+              className="w-auto object-contain opacity-90"
+              style={{ height: 'var(--login-logo-height)' }}
             />
           </div>
         </div>
@@ -118,9 +119,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             <div>
               <label 
-                className="block text-[10px] font-black uppercase tracking-widest"
+                className="block font-black uppercase tracking-widest"
                 style={{ 
                   color: 'var(--login-label-color)',
+                  fontSize: 'var(--login-label-font-size)',
                   marginBottom: 'var(--login-label-margin-bottom)',
                   marginLeft: 'var(--login-label-margin-left)'
                 }}
@@ -144,12 +146,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   style={{ 
                     backgroundColor: 'var(--login-input-bg)',
                     borderColor: 'var(--login-input-border)',
-                    borderWidth: '1px',
+                    borderWidth: 'var(--login-input-border-width)',
                     borderRadius: 'var(--login-input-radius)',
                     paddingTop: 'var(--login-input-padding-y)',
                     paddingBottom: 'var(--login-input-padding-y)',
                     paddingLeft: 'var(--login-input-padding-with-icon)',
-                    paddingRight: 'var(--login-input-padding-x)'
+                    paddingRight: 'var(--login-input-padding-x)',
+                    color: 'var(--login-input-text)'
                   }}
                 />
               </div>
@@ -158,9 +161,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             {isSignUp && (
               <div className="animate-in fade-in slide-in-from-left-2 duration-300">
                 <label 
-                  className="block text-[10px] font-black uppercase tracking-widest"
+                  className="block font-black uppercase tracking-widest"
                   style={{ 
                     color: 'var(--login-label-color)',
+                    fontSize: 'var(--login-label-font-size)',
                     marginBottom: 'var(--login-label-margin-bottom)',
                     marginLeft: 'var(--login-label-margin-left)'
                   }}
@@ -184,12 +188,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     style={{ 
                       backgroundColor: 'var(--login-input-bg)',
                       borderColor: 'var(--login-input-border)',
-                      borderWidth: '1px',
+                      borderWidth: 'var(--login-input-border-width)',
                       borderRadius: 'var(--login-input-radius)',
                       paddingTop: 'var(--login-input-padding-y)',
                       paddingBottom: 'var(--login-input-padding-y)',
                       paddingLeft: 'var(--login-input-padding-with-icon)',
-                      paddingRight: 'var(--login-input-padding-x)'
+                      paddingRight: 'var(--login-input-padding-x)',
+                      color: 'var(--login-input-text)'
                     }}
                   />
                 </div>
@@ -198,9 +203,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             <div>
               <label 
-                className="block text-[10px] font-black uppercase tracking-widest"
+                className="block font-black uppercase tracking-widest"
                 style={{ 
                   color: 'var(--login-label-color)',
+                  fontSize: 'var(--login-label-font-size)',
                   marginBottom: 'var(--login-label-margin-bottom)',
                   marginLeft: 'var(--login-label-margin-left)'
                 }}
@@ -224,12 +230,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   style={{ 
                     backgroundColor: 'var(--login-input-bg)',
                     borderColor: 'var(--login-input-border)',
-                    borderWidth: '1px',
+                    borderWidth: 'var(--login-input-border-width)',
                     borderRadius: 'var(--login-input-radius)',
                     paddingTop: 'var(--login-input-padding-y)',
                     paddingBottom: 'var(--login-input-padding-y)',
                     paddingLeft: 'var(--login-input-padding-with-icon)',
-                    paddingRight: 'var(--login-input-padding-x)'
+                    paddingRight: 'var(--login-input-padding-x)',
+                    color: 'var(--login-input-text)'
                   }}
                 />
               </div>
@@ -238,9 +245,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             {isSignUp && (
               <div className="animate-in fade-in slide-in-from-left-2 duration-400">
                 <label 
-                  className="block text-[10px] font-black uppercase tracking-widest"
+                  className="block font-black uppercase tracking-widest"
                   style={{ 
                     color: 'var(--login-label-color)',
+                    fontSize: 'var(--login-label-font-size)',
                     marginBottom: 'var(--login-label-margin-bottom)',
                     marginLeft: 'var(--login-label-margin-left)'
                   }}
@@ -264,12 +272,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     style={{ 
                       backgroundColor: 'var(--login-input-bg)',
                       borderColor: 'var(--login-input-border)',
-                      borderWidth: '1px',
+                      borderWidth: 'var(--login-input-border-width)',
                       borderRadius: 'var(--login-input-radius)',
                       paddingTop: 'var(--login-input-padding-y)',
                       paddingBottom: 'var(--login-input-padding-y)',
                       paddingLeft: 'var(--login-input-padding-with-icon)',
-                      paddingRight: 'var(--login-input-padding-x)'
+                      paddingRight: 'var(--login-input-padding-x)',
+                      color: 'var(--login-input-text)'
                     }}
                   />
                 </div>
@@ -312,7 +321,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        <p className="mt-8 text-center login-footer-text text-[10px] font-medium tracking-tight uppercase">
+        <p className="mt-8 text-center login-footer-text font-medium tracking-tight uppercase" style={{ fontSize: 'var(--login-label-font-size)' }}>
           &copy; 2026 STN GLOBAL SOLUTIONS. ALL RIGHTS RESERVED.
         </p>
       </div>
