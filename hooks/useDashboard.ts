@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+// v1.1.5 - Forced reload for HMR sync
 import { 
   Project, 
   DashboardPage, 
@@ -41,6 +42,7 @@ const proj4Zip = new URL("../assets/New_Project_4_2026-04-09.zip", import.meta.u
 export const useDashboard = () => {
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
   const [activeProjectId, setActiveProjectId] = useState<string>(() => getInitialProjectsState().activeProjectId);
+  const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
   const [layoutStore, setLayoutStore] = useState<LayoutStore>(loadLayoutStoreSync);
   const [isHydrated, setIsHydrated] = useState(false);
   const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
@@ -531,6 +533,31 @@ export const useDashboard = () => {
     return { lg: obj.lg ?? [], md: obj.md ?? [], sm: obj.sm ?? [], xs: obj.xs ?? [] };
   }, [layout.useResponsive, layoutStore, activeProjectId, currentPage?.id, currentRglLayout]);
 
+  const handleExcelUpload = useCallback((id: string, newData: any[]) => {
+    const widget = widgets.find(w => w.id === id);
+    if (!widget) {
+      updateWidget(id, { data: newData });
+      return;
+    }
+
+    if (newData.length > 0 && widget.config) {
+      const { data, series, xAxisKey } = normalizeChartData(newData, widget.config);
+
+      updateWidget(id, {
+        data,
+        config: {
+          ...widget.config,
+          xAxisKey,
+          series
+        }
+      });
+      // Note: Toast notification should be handled by the caller or a global toast hook
+      return;
+    }
+
+    updateWidget(id, { data: newData });
+  }, [widgets, updateWidget]);
+
   return {
     projects,
     setProjects,
@@ -568,12 +595,100 @@ export const useDashboard = () => {
     addProject,
     deleteProject,
     renameProject,
+    onExcelUpload: handleExcelUpload,
+    excelWidgetId,
+    openExcelModal: (id: string) => setExcelWidgetId(id),
+    closeExcelModal: () => setExcelWidgetId(null),
     save
   };
 };
 
-const sane = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
-const saneNum = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
+export const sane = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
+export const saneNum = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
+
+/** 차트 데이터 정규화 및 시리즈 자동 감지 알고리즘 */
+export const normalizeChartData = (
+  rawData: any[], 
+  existingConfig?: Widget['config']
+): { data: any[], series: any[], xAxisKey: string } => {
+  if (!rawData || rawData.length === 0) {
+    return { data: [], series: [], xAxisKey: 'name' };
+  }
+
+  // 1. 데이터 클리닝 (Key 공백 제거 등)
+  const cleanedData = rawData.map(row => {
+    const cleaned: any = {};
+    Object.keys(row).forEach(k => {
+      cleaned[String(k).trim()] = row[k];
+    });
+    return cleaned;
+  });
+
+  const firstRow = cleanedData[0];
+  const excelKeys = Object.keys(firstRow);
+  
+  // 2. X축 키 결정 (기존 설정 우선, 없으면 첫 번째 열)
+  const xAxisKey = (existingConfig?.xAxisKey || 'name').trim();
+  let excelXKey = excelKeys.find(k => k.toLowerCase() === xAxisKey.toLowerCase()) || excelKeys[0];
+
+  // 3. 시리즈 키 추출 (X축 제외 모든 열)
+  const dataKeys = excelKeys.filter(k => k !== excelXKey);
+
+  // 4. 시리즈 리스트 및 색상 배정
+  const newSeriesList = dataKeys.map((key, idx) => {
+    const existing = existingConfig?.series?.find(s => s.label.trim() === key || s.key.trim() === key);
+    return {
+      key: key,
+      label: key,
+      color: existing?.color || `var(--chart-palette-${(idx % 6) + 1})`
+    };
+  });
+
+  // 5. 최종 데이터 매핑
+  const normalizedData = cleanedData.map(row => {
+    const newRow: any = { [xAxisKey]: row[excelXKey] };
+    newSeriesList.forEach(s => {
+      newRow[s.key] = row[s.key];
+    });
+    return newRow;
+  });
+
+  return {
+    data: normalizedData,
+    series: newSeriesList,
+    xAxisKey
+  };
+};
+
+/** ZIP에서 불러온 프로젝트 데이터 보정 (페이지 유무, ID 정합성 등) */
+export const normalizeImportedProject = (
+  project: Project, 
+  defaults: { page: DashboardPage, header: any, theme: DashboardTheme }
+): Project => {
+  let pages = Array.isArray(project.pages) ? project.pages : [];
+  pages = pages.map((pg) => ({
+    ...defaults.page,
+    ...pg,
+    layout: { ...defaults.page.layout, ...(pg.layout || {}) },
+    header: { ...defaults.header, ...(pg.header || {}) },
+  }));
+
+  if (pages.length === 0) {
+    pages = [{ ...defaults.page, id: "page_1", name: "Main Page" }];
+  }
+
+  const activePageId =
+    project.activePageId && pages.some((p) => p.id === project.activePageId)
+      ? project.activePageId
+      : pages[0].id;
+
+  return { 
+    ...project, 
+    theme: { ...defaults.theme, ...project.theme }, 
+    pages, 
+    activePageId 
+  };
+};
 
 function computeInitialLayout(widgets: Widget[], cols: number): LayoutItem[] {
   let nextX = 0;

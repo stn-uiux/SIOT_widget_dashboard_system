@@ -2699,16 +2699,33 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 <thead className="text-muted uppercase tracking-tighter border-b border-[var(--border-base)]" style={{ fontSize: 'var(--text-tiny)' }}>
                   <tr>
                     <th className="text-left pb-2">유형</th>
-                    <th className="text-right pb-2">오늘</th>
-                    <th className="text-right pb-2">주간</th>
+                    {widget.config?.series?.map((s: any) => (
+                      <th key={s.key} className="text-right pb-2">{s.label}</th>
+                    )) || (
+                      <>
+                        <th className="text-right pb-2">오늘</th>
+                        <th className="text-right pb-2">주간</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-muted)]">
                   {currentData.map((d: any, idx: number) => (
                     <tr key={idx} className="group hover:bg-[var(--primary-subtle)] transition-colors">
                       <td className="py-2.5 text-secondary">{d.name}</td>
-                      <td className="py-2.5 text-right font-mono text-main group-hover:text-primary">{d.today}</td>
-                      <td className="py-2.5 text-right font-mono text-muted">{d.weekly}</td>
+                      {widget.config?.series?.map((s: any, sIdx: number) => (
+                        <td 
+                          key={s.key} 
+                          className={`py-2.5 text-right font-mono ${sIdx === 0 ? 'text-main group-hover:text-primary' : 'text-muted'}`}
+                        >
+                          {d[s.key]?.toLocaleString() ?? '-'}
+                        </td>
+                      )) || (
+                        <>
+                          <td className="py-2.5 text-right font-mono text-main group-hover:text-primary">{d.today}</td>
+                          <td className="py-2.5 text-right font-mono text-muted">{d.weekly}</td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+// v1.1.5 - Forced reload for HMR sync
 import { GridLayout, ResponsiveGridLayout, useContainerWidth, getCompactor } from "react-grid-layout";
 import type { LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -100,7 +101,7 @@ const proj2Zip = new URL("./assets/new_project_2_2026-04-08.zip", import.meta.ur
 const proj3Zip = new URL("./assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
 const proj4Zip = new URL("./assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
 
-import { useDashboard } from "./hooks/useDashboard";
+import { useDashboard, sane, saneNum, normalizeImportedProject } from "./hooks/useDashboard";
 
 
 
@@ -1051,6 +1052,10 @@ const App: React.FC = () => {
     addProject,
     deleteProject,
     renameProject,
+    excelWidgetId,
+    openExcelModal,
+    closeExcelModal,
+    onExcelUpload,
     save
   } = useDashboard();
 
@@ -1143,7 +1148,7 @@ const App: React.FC = () => {
   }, [isPreviewMode, activeProjectId, setProjects]);
 
   // Excel Modal State
-  const [excelWidgetId, setExcelWidgetId] = useState<string | null>(null);
+
 
   // separate ref for height measurement (fitToScreen)
   const mainAreaRef = useRef<HTMLDivElement>(null);
@@ -1414,24 +1419,7 @@ const App: React.FC = () => {
     setIsPreviewMode(true);
   };
 
-  /** ZIP에서 불러온 프로젝트: 페이지 없음/깨진 activePageId 보정 (흰 화면 방지) */
-  const normalizeImportedProject = (project: Project): Project => {
-    let pages = Array.isArray(project.pages) ? project.pages : [];
-    pages = pages.map((pg) => ({
-      ...DEFAULT_PAGE,
-      ...pg,
-      layout: { ...DEFAULT_PAGE.layout, ...(pg.layout || {}) },
-      header: { ...DEFAULT_HEADER, ...(pg.header || {}) },
-    }));
-    if (pages.length === 0) {
-      pages = [{ ...DEFAULT_PAGE, id: "page_1", name: "Main Page" }];
-    }
-    const activePageId =
-      project.activePageId && pages.some((p) => p.id === project.activePageId)
-        ? project.activePageId
-        : pages[0].id;
-    return { ...project, theme: { ...DEFAULT_THEME, ...project.theme }, pages, activePageId };
-  };
+
 
   const handleImportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1454,7 +1442,7 @@ const App: React.FC = () => {
       const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
 
       if (target === "full") {
-        const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId });
+        const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId }, { page: DEFAULT_PAGE, header: DEFAULT_HEADER, theme: DEFAULT_THEME });
         updateCurrentPage(projectToApply);
         setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
         showToast("Full Project loaded successfully.");
@@ -1500,67 +1488,7 @@ const App: React.FC = () => {
 
   // updateHeader is now in useDashboard
 
-  const handleExcelUpload = (id: string, newData: any[]) => {
-    const widget = widgets.find(w => w.id === id);
-    if (!widget) {
-      updateWidget(id, { data: newData });
-      return;
-    }
 
-    // Direct Series Overwrite & Data Mapping
-    if (newData.length > 0 && widget.config) {
-      const cleanRow = (row: any) => {
-        const cleaned: any = {};
-        Object.keys(row).forEach(k => {
-          cleaned[String(k).trim()] = row[k];
-        });
-        return cleaned;
-      };
-
-      const cleanedData = newData.map(cleanRow);
-      const firstRow = cleanedData[0];
-      const excelKeys = Object.keys(firstRow);
-
-      const xAxisKey = (widget.config.xAxisKey || 'name').trim();
-      let excelXKey = excelKeys.find(k => k.toLowerCase() === xAxisKey.toLowerCase()) || excelKeys[0];
-
-      // Any column that is NOT the X-Axis and has numeric data (or just any other column) becomes a series
-      const dataKeys = excelKeys.filter(k => k !== excelXKey);
-
-      // Build new series list from scratch based on Excel headers to be safe
-      const newSeriesList = dataKeys.map((key, idx) => {
-        // Try to preserve existing color if possible, else use palette
-        const existing = widget.config?.series?.find(s => s.label.trim() === key || s.key.trim() === key);
-        return {
-          key: key,
-          label: key,
-          color: existing?.color || `var(--chart-palette-${(idx % 6) + 1})`
-        };
-      });
-
-      const normalizedData = cleanedData.map(row => {
-        const newRow: any = { [xAxisKey]: row[excelXKey] };
-        newSeriesList.forEach(s => {
-          newRow[s.key] = row[s.key];
-        });
-        return newRow;
-      });
-
-      updateWidget(id, {
-        data: normalizedData,
-        config: {
-          ...widget.config,
-          xAxisKey: xAxisKey,
-          series: newSeriesList
-        }
-      });
-
-      showToast(`Imported ${newSeriesList.length} data series: ${newSeriesList.map(s => s.label).join(', ')}`, "success");
-      return;
-    }
-
-    updateWidget(id, { data: newData });
-  };
 
   const showSidebar =
     !isPreviewMode &&
@@ -2297,7 +2225,7 @@ const App: React.FC = () => {
                 onWidgetSelect={handleWidgetSelect}
                 onUpdateWidget={updateWidget}
                 onDeleteWidget={deleteWidget}
-                onOpenExcel={(id) => setExcelWidgetId(id)}
+                onOpenExcel={openExcelModal}
                 onOpenWidgetPicker={handleOpenWidgetPicker}
                 isPreviewMode={isPreviewMode}
                 onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
@@ -2388,9 +2316,9 @@ const App: React.FC = () => {
       {/* Excel Integration Modal */}
       <ExcelModal
         isOpen={excelWidgetId !== null}
-        onClose={() => setExcelWidgetId(null)}
+        onClose={closeExcelModal}
         widget={widgets.find((w) => w.id === excelWidgetId) || null}
-        onUpload={handleExcelUpload}
+        onUpload={onExcelUpload}
         isDark={theme.mode === ThemeMode.DARK}
       />
 
