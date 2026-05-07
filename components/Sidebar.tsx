@@ -443,7 +443,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const isEarningProgress = currentType === WidgetType.EARNING_PROGRESS;
   const isEarningTrend = currentType === WidgetType.EARNING_TREND;
   const isTextBlock = currentType === WidgetType.TEXT_BLOCK;
-  const isPremiumSummary = [WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
+  const isPremiumSummary = [WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_FACILITY_2_FIGMA, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_SECURITY_STATUS_V2, WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
   const isSummaryChart = currentType === WidgetType.SUMMARY_CHART;
   const isTable = currentType === WidgetType.TABLE;
   const isPie = currentType === WidgetType.CHART_PIE;
@@ -451,7 +451,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const isMap = currentType === WidgetType.MAP || currentType === WidgetType.MAP_GOOGLE || currentType === WidgetType.MAP_NAVER;
   const isWeather = currentType === WidgetType.WEATHER;
 
-  const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+  const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_EQUIP_PERF_TOP5, WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_SECURITY_STATUS_V2, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   const hasDataRows = isChart || isSummaryChart || isEarningTrend || isPremiumSummary;
 
@@ -461,6 +461,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     WidgetType.CHART_LINE,
     WidgetType.CHART_AREA,
     WidgetType.CHART_COMPOSED,
+    WidgetType.DASH_EQUIP_PERF_TOP5,
     WidgetType.DASH_FAILURE_STATS,
     WidgetType.DASH_TRAFFIC_STATUS,
     WidgetType.DASH_NET_TRAFFIC
@@ -484,11 +485,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   ].includes(currentType as WidgetType));
 
   const isGridChart = isAxisChart || currentType === WidgetType.CHART_RADAR;
-  const isFacility2 = currentType === WidgetType.DASH_FACILITY_2;
+  const isFacility2 = currentType === WidgetType.DASH_FACILITY_2 || currentType === WidgetType.DASH_FACILITY_2_FIGMA;
   const isIconResizable = isSummary || isGeneralKpi || isSummaryChart || currentType === WidgetType.DASH_RANK_LIST || isFacility2 || isWeather;
   const isBarResizable = [WidgetType.CHART_BAR, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_RESOURCE_USAGE].includes(currentType);
 
-  const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_VDI_STATUS].includes(currentType);
+  const canShowLegend = isChart && !isTable && !isSummaryChart && ![WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_FACILITY_2_FIGMA, WidgetType.DASH_RANK_LIST, WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_SECURITY_STATUS_V2, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
   // 위젯 타입별 가용 옵션 필터링
   const appearanceOptions = [

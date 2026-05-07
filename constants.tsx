@@ -474,6 +474,52 @@ export const TYPE_DEFAULT_DATA: Record<string, {
       series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
     }
   },
+  [WidgetType.DASH_FACILITY_2_FIGMA]: {
+    data: [
+      { name: '서버', value: 123, icon: 'database' },
+      { name: '네트워크', value: 23456, icon: 'wifi' }
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'value',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [{ key: 'value', label: '수치', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_EQUIP_PERF_TOP5]: {
+    data: [
+      { year: '2021', device: 2.2, cpu: 1.6, memory: 2.7 },
+      { year: '2022', device: 2.2, cpu: 1.6, memory: 2.7 },
+      { year: '2023', device: 2.2, cpu: 1.6, memory: 2.7 },
+      { year: '2024', device: 2.2, cpu: 1.6, memory: 2.7 },
+    ],
+    config: {
+      xAxisKey: 'year',
+      yAxisKey: 'device',
+      unit: '',
+      showLegend: true,
+      showGrid: true,
+      showXAxis: true,
+      showYAxis: true,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      useGradient: true,
+      // NOTE: colors are token-based; gradients handled by existing chart code
+      series: [
+        { key: 'device', label: 'Device', color: 'var(--primary-color)', endColor: 'var(--primary-50)' },
+        { key: 'cpu', label: 'CPU', color: 'var(--secondary-color)', endColor: 'var(--primary-30)' },
+        { key: 'memory', label: 'Memory', color: 'var(--primary-70)', endColor: 'var(--primary-20)' },
+      ]
+    }
+  },
   [WidgetType.DASH_RANK_LIST]: {
     data: [
       { name: '그랑시아', value: 80 },
@@ -605,6 +651,32 @@ export const TYPE_DEFAULT_DATA: Record<string, {
       showUnitInLegend: false,
       showLabels: false,
       series: [{ key: 'today', label: '오늘', color: 'var(--primary-color)' }]
+    }
+  },
+  [WidgetType.DASH_SECURITY_STATUS_V2]: {
+    title: '보안 침해 현황',
+    mainValue: '545',
+    data: [
+      { name: 'DDoS', today: 24, weekly: 186 },
+      { name: 'IPS', today: 12, weekly: 448 },
+      { name: 'Anti-Virus', today: 6, weekly: 30 },
+      { name: 'Anti-SPAM', today: 440, weekly: 12586 },
+    ],
+    config: {
+      xAxisKey: 'name',
+      yAxisKey: 'today',
+      unit: '',
+      showLegend: false,
+      showGrid: false,
+      showXAxis: false,
+      showYAxis: false,
+      showUnit: false,
+      showUnitInLegend: false,
+      showLabels: false,
+      series: [
+        { key: 'today', label: '오늘', color: 'var(--primary-color)' },
+        { key: 'weekly', label: '주간', color: 'var(--primary-50)' }
+      ]
     }
   },
   [WidgetType.DASH_VDI_STATUS]: {
@@ -748,10 +820,13 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.SUMMARY_CHART]: { label: '트렌드 요약', icon: Activity, category: 'premium' },
   [WidgetType.DASH_FAILURE_STATUS]: { label: '장애 현황 (KPI)', icon: Activity, category: 'premium' },
   [WidgetType.DASH_NET_TRAFFIC]: { label: '네트워크 트래픽 (Stacked)', icon: Activity, category: 'premium' },
-  [WidgetType.DASH_SECURITY_STATUS]: { label: '보안 탐지 현황', icon: Hexagon, category: 'premium' },
+  [WidgetType.DASH_SECURITY_STATUS]: { label: '보안 탐지 현황 (V1)', icon: Hexagon, category: 'premium' },
+  [WidgetType.DASH_SECURITY_STATUS_V2]: { label: '보안 침해 현황 (V2)', icon: Hexagon, category: 'premium' },
   [WidgetType.DASH_RESOURCE_USAGE]: { label: '리소스 사용량', icon: BarChart3, category: 'premium' },
   [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },
   [WidgetType.DASH_FACILITY_2]: { label: '시설 현황 (Type 2)', icon: Monitor, category: 'premium' },
+  [WidgetType.DASH_FACILITY_2_FIGMA]: { label: '시설 현황 (Figma)', icon: Monitor, category: 'premium' },
+  [WidgetType.DASH_EQUIP_PERF_TOP5]: { label: '전체 장비 성능 Top5', icon: BarChart3, category: 'viz' },
   [WidgetType.DASH_RANK_LIST]: { label: '순위 리스트', icon: BarChartHorizontal, category: 'premium' },
   [WidgetType.DASH_TRAFFIC_TOP5]: { label: '업무망 트래픽 TOP5', icon: Activity, category: 'premium' },
   [WidgetType.DASH_VDI_STATUS]: { label: 'VDI 접속 현황', icon: Table, category: 'premium' },
@@ -810,10 +885,13 @@ const EXAMPLES_WIDGET_TYPES: WidgetType[] = [
   WidgetType.DASH_FAILURE_STATUS,
   WidgetType.DASH_FACILITY_1,
   WidgetType.DASH_FACILITY_2,
+  WidgetType.DASH_FACILITY_2_FIGMA,
+  WidgetType.DASH_EQUIP_PERF_TOP5,
   WidgetType.DASH_RANK_LIST,
   WidgetType.DASH_RESOURCE_USAGE,
   WidgetType.DASH_TRAFFIC_TOP5,
   WidgetType.DASH_SECURITY_STATUS,
+  WidgetType.DASH_SECURITY_STATUS_V2,
   WidgetType.DASH_VDI_STATUS,
   WidgetType.SUMMARY,
   WidgetType.TABLE,

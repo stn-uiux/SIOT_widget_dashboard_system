@@ -19,6 +19,14 @@ import { GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import MapWidget from './MapWidget';
 import chartLayoutTokens from '../chart-layout-tokens.json';
 
+const FACILITY_SERVER_ICON_SRC = 'https://www.figma.com/api/mcp/asset/8ceba7c1-521a-4ac3-9448-9c3096d8795f';
+const FACILITY_NETWORK_ICON_SRC = 'https://www.figma.com/api/mcp/asset/c175cafe-6274-4e5c-a049-f6026d43ec24';
+const FACILITY_SERVER_ICON_DARK_SRC = 'https://www.figma.com/api/mcp/asset/56debf1d-1e85-440a-ab5e-a8c98fba2e41';
+const FACILITY_NETWORK_ICON_DARK_SRC = 'https://www.figma.com/api/mcp/asset/86f4bc2b-6129-4d85-ab81-fa2491b6788b';
+const FACILITY_CARD_DARK_SRC = 'https://www.figma.com/api/mcp/asset/6f066d18-7537-4b1c-a36e-b58b99e44f9f';
+const FACILITY_BG_LIGHT_SRC = new URL('../assets/resource/light/bg3 1.png', import.meta.url).href;
+const FACILITY_BG_DARK_SRC = new URL('../assets/resource/dark/bg3 1.png', import.meta.url).href;
+
 
 const GENERAL_KPI_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   TrendingDown, User, Repeat, Activity, BarChart3, TrendingUp, Database, Users, Clock,
@@ -289,6 +297,7 @@ const AmChartComponent = React.memo<{
 }>(({ widget, theme, isDark, contentSize, labelColor, strokeColor }) => {
   const chartRef = React.useRef<HTMLDivElement>(null);
   const rootRef = React.useRef<am5.Root | null>(null);
+  const updateDataRef = React.useRef<((nextWidget: Widget) => void) | null>(null);
 
   React.useLayoutEffect(() => {
     const container = chartRef.current;
@@ -304,6 +313,7 @@ const AmChartComponent = React.memo<{
       try {
         root = am5.Root.new(el);
         rootRef.current = root;
+        updateDataRef.current = null;
       } catch {
         return;
       }
@@ -363,6 +373,10 @@ const AmChartComponent = React.memo<{
 
         series.data.setAll(data);
         series.appear(1000, 100);
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          series.data.setAll(next);
+        };
       } else if (widget.type === WidgetType.CHART_RADAR) {
         const chart = root.container.children.push(am5radar.RadarChart.new(root, {
           panX: false,
@@ -387,6 +401,7 @@ const AmChartComponent = React.memo<{
           renderer: yRenderer
         }));
 
+        const radarSeries: any[] = [];
         seriesList.forEach(s => {
           const series = chart.series.push(am5radar.RadarLineSeries.new(root, {
             name: s.label,
@@ -417,7 +432,13 @@ const AmChartComponent = React.memo<{
 
           series.data.setAll(data);
           series.appear(1000);
+          radarSeries.push(series);
         });
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          xAxis.data.setAll(next);
+          radarSeries.forEach((s) => s.data.setAll(next));
+        };
       } else if (widget.type === WidgetType.CHART_SANKEY) {
         const series = root.container.children.push(am5flow.Sankey.new(root, {
           sourceIdField: xAxisKey || "from",
@@ -451,7 +472,11 @@ const AmChartComponent = React.memo<{
 
         series.data.setAll(data);
         series.appear(1000, 100);
-      } else if (widget.type === WidgetType.CHART_BAR || widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST) {
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          series.data.setAll(next);
+        };
+      } else if (widget.type === WidgetType.CHART_BAR || widget.type === WidgetType.DASH_EQUIP_PERF_TOP5 || widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST) {
         const isHorizontal = widget.type === WidgetType.CHART_BAR_HORIZONTAL || widget.type === WidgetType.DASH_RANK_LIST;
 
         const chart = root.container.children.push(am5xy.XYChart.new(root, {
@@ -521,6 +546,7 @@ const AmChartComponent = React.memo<{
           }
         }
 
+        const xySeries: any[] = [];
         seriesList.forEach(s => {
           const series = chart.series.push(am5xy.ColumnSeries.new(root, {
             name: s.label,
@@ -541,7 +567,17 @@ const AmChartComponent = React.memo<{
             cornerRadiusBR: isHorizontal ? theme.chartRadius : 0,
             cornerRadiusBL: 0,
             strokeOpacity: 0,
+            // IMPORTANT: amCharts expects gradients via `fillGradient`, not `fill`
             fill: toAm5Color(s.color),
+            fillGradient: safeConfig.useGradient
+              ? am5.LinearGradient.new(root, {
+                stops: [
+                  { color: toAm5Color(s.color), opacity: 1 },
+                  { color: toAm5Color(s.endColor || s.color), opacity: 1 }
+                ],
+                rotation: isHorizontal ? 0 : 90
+              })
+              : undefined,
             fillOpacity: 1,
             visible: true,
             [isHorizontal ? "height" : "width"]: am5.percent(safeConfig.barWidth ?? 60)
@@ -549,7 +585,18 @@ const AmChartComponent = React.memo<{
 
           series.data.setAll(data);
           series.appear(1000);
+          xySeries.push(series);
         });
+
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          if (isHorizontal) {
+            yAxis.data.setAll(next);
+          } else {
+            xAxis.data.setAll(next);
+          }
+          xySeries.forEach((s) => s.data.setAll(next));
+        };
       } else if (widget.type === WidgetType.CHART_LINE || widget.type === WidgetType.CHART_AREA || widget.type === WidgetType.DASH_TRAFFIC_STATUS || widget.type === WidgetType.DASH_FAILURE_STATS || widget.type === WidgetType.DASH_NET_TRAFFIC) {
         const chart = root.container.children.push(am5xy.XYChart.new(root, {
           panX: false,
@@ -608,6 +655,7 @@ const AmChartComponent = React.memo<{
           renderer: yRenderer
         }));
 
+        const lineSeries: any[] = [];
         seriesList.forEach(s => {
           const series = chart.series.push(am5xy.LineSeries.new(root, {
             name: s.label,
@@ -644,8 +692,15 @@ const AmChartComponent = React.memo<{
           }
           series.data.setAll(data);
           series.appear(1000);
+          lineSeries.push(series);
         });
         chart.appear(1000, 100);
+
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          xAxis.data.setAll(next);
+          lineSeries.forEach((s) => s.data.setAll(next));
+        };
       } else if (widget.type === WidgetType.CHART_COMPOSED) {
         const chart = root.container.children.push(am5xy.XYChart.new(root, {
           panX: false,
@@ -704,6 +759,7 @@ const AmChartComponent = React.memo<{
           renderer: yRenderer
         }));
 
+        const composedSeries: any[] = [];
         seriesList.forEach((s, idx) => {
           if (idx === 0) {
             const series = chart.series.push(am5xy.ColumnSeries.new(root, {
@@ -734,6 +790,7 @@ const AmChartComponent = React.memo<{
 
             series.data.setAll(data);
             series.appear(1000);
+            composedSeries.push(series);
           } else {
             const series = chart.series.push(am5xy.LineSeries.new(root, {
               name: s.label,
@@ -759,9 +816,15 @@ const AmChartComponent = React.memo<{
 
             series.data.setAll(data);
             series.appear(1000);
+            composedSeries.push(series);
           }
         });
         chart.appear(1000, 100);
+        updateDataRef.current = (nextWidget) => {
+          const next = Array.isArray(nextWidget.data) ? nextWidget.data : [];
+          xAxis.data.setAll(next);
+          composedSeries.forEach((s) => s.data.setAll(next));
+        };
       } else {
         const label = root.container.children.push(am5.Label.new(root, {
           text: 'Unsupported in amCharts',
@@ -802,13 +865,12 @@ const AmChartComponent = React.memo<{
       try {
         rootRef.current?.dispose();
         rootRef.current = null;
+        updateDataRef.current = null;
       } catch { /* ignore */ }
     };
   }, [
     widget.id,
     widget.type,
-    widget.data,
-    widget.config,
     theme.primaryColor,
     theme.borderRadius,
     isDark,
@@ -816,6 +878,11 @@ const AmChartComponent = React.memo<{
     labelColor,
     strokeColor
   ]);
+
+  // Update data without recreating chart (prevents flicker in preview mode)
+  React.useEffect(() => {
+    updateDataRef.current?.(widget);
+  }, [widget.data, widget.config]);
 
   return <div ref={chartRef} className="w-full h-full min-h-[120px]" style={{ minHeight: 120 }} />;
 });
@@ -1237,6 +1304,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
       switch (currentType) {
         case WidgetType.CHART_BAR: type = 'bar'; break;
+        case WidgetType.DASH_EQUIP_PERF_TOP5: type = 'bar'; break;
         case WidgetType.CHART_BAR_HORIZONTAL:
           type = 'bar';
           options.plotOptions.bar.horizontal = true;
@@ -1348,7 +1416,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       }
 
       const amChartLabelColor = isDark ? 'var(--text-main)' : labelColor;
-      const isAmXY = [WidgetType.CHART_LINE, WidgetType.CHART_AREA, WidgetType.CHART_BAR, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED].includes(currentType);
+      const isAmXY = [WidgetType.CHART_LINE, WidgetType.CHART_AREA, WidgetType.CHART_BAR, WidgetType.DASH_EQUIP_PERF_TOP5, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED].includes(currentType);
       return (
         <div className="h-full flex flex-col">
           <div className={`flex-1 min-h-0 overflow-hidden`}>
@@ -1374,7 +1442,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       WidgetType.BLANK,
       WidgetType.TEXT_BLOCK,
       WidgetType.VERTICAL_NAV_CARD,
-      WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2,
+      WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_FACILITY_2_FIGMA,
       WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS,
       WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5
     ].includes(currentType);
@@ -1800,6 +1868,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
 
       case WidgetType.CHART_BAR:
+      case WidgetType.DASH_EQUIP_PERF_TOP5:
         return (
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
@@ -2469,6 +2538,69 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           </div>
         );
 
+      case WidgetType.DASH_FACILITY_2_FIGMA:
+        const isDarkFacility = theme.mode === ThemeMode.DARK;
+        const facilityBgSrc = isDarkFacility ? FACILITY_BG_DARK_SRC : FACILITY_BG_LIGHT_SRC;
+        return (
+          <div
+            className="h-full flex flex-col"
+            style={{
+              gap: 'calc(var(--spacing-sm) + var(--spacing-xs))',
+              padding: 'calc(var(--spacing-sm) + var(--spacing-xs))'
+            }}
+          >
+            <div
+              className="text-main"
+              style={{ fontSize: 'var(--title-size)', fontWeight: 'var(--title-weight)' }}
+            >
+              시설 현황
+            </div>
+            <div
+              className="flex-1 flex flex-col justify-center border-main rounded-md"
+              style={{
+                padding: 'var(--spacing-lg)',
+                gap: 'var(--spacing-lg)',
+                backgroundColor: 'var(--surface)',
+                backgroundImage: isDarkFacility ? `url("${FACILITY_CARD_DARK_SRC}")` : `url("${facilityBgSrc}")`,
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center'
+              }}
+            >
+              {currentData.map((d: any, idx: number) => {
+                const isServer = String(d?.icon ?? d?.name ?? '').toLowerCase().includes('database') || String(d?.name ?? '').includes('서버');
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-sm">
+                      <img
+                        alt=""
+                        src={
+                          isDarkFacility
+                            ? (isServer ? FACILITY_SERVER_ICON_DARK_SRC : FACILITY_NETWORK_ICON_DARK_SRC)
+                            : (isServer ? FACILITY_SERVER_ICON_SRC : FACILITY_NETWORK_ICON_SRC)
+                        }
+                        style={{ width: 'var(--spacing-md)', height: 'var(--spacing-md)' }}
+                      />
+                      <span
+                        className={isDarkFacility ? 'fw-medium text-[var(--white)]' : 'text-main fw-medium'}
+                        style={{ fontSize: 'calc(var(--text-md) + var(--spacing-xs))' }}
+                      >
+                        {d.name}
+                      </span>
+                    </div>
+                    <span
+                      className={isDarkFacility ? 'fw-medium text-[var(--white)]' : 'text-main fw-medium'}
+                      style={{ fontSize: 'calc(var(--text-lg) + var(--spacing-sm))' }}
+                    >
+                      {Number(d.value).toLocaleString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+
       case WidgetType.DASH_RANK_LIST:
         return (
           <div className="h-full flex items-center gap-8 px-4 overflow-hidden">
@@ -2523,14 +2655,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     {d.name}
                   </div>
                   <div
-                    className="flex-1 bg-[var(--surface-muted)] rounded-full overflow-hidden min-w-0"
-                    style={{ height: `${(currentConfig.barWidth ?? 60) * 0.16}px` }}
+                    className="flex-1 bg-[var(--surface-muted)] overflow-hidden min-w-0"
+                    style={{
+                      height: `${(currentConfig.barWidth ?? 60) * 0.16}px`,
+                      borderRadius: `${theme.chartRadius}px`,
+                    }}
                   >
                     <div
-                      className="h-full rounded transition-all duration-500"
+                      className="h-full transition-all duration-500"
                       style={{
                         width: `${widthPercent}%`,
-                        background: 'var(--chart-gradient-multi)'
+                        background: 'var(--chart-gradient-multi)',
+                        borderRadius: `${theme.chartRadius}px`,
                       }}
                     />
                   </div>
@@ -2734,6 +2870,133 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           </div>
         );
 
+      case WidgetType.DASH_SECURITY_STATUS_V2: {
+        const v2Main = currentMainValue ?? '0';
+        const v2Rows = Array.isArray(currentData) ? currentData : [];
+        const headerBg = 'var(--primary-gradient)';
+        const rowAltBg = 'color-mix(in srgb, var(--border-muted) 70%, transparent)';
+        const rowBaseBg = 'color-mix(in srgb, var(--surface) 50%, transparent)';
+
+        return (
+          <div className="h-full flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
+            <div
+              className="flex flex-col items-center justify-center"
+              style={{
+                width: '130px',
+                gap: 'calc(var(--spacing-sm) + var(--spacing-xs))',
+                height: '100%',
+              }}
+            >
+              <div className="flex flex-col items-center justify-center" style={{ gap: 'calc(var(--spacing-sm) + var(--spacing-xs))' }}>
+                <div className="text-muted fw-bold" style={{ fontSize: 'var(--text-small)' }}>
+                  보안침해/탐지
+                </div>
+                <div className="text-main fw-bold" style={{ fontSize: 'var(--text-lg)' }}>
+                  {v2Main}
+                </div>
+              </div>
+
+              <svg
+                width="76"
+                height="76"
+                viewBox="0 0 76 76"
+                aria-hidden="true"
+                style={{ color: 'var(--primary-color)' }}
+              >
+                <circle
+                  cx="38"
+                  cy="38"
+                  r="30"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeDasharray="4 10"
+                  opacity="0.85"
+                />
+                <path
+                  d="M38 20c7 4 12 4 12 4v14c0 10-8 16-12 18-4-2-12-8-12-18V24s5 0 12-4Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                />
+                <circle cx="44.5" cy="41.5" r="6" fill="none" stroke="currentColor" strokeWidth="3" />
+                <path d="M49 46l6 6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </div>
+
+            <div className="flex-1 h-full min-w-0 flex flex-col justify-center">
+              <div
+                className="w-full flex items-center text-white fw-bold"
+                style={{
+                  height: '28px',
+                  borderTopLeftRadius: `${theme.chartRadius}px`,
+                  borderTopRightRadius: `${theme.chartRadius}px`,
+                  background: headerBg,
+                }}
+              >
+                <div className="flex-1 flex items-center justify-center" style={{ fontSize: 'var(--text-small)' }}>유형</div>
+                <div className="flex items-center justify-center" style={{ width: '72px', fontSize: 'var(--text-small)' }}>오늘</div>
+                <div className="flex items-center justify-center" style={{ width: '72px', fontSize: 'var(--text-small)' }}>주간</div>
+              </div>
+
+              <div
+                className="w-full overflow-hidden"
+                style={{
+                  borderBottomLeftRadius: `${theme.chartRadius}px`,
+                  borderBottomRightRadius: `${theme.chartRadius}px`,
+                  border: '1px solid var(--border-base)',
+                  borderTop: 'none',
+                }}
+              >
+                {v2Rows.map((r: any, idx: number) => {
+                  const bg = idx % 2 === 1 ? rowAltBg : rowBaseBg;
+                  return (
+                    <div key={idx} className="flex items-stretch" style={{ background: bg }}>
+                      <div
+                        className="flex-1 flex items-center justify-center"
+                        style={{
+                          padding: 'calc(var(--spacing-xs) + var(--spacing-nano))',
+                          borderRight: '1px solid var(--border-base)',
+                          color: 'var(--text-muted)',
+                          fontSize: 'var(--text-small)',
+                        }}
+                      >
+                        {r.name}
+                      </div>
+                      <div
+                        className="flex items-center justify-center"
+                        style={{
+                          width: '72px',
+                          padding: 'calc(var(--spacing-xs) + var(--spacing-nano))',
+                          borderRight: '1px solid var(--border-base)',
+                          color: 'var(--text-secondary)',
+                          fontSize: 'var(--text-base)',
+                          fontWeight: 'var(--font-bold)',
+                        }}
+                      >
+                        {Number(r.today ?? 0).toLocaleString()}
+                      </div>
+                      <div
+                        className="flex items-center justify-center"
+                        style={{
+                          width: '72px',
+                          padding: 'calc(var(--spacing-xs) + var(--spacing-nano))',
+                          color: 'var(--text-secondary)',
+                          fontSize: 'var(--text-base)',
+                          fontWeight: 'var(--font-bold)',
+                        }}
+                      >
+                        {Number(r.weekly ?? 0).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      }
 
       case WidgetType.DASH_VDI_STATUS:
         return (
@@ -2898,7 +3161,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         style={glassStyleInline ?? cardStyle}
       >
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ paddingLeft: CHART_LEFT_INSET, paddingRight: CHART_LEFT_INSET }}>
-          {(!widget.hideHeader || isEditMode) && (
+          {(widget.type !== WidgetType.DASH_FACILITY_2_FIGMA) && (!widget.hideHeader || isEditMode) && (
             <div className="flex items-center justify-between mb-0 flex-shrink-0 gap-2 widget-header-row" style={{ ['--header-title-size' as string]: `${titleSize}px` }}>
               <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
                 {isEditMode ? (

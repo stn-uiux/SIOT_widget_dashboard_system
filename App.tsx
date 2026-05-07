@@ -1799,7 +1799,12 @@ const App: React.FC = () => {
                     }}
                   >
                     <Palette className="group-hover:scale-110 transition-transform" style={{ width: 'var(--gnb-icon-size)', height: 'var(--gnb-icon-size)', color: isDesignSidebarOpen ? 'var(--gnb-icon-active-color)' : 'var(--gnb-icon-color)' }} /> 
-                    <span className={`font-bold tracking-tighter ${isDesignSidebarOpen ? "text-primary" : ""}`} style={{ fontSize: 'var(--text-small)' }}>Design</span>
+                    <span
+                      className="font-bold tracking-tighter"
+                      style={{ fontSize: 'var(--text-small)', color: isDesignSidebarOpen ? 'var(--white)' : undefined }}
+                    >
+                      Design
+                    </span>
                   </button>
                   <button
                     onClick={handleOpenLayoutSidebar}
@@ -1813,7 +1818,12 @@ const App: React.FC = () => {
                     }}
                   >
                     <LayoutGrid className="group-hover:scale-110 transition-transform" style={{ width: 'var(--gnb-icon-size)', height: 'var(--gnb-icon-size)', color: isLayoutSidebarOpen ? 'var(--gnb-icon-active-color)' : 'var(--gnb-icon-color)' }} /> 
-                    <span className={`font-bold tracking-tighter ${isLayoutSidebarOpen ? "text-primary" : ""}`} style={{ fontSize: 'var(--text-small)' }}>Layout</span>
+                    <span
+                      className="font-bold tracking-tighter"
+                      style={{ fontSize: 'var(--text-small)', color: isLayoutSidebarOpen ? 'var(--white)' : undefined }}
+                    >
+                      Layout
+                    </span>
                   </button>
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
@@ -1827,7 +1837,15 @@ const App: React.FC = () => {
                     }}
                   >
                     <Edit3 className="group-hover:scale-110 transition-transform" style={{ width: 'var(--gnb-icon-size)', height: 'var(--gnb-icon-size)', color: isEditMode ? 'var(--gnb-icon-active-color)' : 'var(--gnb-icon-color)' }} /> 
-                    <span className={`font-bold tracking-tighter ${isEditMode ? "text-primary" : ""}`} style={{ fontSize: 'var(--text-small)' }}>Edit</span>
+                    <span
+                      className="font-bold tracking-tighter"
+                      style={{
+                        fontSize: 'var(--text-small)',
+                        color: isEditMode ? 'var(--white)' : undefined
+                      }}
+                    >
+                      Edit
+                    </span>
                   </button>
                   <button
                     disabled={isEditMode}
@@ -1849,7 +1867,12 @@ const App: React.FC = () => {
                     ) : (
                       <Eye className="group-hover:scale-110 transition-transform" style={{ width: 'var(--gnb-icon-size)', height: 'var(--gnb-icon-size)', color: 'var(--gnb-icon-color)' }} />
                     )}
-                    <span className={`font-bold tracking-tighter ${isPreviewMode ? "text-primary" : ""}`} style={{ fontSize: 'var(--text-small)' }}>{isPreviewMode ? "Exit Preview" : "Preview"}</span>
+                    <span
+                      className="font-bold tracking-tighter"
+                      style={{ fontSize: 'var(--text-small)', color: isPreviewMode ? 'var(--white)' : undefined }}
+                    >
+                      {isPreviewMode ? "Exit Preview" : "Preview"}
+                    </span>
                   </button>
                 </div>
               </>

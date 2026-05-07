@@ -83,7 +83,8 @@ const CATEGORIES = [
             { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_PIE] },
             { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_RADAR] },
             { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_COMPOSED] },
-            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램', preview: PREVIEW_ASSETS[WidgetType.CHART_SANKEY] }
+            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램', preview: PREVIEW_ASSETS[WidgetType.CHART_SANKEY] },
+            { id: WidgetType.DASH_EQUIP_PERF_TOP5, icon: BarChart3, label: '전체 장비 성능 Top5' }
         ]
     },
     {
@@ -96,10 +97,12 @@ const CATEGORIES = [
             { id: WidgetType.SUMMARY_CHART, icon: Activity, label: '트렌드 요약', preview: PREVIEW_ASSETS[WidgetType.SUMMARY_CHART] },
             { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)', preview: PREVIEW_ASSETS[WidgetType.DASH_FAILURE_STATUS] },
             { id: WidgetType.DASH_NET_TRAFFIC, icon: Activity, label: '네트워크 트래픽' },
-            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황', preview: PREVIEW_ASSETS[WidgetType.DASH_SECURITY_STATUS] },
+            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황 (V1)', preview: PREVIEW_ASSETS[WidgetType.DASH_SECURITY_STATUS] },
+            { id: WidgetType.DASH_SECURITY_STATUS_V2, icon: Hexagon, label: '보안 침해 현황 (V2)' },
             { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률', preview: PREVIEW_ASSETS[WidgetType.DASH_RESOURCE_USAGE] },
             { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황' },
             { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태' },
+            { id: WidgetType.DASH_FACILITY_2_FIGMA, icon: Monitor, label: '시설 상태 (Figma)' },
             { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
             { id: WidgetType.DASH_TRAFFIC_TOP5, icon: Activity, label: '업무망 상태' },
             { id: WidgetType.DASH_VDI_STATUS, icon: LayoutGrid, label: 'VDI 접속 현황' }
