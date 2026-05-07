@@ -363,6 +363,15 @@
 
     /* GNB Capsule */
     --gnb-project-name: var(--text-main); /* amCharts/Design 등 버튼 글자색과 동일 */
+
+    /* Export Overlay Tokens */
+    --export-overlay-backdrop-bg: rgba(0, 0, 0, 0.6);
+    --export-overlay-backdrop-blur: 4px;
+    --export-overlay-dialog-max-width: 384px;
+    --export-overlay-spinner-size: 64px;
+    --export-overlay-spinner-border: 4px;
+    --export-overlay-progress-height: 6px;
+    --export-overlay-z-index: 1000;
 }
 
 .ds-widget-card {

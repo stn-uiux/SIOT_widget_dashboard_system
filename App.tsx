@@ -1056,6 +1056,17 @@ const App: React.FC = () => {
     openExcelModal,
     closeExcelModal,
     onExcelUpload,
+    capturingForExport, setCapturingForExport,
+    exportPhase, setExportPhase,
+    exportTarget, setExportTarget,
+    importTarget, setImportTarget,
+    isImporting, setIsImporting,
+    showImportConfirm, setShowImportConfirm,
+    pendingImportFile, setPendingImportFile,
+    hideBarForCapture, setHideBarForCapture,
+    handleImportChange,
+    executeImport,
+    performExportCapture,
     save
   } = useDashboard();
 
@@ -1227,98 +1238,24 @@ const App: React.FC = () => {
   };
 
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
-  const [capturingForExport, setCapturingForExport] = useState(false);
-  const [exportPhase, setExportPhase] = useState<"waiting" | "capturing" | "packing" | null>(null);
-  const [exportTarget, setExportTarget] = useState<"full" | "base" | null>(null);
-  const [importTarget, setImportTarget] = useState<"full" | "base" | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
-  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
-  const [hideBarForCapture, setHideBarForCapture] = useState(false);
+
   const exportPreviewRef = useRef<HTMLDivElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  // ── 내보내기: Preview 전환 → 로딩 표시 → 렌더 대기 → (로딩바 숨김) → 전체 화면 캡처 → ZIP 다운로드 ──
+  // ── 내보내기: Preview 전환 → 훅 호출하여 캡처 및 ZIP 다운로드 ──
   useEffect(() => {
-    if (!capturingForExport || !isPreviewMode) return;
-    setExportPhase("waiting");
-    const waitTimer = setTimeout(() => {
-      const rootEl = appRootRef.current;
-      if (!rootEl) {
-        setExportPhase(null);
-        setCapturingForExport(false);
-        setIsPreviewMode(false);
-        return;
-      }
-      setExportPhase("capturing");
-      setHideBarForCapture(true);
-      const capture = async () => {
-        try {
-          const mod = await import("html-to-image");
-          let fullBlob: Blob | null = null;
-          let baseBlob: Blob | null = null;
-
-          if (exportTarget === "full") {
-            fullBlob = await mod.toBlob(rootEl, { pixelRatio: 1, cacheBust: true });
-          } else {
-            baseBlob = await mod.toBlob(rootEl, {
-              pixelRatio: 1,
-              cacheBust: true,
-              filter: (node: any) => {
-                if (node.classList?.contains('react-grid-layout') ||
-                  node.classList?.contains('header-widget-layer') ||
-                  (node.textContent && node.textContent.includes('Add Widget') && node.tagName === 'BUTTON')) {
-                  return false;
-                }
-                if (node.classList?.contains('widget-card')) {
-                  return false;
-                }
-                return true;
-              }
-            });
-          }
-
-          setExportPhase("packing");
-          const layoutPositions = (layoutStore[activeProjectId] ?? {}) as Record<string, Record<string, LayoutItem[]>>;
-
-          if (exportTarget === "full") {
-            // Download 1: Full Project
-            await exportProjectToZip(currentProject, layoutPositions, fullBlob);
-            showToast("Project exported successfully (Full)");
-          } else if (exportTarget === "base") {
-            // Download 2: Settings Only (Clean)
-            const cleanProject: Project = {
-              ...currentProject,
-              pages: currentProject.pages.map(pg => ({
-                ...pg,
-                widgets: [],
-                header: pg.header ? { ...pg.header, widgets: [] } : pg.header
-              }))
-            };
-            // For clean project, we pass empty layout positions
-            await exportProjectToZip(cleanProject, {}, baseBlob, "_Base_Layout");
-            showToast("Project layout exported successfully (Base)");
-          }
-        } catch (err) {
-          console.error(err);
-          showToast("미리보기 캡처 실패", "error");
-        } finally {
-          setHideBarForCapture(false);
-          setExportPhase(null);
-          setCapturingForExport(false);
+    if (capturingForExport && isPreviewMode) {
+      performExportCapture(appRootRef.current)
+        .then(() => {
+          showToast(`프로젝트를 성공적으로 내보냈습니다. (${exportTarget === "full" ? "전체" : "레이아웃"})`);
           setIsPreviewMode(false);
-          setExportTarget(null);
-        }
-      };
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          capture();
+        })
+        .catch((err) => {
+          showToast(err instanceof Error ? err.message : "내보내기 실패", "error");
+          setIsPreviewMode(false);
         });
-      });
-    }, 2500);
-    return () => clearTimeout(waitTimer);
-  }, [capturingForExport, isPreviewMode, currentProject, layoutStore, activeProjectId]);
+    }
+  }, [capturingForExport, isPreviewMode, performExportCapture]);
 
   // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
   const _page = currentPage ?? (currentProject?.pages?.[0]);
@@ -1421,58 +1358,7 @@ const App: React.FC = () => {
 
 
 
-  const handleImportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !importTarget) return;
 
-    if (importTarget === 'full') {
-      setPendingImportFile(file);
-      setShowImportConfirm(true);
-      return;
-    }
-
-    await executeImport(file, 'base');
-  };
-
-  const executeImport = async (file: File, target: 'full' | 'base') => {
-    setIsProjectDropdownOpen(false);
-    setIsImporting(true);
-    try {
-      const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
-
-      if (target === "full") {
-        const projectToApply = normalizeImportedProject({ ...importedProject, id: activeProjectId }, { page: DEFAULT_PAGE, header: DEFAULT_HEADER, theme: DEFAULT_THEME });
-        updateCurrentPage(projectToApply);
-        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
-        showToast("Full Project loaded successfully.");
-      } else {
-        // Base Layout Only
-        const projectToApply = {
-          ...currentProject,
-          theme: { ...importedProject.theme },
-          pages: currentProject.pages.map((pg, idx) => {
-            const importedPage = importedProject.pages[idx] || importedProject.pages[0];
-            return {
-              ...pg,
-              layout: { ...importedPage.layout },
-              header: { ...importedPage.header, widgets: pg.header.widgets }
-            };
-          })
-        };
-        updateCurrentPage(projectToApply);
-        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
-        showToast("Base Layout applied successfully.");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast(err instanceof Error ? err.message : "Import failed", "error");
-    } finally {
-      setIsImporting(false);
-      setImportTarget(null);
-      setPendingImportFile(null);
-    }
-  };
 
   const handleProjectSave = async () => {
     if (isEditMode) {
@@ -1520,10 +1406,10 @@ const App: React.FC = () => {
     >
       <ConfirmModal
         isOpen={showImportConfirm}
-        title="Replace Project?"
-        message="This will overwrite all widgets and pages in your current project. This action cannot be undone."
-        confirmText="Replace Everything"
-        cancelText="Cancel"
+        title="프로젝트를 교체하시겠습니까?"
+        message="불러오려는 파일의 내용으로 현재 프로젝트의 모든 위젯과 페이지가 덮어씌워집니다. 이 작업은 되돌릴 수 없습니다."
+        confirmText="모두 교체하기"
+        cancelText="취소"
         isDark={theme.mode === ThemeMode.DARK}
         onConfirm={() => {
           if (pendingImportFile) executeImport(pendingImportFile, 'full');
@@ -2402,7 +2288,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex-1">
               <p className="uppercase font-bold text-muted tracking-widest mb-0.5" style={{ fontSize: 'var(--text-caption)' }}>
-                System Notification
+                시스템 알림
               </p>
               <p className="text-sm font-bold text-main">{toast.message}</p>
             </div>
@@ -2432,6 +2318,73 @@ const App: React.FC = () => {
           isPreview={isPreviewMode}
           onClick={isPreviewMode ? () => setIsPreviewMode(false) : () => setIsFloatingGnbOpen(!isFloatingGnbOpen)} 
         />
+      )}
+      {/* ── 내보내기 진행 중 로딩 오버레이 ── */}
+      {exportPhase && (
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center animate-in fade-in duration-300"
+          style={{
+            zIndex: 'var(--export-overlay-z-index)',
+            backgroundColor: 'var(--export-overlay-backdrop-bg)',
+            backdropFilter: `blur(var(--export-overlay-backdrop-blur))`,
+            WebkitBackdropFilter: `blur(var(--export-overlay-backdrop-blur))`,
+          }}
+        >
+          <div
+            className="flex flex-col items-center border border-[var(--border-base)]"
+            style={{
+              backgroundColor: 'var(--surface)',
+              padding: 'var(--spacing-xl)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-premium)',
+              gap: 'var(--spacing-lg)',
+              maxWidth: 'var(--export-overlay-dialog-max-width)',
+              width: '100%',
+              margin: '0 var(--spacing-md)',
+            }}
+          >
+            <div
+              className="relative"
+              style={{ width: 'var(--export-overlay-spinner-size)', height: 'var(--export-overlay-spinner-size)' }}
+            >
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{ border: 'var(--export-overlay-spinner-border) solid var(--primary-20)' }}
+              />
+              <div
+                className="absolute inset-0 rounded-full animate-spin"
+                style={{
+                  border: 'var(--export-overlay-spinner-border) solid var(--primary-color)',
+                  borderTopColor: 'transparent',
+                }}
+              />
+            </div>
+
+            <div className="text-center">
+              <h3 className="font-bold text-main" style={{ fontSize: 'var(--text-md)', marginBottom: 'var(--spacing-xs)' }}>
+                {exportPhase === 'waiting' && "준비 중..."}
+                {exportPhase === 'capturing' && "화면 캡처 중..."}
+                {exportPhase === 'packing' && "데이터 압축 중..."}
+              </h3>
+              <p className="text-muted" style={{ fontSize: 'var(--text-small)' }}>
+                잠시만 기다려주세요. 대시보드를 파일로 만들고 있습니다.
+              </p>
+            </div>
+
+            <div
+              className="w-full rounded-full overflow-hidden"
+              style={{ backgroundColor: 'var(--surface-elevated)', height: 'var(--export-overlay-progress-height)' }}
+            >
+              <div
+                className="h-full transition-all duration-500 ease-out"
+                style={{
+                  backgroundColor: 'var(--primary-color)',
+                  width: exportPhase === 'waiting' ? '33%' : exportPhase === 'capturing' ? '66%' : '95%',
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

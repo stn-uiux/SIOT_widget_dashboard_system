@@ -47,6 +47,16 @@ export const useDashboard = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [presets, setPresets] = useState<ThemePreset[]>(() => loadPresetsSync(THEME_PRESETS));
 
+  // ── I/O 관련 상태 (Export / Import) ──
+  const [capturingForExport, setCapturingForExport] = useState(false);
+  const [exportPhase, setExportPhase] = useState<"waiting" | "capturing" | "packing" | null>(null);
+  const [exportTarget, setExportTarget] = useState<"full" | "base" | null>(null);
+  const [importTarget, setImportTarget] = useState<"full" | "base" | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [hideBarForCapture, setHideBarForCapture] = useState(false);
+
   const layoutStoreRef = useRef<LayoutStore>(layoutStore);
   layoutStoreRef.current = layoutStore;
   const projectsRef = useRef<Project[]>(projects);
@@ -173,6 +183,12 @@ export const useDashboard = () => {
         }
         return p;
       }),
+    );
+  }, [activeProjectId]);
+
+  const replaceActiveProject = useCallback((newProject: Project) => {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === activeProjectId ? newProject : p))
     );
   }, [activeProjectId]);
 
@@ -558,6 +574,139 @@ export const useDashboard = () => {
     updateWidget(id, { data: newData });
   }, [widgets, updateWidget]);
 
+  const executeImport = useCallback(async (file: File, target: 'full' | 'base') => {
+    setIsImporting(true);
+    try {
+      const { project: importedProject, layoutPositions } = await importProjectFromZip(file);
+
+      if (target === "full") {
+        const projectToApply = normalizeImportedProject(
+          { ...importedProject, id: activeProjectId }, 
+          { page: DEFAULT_PAGE, header: currentPage?.header || DEFAULT_HEADER, theme }
+        );
+        replaceActiveProject(projectToApply);
+        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
+      } else {
+        // Base Layout Only (테마와 레이아웃만 가져오고 위젯은 유지)
+        const projectToApply: Project = {
+          ...currentProject,
+          theme: { ...importedProject.theme },
+          pages: currentProject.pages.map((pg, idx) => {
+            const importedPage = importedProject.pages[idx] || importedProject.pages[0];
+            return {
+              ...pg,
+              layout: { ...importedPage.layout },
+              header: { ...importedPage.header, widgets: pg.header.widgets }
+            };
+          })
+        };
+        replaceActiveProject(projectToApply);
+        setLayoutStore((prev) => ({ ...prev, [activeProjectId]: layoutPositions }));
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      setIsImporting(false);
+      setImportTarget(null);
+      setPendingImportFile(null);
+    }
+  }, [activeProjectId, currentPage?.header, currentProject, theme, replaceActiveProject, setLayoutStore]);
+
+  const handleImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !importTarget) return;
+
+    if (importTarget === 'full') {
+      setPendingImportFile(file);
+      setShowImportConfirm(true);
+      return;
+    }
+
+    await executeImport(file, 'base');
+  }, [importTarget, executeImport]);
+
+  const performExportCapture = useCallback(async (rootEl: HTMLElement | null) => {
+    if (!rootEl || !capturingForExport) return;
+
+    // 즉시 상태를 false로 변경하여 useEffect 중복 트리거를 방지합니다.
+    setCapturingForExport(false);
+
+    console.log("[STN] Export started: Phase = waiting");
+    setExportPhase("waiting");
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    try {
+      console.log("[STN] Export phase: capturing");
+      setExportPhase("capturing");
+      setHideBarForCapture(true);
+
+      const mod = await import("html-to-image");
+      let fullBlob: Blob | null = null;
+      let baseBlob: Blob | null = null;
+
+      const captureOptions = {
+        pixelRatio: 1,
+        cacheBust: true,
+        skipFonts: true,
+        preferredFontFormat: 'woff2' as const,
+      };
+
+      if (exportTarget === "full") {
+        fullBlob = await mod.toBlob(rootEl, captureOptions);
+        console.log("[STN] Full screenshot captured, blob size:", fullBlob?.size);
+      } else {
+        baseBlob = await mod.toBlob(rootEl, {
+          ...captureOptions,
+          filter: (node: any) => {
+            if (
+              node.classList?.contains('react-grid-layout') ||
+              node.classList?.contains('header-widget-layer') ||
+              (node.textContent && node.textContent.includes('Add Widget') && node.tagName === 'BUTTON')
+            ) {
+              return false;
+            }
+            if (node.classList?.contains('widget-card')) {
+              return false;
+            }
+            return true;
+          }
+        });
+        console.log("[STN] Base screenshot captured, blob size:", baseBlob?.size);
+      }
+
+      console.log("[STN] Export phase: packing");
+      setExportPhase("packing");
+      const layoutPositions = (layoutStore[activeProjectId] ?? {}) as Record<string, Record<string, LayoutItem[]>>;
+
+      if (exportTarget === "full") {
+        await exportProjectToZip(currentProject, layoutPositions, fullBlob);
+      } else if (exportTarget === "base") {
+        const cleanProject: Project = {
+          ...currentProject,
+          pages: currentProject.pages.map(pg => ({
+            ...pg,
+            widgets: [],
+            header: pg.header ? { ...pg.header, widgets: [] } : pg.header
+          }))
+        };
+        await exportProjectToZip(cleanProject, {}, baseBlob, "_Base_Layout");
+      }
+      
+      console.log("[STN] Export completed successfully.");
+      return true;
+    } catch (err) {
+      console.error("[STN] Export failed:", err);
+      throw err;
+    } finally {
+      setExportPhase(null);
+      setCapturingForExport(false);
+      setHideBarForCapture(false);
+    }
+  }, [capturingForExport, exportTarget, activeProjectId, currentProject, layoutStore]);
+
   return {
     projects,
     setProjects,
@@ -581,6 +730,7 @@ export const useDashboard = () => {
     handlePageChange,
     handleRglLayoutChange,
     handleResponsiveLayoutChange,
+    replaceActiveProject,
     addWidgetWithType,
     updateWidget,
     deleteWidget,
@@ -596,9 +746,24 @@ export const useDashboard = () => {
     deleteProject,
     renameProject,
     onExcelUpload: handleExcelUpload,
+    handleImportChange,
+    executeImport,
+    performExportCapture,
+
     excelWidgetId,
     openExcelModal: (id: string) => setExcelWidgetId(id),
     closeExcelModal: () => setExcelWidgetId(null),
+    
+    // I/O 상태 및 세터 노출
+    capturingForExport, setCapturingForExport,
+    exportPhase, setExportPhase,
+    exportTarget, setExportTarget,
+    importTarget, setImportTarget,
+    isImporting, setIsImporting,
+    showImportConfirm, setShowImportConfirm,
+    pendingImportFile, setPendingImportFile,
+    hideBarForCapture, setHideBarForCapture,
+
     save
   };
 };

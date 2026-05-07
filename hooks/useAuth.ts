@@ -47,8 +47,12 @@ export const useAuth = () => {
    */
   const logout = async () => {
     try {
-      // Force clear potential session residues in localStorage
-      localStorage.removeItem('supabase.auth.token');
+      // 모든 Supabase 관련 인증 키 삭제 (sb-xxxx-auth-token 형태 등)
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('supabase.auth.token') || (key.startsWith('sb-') && key.endsWith('-auth-token'))) {
+          localStorage.removeItem(key);
+        }
+      });
       
       // Attempt signOut with a timeout fallback
       const signOutPromise = supabase.auth.signOut();

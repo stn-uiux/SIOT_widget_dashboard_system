@@ -161,10 +161,15 @@ export async function exportProjectToZip(
   const suffix = customSuffix || "";
   const name = `${safeName}${suffix}_${today}.zip`;
   const a = document.createElement("a");
+  a.style.display = "none";
   a.href = URL.createObjectURL(blob);
   a.download = name;
+  document.body.appendChild(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 100);
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }, 100);
 }
 
 /** ZIP 파일 파싱 후 프로젝트 + 레이아웃 + 이미지 URL 복원 */

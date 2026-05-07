@@ -592,6 +592,15 @@
                 "glow": { "value": "0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2)", "type": "string" },
                 "inner_glow": { "value": "inset 0 0 15px rgba(255, 255, 255, 0.3)", "type": "string" },
                 "blur": { "value": "12px", "type": "dimension" }
+            },
+            "export_overlay": {
+                "backdrop_bg":      { "value": "rgba(0, 0, 0, 0.6)", "type": "color",     "description": "내보내기 오버레이 배경 dimmer" },
+                "backdrop_blur":    { "value": "4px",                 "type": "dimension", "description": "backdrop-filter blur 값" },
+                "dialog_max_width": { "value": "384px",               "type": "dimension", "description": "오버레이 다이얼로그 최대 너비" },
+                "spinner_size":     { "value": "64px",                "type": "dimension", "description": "스피너 원형 크기" },
+                "spinner_border":   { "value": "4px",                 "type": "dimension", "description": "스피너 테두리 두께" },
+                "progress_height":  { "value": "6px",                 "type": "dimension", "description": "진행바 높이" },
+                "z_index":          { "value": 1000,                  "type": "number",    "description": "오버레이 z-index" }
             }
         },
         "icons": {
