@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect, useTransition } from "react";
 import { createPortal } from "react-dom";
 // v1.1.5 - Forced reload for HMR sync
 import { GridLayout, ResponsiveGridLayout, useContainerWidth, getCompactor } from "react-grid-layout";
@@ -1158,6 +1158,7 @@ const App: React.FC = () => {
   const [isDesignSidebarOpen, setIsDesignSidebarOpen] = useState(false);
   const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
   const previewTickRef = useRef(0);
   const previewBaseDataRef = useRef<Record<string, any[]>>({});
@@ -1579,9 +1580,12 @@ const App: React.FC = () => {
   };
 
   const handleWidgetSelect = useCallback((id: string | null) => {
-    setSelectedWidgetId(id);
-    // Explicitly close design sidebar when selecting a widget or deselecting
-    setIsDesignSidebarOpen(false);
+    // Sidebar 첫 렌더가 무거워 클릭이 끊기는 것을 완화
+    startTransition(() => {
+      setSelectedWidgetId(id);
+      // Explicitly close design sidebar when selecting a widget or deselecting
+      setIsDesignSidebarOpen(false);
+    });
   }, []);
 
   const handleToggleEditMode = () => {
