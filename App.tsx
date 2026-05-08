@@ -309,10 +309,10 @@ const DashboardGrid: React.FC<{
                 <Plus className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center">
-                <span className="font-black text-lg uppercase tracking-widest block mb-2">
+                <span className="font-black uppercase tracking-widest block" style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--spacing-sm)' }}>
                   Create Your Dashboard
                 </span>
-                <p className="text-xs text-muted font-medium">
+                <p className="text-muted font-medium" style={{ fontSize: 'var(--text-small)' }}>
                   Click to add your first analysis widget
                 </p>
               </div>
@@ -332,8 +332,8 @@ const DashboardGrid: React.FC<{
               const totalH = 3000;
               const gridFillVar = theme.mode === ThemeMode.LIGHT ? "--grid-guide-fill-light" : "--grid-guide-fill-dark";
               const gridFill = typeof document !== "undefined"
-                ? getComputedStyle(document.documentElement).getPropertyValue(gridFillVar).trim() || "rgba(0,0,0,0.06)"
-                : "rgba(0,0,0,0.06)";
+                ? getComputedStyle(document.documentElement).getPropertyValue(gridFillVar).trim() || "var(--grid-guide-fill-light)"
+                : "var(--grid-guide-fill-light)";
               const columns = Array.from({ length: cols }, (_, i) => ({
                 x: i * (colWidth + margin),
                 width: colWidth,
@@ -449,9 +449,18 @@ const DashboardGrid: React.FC<{
                         userRole={userRole}
                       />
                       {isEditMode && isThisResizing && liveSize && (
-                        <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
+                        <div
+                          className="absolute z-[100] w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
+                          style={{
+                            bottom: 'var(--spacing-sm)',
+                            right: 'var(--spacing-sm)',
+                            padding: 'var(--spacing-xs) var(--spacing-sm)',
+                            backgroundColor: 'var(--overlay-strong)',
+                            border: 'var(--widget-border-width) solid var(--overlay-border)',
+                          }}
+                        >
+                          <div className="flex items-center justify-center" style={{ gap: 'var(--spacing-xxs)' }}>
+                            <span className="font-bold font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)', color: 'var(--overlay-text)' }}>
                               {liveSize.w} × {liveSize.h}
                             </span>
                           </div>
@@ -535,9 +544,18 @@ const DashboardGrid: React.FC<{
                           userRole={userRole}
                         />
                         {isEditMode && isThisResizing && liveSize && (
-                          <div className="absolute bottom-3 right-3 z-[100] w-fit h-fit px-2.5 py-1 rounded bg-black/90 backdrop-blur-sm border border-white/20 shadow-2xl pointer-events-none overflow-hidden">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className="font-bold text-white/90 font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)' }}>
+                          <div
+                            className="absolute z-[100] w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
+                            style={{
+                              bottom: 'var(--spacing-sm)',
+                              right: 'var(--spacing-sm)',
+                              padding: 'var(--spacing-xs) var(--spacing-sm)',
+                              backgroundColor: 'var(--overlay-strong)',
+                              border: 'var(--widget-border-width) solid var(--overlay-border)',
+                            }}
+                          >
+                            <div className="flex items-center justify-center" style={{ gap: 'var(--spacing-xxs)' }}>
+                              <span className="font-bold font-mono tracking-tighter leading-none" style={{ fontSize: 'var(--text-caption)', color: 'var(--overlay-text)' }}>
                                 {liveSize.w} × {liveSize.h}
                               </span>
                             </div>
@@ -559,14 +577,18 @@ const DashboardGrid: React.FC<{
                   <button
                     onClick={onOpenWidgetPicker}
                     className={`
-                    relative flex items-center gap-3 px-6 h-[52px]
-                    bg-white/10 dark:bg-black/40 backdrop-blur-2xl
-                    border border-white/20 dark:border-white/10
+                    relative flex items-center gap-3 px-6
                     rounded-full overflow-hidden transition-all duration-500
                     hover:scale-105 hover:px-8 active:scale-95
                     shadow-[var(--shadow-header-bar)]
                     before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity
                   `}
+                  style={{
+                    height: 'var(--add-widget-pill-height)',
+                    backgroundColor: 'var(--add-widget-pill-bg)',
+                    border: 'var(--widget-border-width) solid var(--add-widget-pill-border)',
+                    backdropFilter: 'blur(var(--add-widget-pill-blur))',
+                  }}
                   >
                     {/* Glowing Animated Ring */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
@@ -574,24 +596,38 @@ const DashboardGrid: React.FC<{
                     </div>
 
                     {/* Icon with hover rotation */}
-                    <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700">
-                      <Plus className="w-5 h-5 text-white stroke-[3px]" />
+                    <div
+                      className="relative z-10 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700"
+                      style={{ width: 'var(--add-widget-icon-wrap-size)', height: 'var(--add-widget-icon-wrap-size)', backgroundColor: 'var(--primary-color)' }}
+                    >
+                      <Plus className="w-5 h-5 text-white" style={{ strokeWidth: 'var(--icon-stroke-bold)' }} />
                     </div>
 
                     {/* Text with letter spacing animation */}
-                    <span className={`relative z-10 font-black text-[13px] uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md ${theme.mode === ThemeMode.LIGHT ? "text-[var(--text-main)]" : "text-white"}`}>
+                    <span
+                      className="relative z-10 font-black uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all duration-500 whitespace-nowrap drop-shadow-md"
+                      style={{ fontSize: 'var(--text-small)', color: theme.mode === ThemeMode.LIGHT ? 'var(--text-main)' : 'var(--white)' }}
+                    >
                       Add Widget
                     </span>
 
                   </button>
 
                   {/* Subtle outer glow */}
-                  <div className="absolute -inset-1 bg-primary/20 blur-2xl rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute -inset-1 blur-2xl rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: 'var(--add-widget-glow)' }} />
                 </div>
 
                 {/* Hint under the button */}
-                <div className="mt-3 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm border border-white/5 opacity-0 group-hover:opacity-60 transition-opacity duration-500">
-                  <span className="text-white/70 uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)' }}>Pick analysis component</span>
+                <div
+                  className="mt-3 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500"
+                  style={{
+                    padding: 'var(--spacing-xs) var(--spacing-sm)',
+                    backgroundColor: 'var(--overlay-soft)',
+                    border: 'var(--widget-border-width) solid var(--overlay-border-soft)',
+                    backdropFilter: 'blur(var(--floating-panel-blur))',
+                  }}
+                >
+                  <span className="uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)', color: 'var(--overlay-text-dim)' }}>Pick analysis component</span>
                 </div>
               </div>
             )}
@@ -977,35 +1013,37 @@ const LoadingScreen = ({ message }: { message: string }) => (
     <div className="relative flex flex-col items-center">
       <div 
         className="absolute rounded-full animate-pulse" 
-        style={{ 
-          inset: '-80px', 
+        style={{
+          inset: 'var(--loading-glow-inset-outer)',
           backgroundColor: 'var(--loading-glow-1)', 
           filter: 'blur(var(--loading-blur-1))' 
         }} 
       />
       <div 
         className="absolute rounded-full animate-pulse [animation-delay:700ms]" 
-        style={{ 
-          inset: '-40px', 
+        style={{
+          inset: 'var(--loading-glow-inset-inner)',
           backgroundColor: 'var(--loading-glow-2)', 
           filter: 'blur(var(--loading-blur-2))' 
         }} 
       />
       <div className="flex flex-col items-center">
         <div 
-          className="border-4 rounded-full animate-spin mb-8" 
+          className="rounded-full animate-spin"
           style={{ 
             width: 'var(--loading-spinner-size)', 
             height: 'var(--loading-spinner-size)',
-            borderColor: 'rgba(var(--primary-color-rgb), 0.2)',
+            borderWidth: 'var(--loading-spinner-border-width)',
+            marginBottom: 'var(--spacing-xl)',
+            borderColor: 'var(--loading-spinner-track)',
             borderTopColor: 'var(--loading-spinner-color)'
           }} 
         />
         <div className="text-center">
-          <span className="text-sm uppercase tracking-[0.4em] font-black animate-pulse" style={{ color: 'var(--loading-text-1)' }}>
+          <span className="uppercase tracking-[0.4em] font-black animate-pulse" style={{ fontSize: 'var(--text-small)', color: 'var(--loading-text-1)' }}>
             STN Dashboard
           </span>
-          <p className="mt-2 tracking-widest uppercase" style={{ fontSize: 'var(--text-tiny)', color: 'var(--loading-text-2)' }}>
+          <p className="tracking-widest uppercase" style={{ marginTop: 'var(--spacing-xs)', fontSize: 'var(--text-tiny)', color: 'var(--loading-text-2)' }}>
             {message}
           </p>
         </div>
@@ -1114,17 +1152,24 @@ const App: React.FC = () => {
   const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
+  const previewTickRef = useRef(0);
 
-  // ── 2. Real-time Preview Simulation (1s updates) ──
+  // ── 2. Real-time Preview Simulation (optimized updates) ──
   useEffect(() => {
     if (!isPreviewMode) return;
     const interval = setInterval(() => {
+      previewTickRef.current += 1;
+      const tickGroup = previewTickRef.current % 2;
       setProjects((prev) => {
         return prev.map((p) => {
           if (p.id !== activeProjectId) return p;
+          let projectChanged = false;
           const updatedPages = p.pages.map((pg) => {
             if (pg.id !== p.activePageId) return pg;
-            const updatedWidgets = pg.widgets.map((w) => {
+            let pageChanged = false;
+            const updatedWidgets = pg.widgets.map((w, idx) => {
+              // Update only half of widgets per tick to reduce heavy chart rerenders.
+              if (idx % 2 !== tickGroup) return w;
               const newData = (w.data || []).map((d: any) => {
                 const nextD = { ...d };
                 if (w.config?.series) {
@@ -1147,14 +1192,18 @@ const App: React.FC = () => {
                   newMainValue = (mainValNum + variation).toFixed(1) + unit;
                 }
               }
+              pageChanged = true;
               return { ...w, data: newData, mainValue: newMainValue };
             });
+            if (!pageChanged) return pg;
+            projectChanged = true;
             return { ...pg, widgets: updatedWidgets };
           });
+          if (!projectChanged) return p;
           return { ...p, pages: updatedPages };
         });
       });
-    }, 1000);
+    }, 1600);
     return () => clearInterval(interval);
   }, [isPreviewMode, activeProjectId, setProjects]);
 
@@ -1427,8 +1476,8 @@ const App: React.FC = () => {
       {/* 내보내기/불러오기 로딩 바 */}
       {(capturingForExport || isImporting) && !hideBarForCapture && (
         <div className="fixed top-0 left-0 right-0 z-[100] flex flex-col bg-[var(--surface)] border-b border-[var(--border-base)] shadow-lg">
-          <div className="flex items-center justify-between px-4 py-2">
-            <span className="text-sm font-medium text-[var(--text-main)]">
+          <div className="flex items-center justify-between" style={{ padding: 'var(--spacing-sm) var(--spacing-md)' }}>
+            <span className="font-medium text-[var(--text-main)]" style={{ fontSize: 'var(--text-small)' }}>
               {isImporting ? "프로젝트 불러오기 중..." : (
                 <>
                   {exportPhase === "waiting" && "내보내기 중… Preview 화면 렌더링 대기"}
@@ -1439,7 +1488,7 @@ const App: React.FC = () => {
               )}
             </span>
           </div>
-          <div className="h-1 w-full bg-[var(--border-muted)] overflow-hidden">
+          <div className="w-full bg-[var(--border-muted)] overflow-hidden" style={{ height: 'var(--progress-track-height)' }}>
             <div
               className={`h-full bg-[var(--primary-color)] transition-all duration-500 ease-out ${isImporting ? 'animate-pulse' : ''}`}
               style={{
@@ -1480,7 +1529,7 @@ const App: React.FC = () => {
             height: 'var(--ai-fab-size)',
             backgroundColor: 'var(--gnb-bg)',
             backdropFilter: 'blur(var(--gnb-blur))',
-            borderRadius: '9999px',
+            borderRadius: 'var(--gnb-radius)',
             boxShadow: 'var(--gnb-shadow)',
           }}
           title="Exit Preview"
@@ -1504,7 +1553,7 @@ const App: React.FC = () => {
             backdropFilter: 'blur(var(--gnb-blur))',
             borderRadius: 'var(--gnb-radius)',
             padding: '0 var(--gnb-padding-x)',
-            border: '1px solid var(--border-base)',
+            border: 'var(--widget-border-width) solid var(--border-base)',
             boxShadow: 'var(--gnb-shadow)',
           }}
         >
@@ -1563,7 +1612,8 @@ const App: React.FC = () => {
                                         if (e.key === "Escape") setEditingProjectId(null);
                                       }}
                                       onBlur={() => renameProject(p.id, editingProjectName)}
-                                      className="flex-1 min-w-0 bg-transparent border-b border-[var(--primary-color)] text-xs font-bold outline-none uppercase tracking-tight text-[var(--text-main)] w-full"
+                                      className="flex-1 min-w-0 bg-transparent border-b border-[var(--primary-color)] font-bold outline-none uppercase tracking-tight text-[var(--text-main)] w-full"
+                                      style={{ fontSize: 'var(--text-small)' }}
                                     />
                                   </div>
                                 ) : (
@@ -1575,7 +1625,7 @@ const App: React.FC = () => {
                                     className="flex-1 min-w-0 text-left"
                                   >
                                     <div className="flex-1 min-w-0">
-                                      <p className="font-bold text-xs uppercase tracking-tight truncate">
+                                      <p className="font-bold uppercase tracking-tight truncate" style={{ fontSize: 'var(--text-small)' }}>
                                         {p.name}
                                       </p>
                                     </div>
@@ -1612,7 +1662,7 @@ const App: React.FC = () => {
                           </div>
                            <div className="p-1 mt-1 border-t border-[var(--border-muted)] space-y-2">
                             <div className="flex flex-col gap-1.5 px-1 py-1">
-                              <span className="text-[9px] font-black text-muted uppercase tracking-[0.2em] pl-1">Project Sync</span>
+                              <span className="font-black text-muted uppercase tracking-[0.2em] pl-1" style={{ fontSize: 'var(--text-micro)' }}>Project Sync</span>
                               <div className="grid grid-cols-2 gap-1.5">
                                 <button
                                   onClick={() => handleExportClick('full')}
@@ -1631,7 +1681,7 @@ const App: React.FC = () => {
                                   }}
                                 >
                                   <Upload className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-export-text)' }} />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: 'var(--text-micro)', color: 'var(--text-muted)' }}>
                                     Full Export
                                   </span>
                                 </button>
@@ -1652,7 +1702,7 @@ const App: React.FC = () => {
                                   }}
                                 >
                                   <Palette className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-export-text)' }} />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: 'var(--text-micro)', color: 'var(--text-muted)' }}>
                                     Base Export
                                   </span>
                                 </button>
@@ -1675,7 +1725,7 @@ const App: React.FC = () => {
                                   }}
                                 >
                                   <Download className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-import-text)' }} />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: 'var(--text-micro)', color: 'var(--text-muted)' }}>
                                     Full Import
                                   </span>
                                 </button>
@@ -1698,7 +1748,7 @@ const App: React.FC = () => {
                                   }}
                                 >
                                   <Palette className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" style={{ color: 'var(--gnb-import-text)' }} />
-                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                  <span className="font-extrabold uppercase whitespace-nowrap" style={{ fontSize: 'var(--text-micro)', color: 'var(--text-muted)' }}>
                                     Base Import
                                   </span>
                                 </button>
@@ -1746,7 +1796,7 @@ const App: React.FC = () => {
                       >
                         <currentLibrary.icon className="w-3.5 h-3.5" />
                       </div>
-                      <span className="text-xs font-bold">{currentLibrary.label}</span>
+                      <span className="font-bold" style={{ fontSize: 'var(--text-small)' }}>{currentLibrary.label}</span>
                       <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-muted/60 group-hover:text-primary`} />
                     </button>
 
@@ -1885,8 +1935,9 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-1.5 mb-0.5">
                   {userRole === 'admin' && (
                     <span 
-                      className="px-1.5 py-0.5 border rounded-full text-[8px] font-black tracking-widest leading-none"
+                      className="px-1.5 py-0.5 border rounded-full font-black tracking-widest leading-none"
                       style={{ 
+                        fontSize: 'var(--text-nano)',
                         backgroundColor: 'var(--gnb-user-badge-bg)', 
                         borderColor: 'color-mix(in srgb, var(--gnb-user-badge-text) 30%, transparent)',
                         color: 'var(--gnb-user-badge-text)'
@@ -1896,8 +1947,8 @@ const App: React.FC = () => {
                     </span>
                   )}
                   <span 
-                    className="text-[10px] font-black leading-none tracking-widest uppercase"
-                    style={{ color: 'var(--gnb-user-label-color)' }}
+                    className="font-black leading-none tracking-widest uppercase"
+                    style={{ fontSize: 'var(--text-caption)', color: 'var(--gnb-user-label-color)' }}
                   >
                     System User
                   </span>
@@ -2152,7 +2203,7 @@ const App: React.FC = () => {
               top: `${panelPos.y}px`,
               right: `${panelPos.x}px`,
               width: 'var(--panel-width)',
-              maxHeight: 'calc(100vh - 120px)',
+              maxHeight: 'calc(100vh - var(--panel-max-height-offset))',
               display: 'flex',
               flexDirection: 'column',
               cursor: isDraggingPanel ? 'move' : 'default'
@@ -2313,11 +2364,11 @@ const App: React.FC = () => {
               <p className="uppercase font-bold text-muted tracking-widest mb-0.5" style={{ fontSize: 'var(--text-caption)' }}>
                 시스템 알림
               </p>
-              <p className="text-sm font-bold text-main">{toast.message}</p>
+              <p className="font-bold text-main" style={{ fontSize: 'var(--text-small)' }}>{toast.message}</p>
             </div>
             <button
               onClick={() => setToast(null)}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1 rounded-lg transition-colors hover:bg-[var(--border-muted)]"
             >
               <Plus className="w-4 h-4 rotate-45 text-muted" />
             </button>

@@ -68,6 +68,12 @@ const resolveColor = (colorStr: string | undefined, fallback: string, primaryHex
   return colorStr;
 };
 
+const getSeriesModeColors = (series: ChartSeries, isDarkMode: boolean) => {
+  const color = isDarkMode ? (series.colorDark ?? series.color) : (series.colorLight ?? series.color);
+  const endColor = isDarkMode ? (series.endColorDark ?? series.endColor) : (series.endColorLight ?? series.endColor);
+  return { color, endColor };
+};
+
 const PIE_COLORS = [
   'var(--primary-color)',
   'var(--secondary-color)',
@@ -135,25 +141,42 @@ const RechartsNumericYAxisMeasure: React.FC<{
   const measureRef = React.useRef<HTMLSpanElement>(null);
   const [yAxisWidth, setYAxisWidth] = React.useState(28);
   const maxVal = React.useMemo(() => {
-    if (!props.currentData?.length || !props.localSeries?.length) return 0;
     let m = 0;
-    for (const d of props.currentData) {
-      for (const s of props.localSeries) {
-        const v = Number(d[s.key]);
-        if (!Number.isNaN(v)) m = Math.max(m, v);
+    if (props.currentData?.length && props.localSeries?.length) {
+      for (const d of props.currentData) {
+        for (const s of props.localSeries) {
+          const v = Number(d[s.key]);
+          if (!Number.isNaN(v)) m = Math.max(m, v);
+        }
+      }
+    }
+    if (m === 0 && props.currentData?.length) {
+      for (const d of props.currentData) {
+        if (!d || typeof d !== 'object') continue;
+        for (const [k, val] of Object.entries(d)) {
+          if (typeof val === 'object' || k === 'name') continue;
+          const v = Number(val);
+          if (!Number.isNaN(v)) m = Math.max(m, v);
+        }
       }
     }
     return m;
   }, [props.currentData, props.localSeries]);
 
+  const widestTickLabel = React.useMemo(() => {
+    const m = maxVal;
+    const candidates = [m.toLocaleString(), String(Math.round(m)), m >= 1000 ? m.toLocaleString('en-US') : ''].filter(Boolean) as string[];
+    return candidates.reduce((a, b) => (a.length >= b.length ? a : b), '0');
+  }, [maxVal]);
+
   React.useLayoutEffect(() => {
     if (!measureRef.current) {
-      setYAxisWidth(28);
+      setYAxisWidth(32);
       return;
     }
     const w = measureRef.current.offsetWidth;
-    setYAxisWidth(Math.max(24, Math.min(120, w + 4)));
-  }, [maxVal, props.contentSize]);
+    setYAxisWidth(Math.max(32, Math.min(140, Math.ceil(w + 12))));
+  }, [widestTickLabel, props.contentSize]);
 
   const effectiveWidth = props.showYAxis !== false ? yAxisWidth : 0;
   return (
@@ -169,7 +192,7 @@ const RechartsNumericYAxisMeasure: React.FC<{
           fontWeight: 500,
         }}
       >
-        {maxVal.toLocaleString()}
+        {widestTickLabel}
       </span>
       {props.children(effectiveWidth)}
     </>
@@ -287,6 +310,12 @@ const parseToHex = (colorStr: string, primaryColor: string = '#3b82f6'): string 
   return colorStr.includes('primary') ? primaryColor : '#64748b';
 };
 
+const getGradientEndColor = (startColor: string, endColorRaw: string | undefined, isDarkMode: boolean): string => {
+  if (endColorRaw) return parseToHex(endColorRaw);
+  const base = parseToHex(startColor);
+  return shadeColor(base, isDarkMode ? 22 : -22);
+};
+
 const AmChartComponent = React.memo<{
   widget: Widget,
   theme: DashboardTheme,
@@ -337,7 +366,10 @@ const AmChartComponent = React.memo<{
 
       const safeConfig = widget.config || {};
       const seriesList = safeConfig.series && safeConfig.series.length > 0
-        ? safeConfig.series
+        ? safeConfig.series.map((s) => {
+            const modeColors = getSeriesModeColors(s, isDark);
+            return { ...s, color: modeColors.color, endColor: modeColors.endColor };
+          })
         : [{ key: safeConfig.yAxisKey || 'value', label: 'Value', color: 'var(--primary-color)' }];
 
       const {
@@ -777,15 +809,16 @@ const AmChartComponent = React.memo<{
               cornerRadiusTL: theme.chartRadius,
               cornerRadiusTR: theme.chartRadius,
               strokeOpacity: 0,
-              fill: safeConfig.useGradient
-                ? (am5.LinearGradient.new(root, {
+              fill: toAm5Color(s.color),
+              fillGradient: safeConfig.useGradient
+                ? am5.LinearGradient.new(root, {
                   stops: [
-                    { color: toAm5Color(s.color) },
-                    { color: toAm5Color(s.endColor || s.color) }
+                    { color: toAm5Color(s.color), opacity: 1 },
+                    { color: toAm5Color(s.endColor || s.color), opacity: 1 }
                   ],
                   rotation: 90
-                }) as any)
-                : (toAm5Color(s.color) as any)
+                })
+                : undefined
             });
 
             series.data.setAll(data);
@@ -1094,9 +1127,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
     // Calculate local series inside renderChart to handle secondary overrides correctly
     const localSeries = currentConfig.series && currentConfig.series.length > 0
-      ? currentConfig.series
+      ? currentConfig.series.map((s) => {
+          const modeColors = getSeriesModeColors(s, isDark);
+          return { ...s, color: modeColors.color, endColor: modeColors.endColor };
+        })
       : [{ key: currentConfig.yAxisKey || 'value', label: widget.title, color: theme.primaryColor }];
 
+    const yAxisGutter = chartLayoutTokens.tokens.charts.common.yAxisGutter.value;
     const commonProps = {
       data: currentData,
       margin: { top: 6, right: 6, left: 0, bottom: xAxisLabel ? 26 : 4 }
@@ -1328,7 +1365,17 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           options.xaxis = { categories };
           break;
         case WidgetType.CHART_COMPOSED:
+          // Apex mixed chart: first series as column, rest as lines
           type = 'line';
+          chartData = apexSeries.map((s, idx) => ({
+            ...s,
+            type: idx === 0 ? 'column' : 'line'
+          }));
+          options.stroke = {
+            ...options.stroke,
+            width: apexSeries.map((_, idx) => (idx === 0 ? 0 : 3)),
+            curve: 'smooth'
+          };
           break;
         case WidgetType.DASH_TRAFFIC_STATUS:
           type = 'area';
@@ -1385,7 +1432,11 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
             shade: isDark ? 'dark' : 'light',
             type: currentType === WidgetType.CHART_BAR_HORIZONTAL ? 'horizontal' : 'vertical',
             shadeIntensity: 0.5,
-            gradientToColors: localSeries.map(s => resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor)),
+            gradientToColors: localSeries.map((s) => {
+              const start = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
+              const endRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
+              return getGradientEndColor(start, endRaw, isDark);
+            }),
             inverseColors: false,
             opacityFrom: 1,
             opacityTo: 1,
@@ -1443,7 +1494,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       WidgetType.TEXT_BLOCK,
       WidgetType.VERTICAL_NAV_CARD,
       WidgetType.DASH_FAILURE_STATUS, WidgetType.DASH_FACILITY_1, WidgetType.DASH_FACILITY_2, WidgetType.DASH_FACILITY_2_FIGMA,
-      WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS,
+      WidgetType.DASH_RESOURCE_USAGE, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_SECURITY_STATUS_V2,
       WidgetType.DASH_VDI_STATUS, WidgetType.DASH_RANK_LIST, WidgetType.DASH_TRAFFIC_TOP5
     ].includes(currentType);
 
@@ -1635,9 +1686,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         const strokeDash = (progress / 100) * circumference;
         const isTrendUp = !currentSubValue?.startsWith('-');
         return (
-          <div className="h-full flex items-center min-h-0" style={{ gap: 'var(--spacing)', padding: 'var(--spacing)' }}>
-            <div className="shrink-0 relative w-24 h-24">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+          <div className="h-full min-h-0 flex items-center justify-center" style={{ padding: 'var(--spacing)' }}>
+            <div className="inline-flex items-center" style={{ gap: 'var(--spacing)' }}>
+              <div className="shrink-0 relative w-24 h-24">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <defs>
                   <linearGradient id={`earning-progress-grad-${widget.id}-${isSec ? 'sec' : 'main'}`} x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="var(--primary-color)" />
@@ -1646,8 +1698,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 </defs>
                 <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-muted)" strokeWidth="10" />
                 <circle cx="50" cy="50" r="40" fill="none" stroke={`url(#earning-progress-grad-${widget.id}-${isSec ? 'sec' : 'main'})`} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${strokeDash} ${circumference}`} />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
                 {isEditMode && !isSec ? (
                   <input
                     type="number"
@@ -1661,9 +1713,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 ) : (
                   <span className="text-[var(--text-main)]" style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--title-weight)' }}>{progress}</span>
                 )}
+                </div>
               </div>
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center" style={{ gap: '2px' }}>
+              <div className="min-w-0 flex flex-col items-start justify-center text-left" style={{ gap: '2px' }}>
               {isEditMode && !isSec ? (
                 <input
                   type="text"
@@ -1701,6 +1753,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   <span className={isTrendUp ? 'text-[var(--success)]' : 'text-[var(--error)]'} style={{ fontSize: 'var(--text-small)' }}>{currentSubValue}</span>
                 )}
               </div>
+            </div>
             </div>
           </div>
         );
@@ -1881,7 +1934,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
+                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
                           const stopEndOpacity = endColorRaw ? 1 : 0.2;
 
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1953,7 +2006,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
+                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
                           const stopEndOpacity = endColorRaw ? 1 : 0.2;
 
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
@@ -1962,7 +2015,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           return (
                             <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
                               <stop offset="0%" stopColor={color} stopOpacity={1} />
-                              <stop offset="95%" stopColor={endColorRaw ? parseToHex(endColorRaw) : shadeColor(color, -25)} stopOpacity={1} />
+                              <stop offset="95%" stopColor={getGradientEndColor(color, endColorRaw, isDark)} stopOpacity={1} />
                             </linearGradient>
                           );
                         })}
@@ -2018,7 +2071,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
+                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
 
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-ln-${idx}-${safeWidgetId}`;
@@ -2094,7 +2147,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                           const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
                           const color = parseToHex(rawColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = endColorRaw ? parseToHex(endColorRaw) : color;
+                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
 
                           const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const gradId = `g-ar-${idx}-${safeWidgetId}`;
@@ -2338,14 +2391,15 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     {currentConfig.useGradient && (
                       <defs>
                         {localSeries.map((s, idx) => {
+                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                           const color = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
                           const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = endColorRaw || color;
+                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
 
                           if (idx === 0) {
                             // Bar Gradient (Vertical)
                             const stopEndOpacity = endColorRaw ? 1 : 0.2;
-                            const gradId = `g-cbar-${idx}`;
+                            const gradId = `g-cbar-${idx}-${safeWidgetId}`;
                             return (
                               <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor={color} stopOpacity={1} />
@@ -2354,7 +2408,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                             );
                           } else {
                             // Line Gradient (Horizontal)
-                            const gradId = `g-cln-${idx}`;
+                            const gradId = `g-cln-${idx}-${safeWidgetId}`;
                             return (
                               <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
                                 <stop offset="0%" stopColor={color} stopOpacity={1} />
@@ -2645,7 +2699,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
       case WidgetType.DASH_TRAFFIC_TOP5:
         return (
-          <div className="h-full flex flex-col gap-1.5 min-h-0 overflow-y-auto py-1">
+          <div className="h-full flex flex-col gap-1.5 min-h-0 overflow-y-auto py-1 justify-center">
             {currentData.map((d: any, idx: number) => {
               const maxVal = Math.max(...currentData.map((i: any) => i.value)) || 1;
               const widthPercent = (d.value / maxVal) * 100;

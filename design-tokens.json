@@ -216,6 +216,10 @@
                 "full": {
                     "value": "9999px",
                     "type": "dimension"
+                },
+                "pill": {
+                    "value": "9999px",
+                    "type": "dimension"
                 }
             },
             "spacing": {
@@ -428,8 +432,13 @@
                 "glow_secondary": { "value": "rgba(99, 102, 241, 0.1)", "type": "color" },
                 "blur_primary": { "value": "100px", "type": "dimension" },
                 "blur_secondary": { "value": "60px", "type": "dimension" },
+                "glow_inset_outer": { "value": "-80px", "type": "dimension" },
+                "glow_inset_inner": { "value": "-40px", "type": "dimension" },
                 "spinner_size": { "value": "48px", "type": "dimension" },
                 "spinner_color": { "value": "#3b82f6", "type": "color" },
+                "spinner_track": { "value": "rgba(59, 130, 246, 0.2)", "type": "color" },
+                "spinner_border_width": { "value": "4px", "type": "dimension" },
+                "progress_track_height": { "value": "4px", "type": "dimension" },
                 "text_primary": { "value": "#ffffff", "type": "color" },
                 "text_secondary": { "value": "#94a3b8", "type": "color" }
             },
@@ -476,6 +485,14 @@
             "gnb": {
                 "height": { "value": "var(--ai-fab-size)", "type": "dimension" },
                 "radius": { "value": "9999px", "type": "dimension" },
+                "add_widget_pill_height": { "value": "52px", "type": "dimension" },
+                "add_widget_pill_bg_light": { "value": "rgba(255, 255, 255, 0.1)", "type": "color" },
+                "add_widget_pill_bg_dark": { "value": "rgba(0, 0, 0, 0.4)", "type": "color" },
+                "add_widget_pill_border_light": { "value": "rgba(255, 255, 255, 0.2)", "type": "color" },
+                "add_widget_pill_border_dark": { "value": "rgba(255, 255, 255, 0.1)", "type": "color" },
+                "add_widget_pill_blur": { "value": "16px", "type": "dimension" },
+                "add_widget_icon_wrap_size": { "value": "32px", "type": "dimension" },
+                "add_widget_glow": { "value": "rgba(59, 130, 246, 0.2)", "type": "color" },
                 "padding_x": { "value": "24px", "type": "dimension" },
                 "blur": { "value": "16px", "type": "dimension" },
                 "bg_light": { "value": "rgba(255, 255, 255, 0.85)", "type": "color" },
@@ -509,6 +526,7 @@
                 "export_hover_border": { "value": "rgba(59, 130, 246, 0.3)", "type": "color" },
                 "export_text": { "value": "#3b82f6", "type": "color" },
                 "icon_size": { "value": "16px", "type": "dimension" },
+                "icon_stroke_bold": { "value": "3px", "type": "dimension" },
                 "icon_color": { "value": "rgba(148, 163, 184, 0.7)", "type": "color" },
                 "icon_active_color": { "value": "#3b82f6", "type": "color" },
                 "user_label_color_light": { "value": "rgba(15, 23, 42, 0.5)", "type": "color" },
@@ -516,10 +534,22 @@
                 "user_id_color_light": { "value": "#0f172a", "type": "color" },
                 "user_id_color_dark": { "value": "#f8fafc", "type": "color" }
             },
+            "overlay": {
+                "strong_bg": { "value": "rgba(0, 0, 0, 0.9)", "type": "color" },
+                "soft_bg": { "value": "rgba(0, 0, 0, 0.2)", "type": "color" },
+                "border": { "value": "rgba(255, 255, 255, 0.2)", "type": "color" },
+                "border_soft": { "value": "rgba(255, 255, 255, 0.05)", "type": "color" },
+                "text": { "value": "rgba(255, 255, 255, 0.9)", "type": "color" },
+                "text_dim": { "value": "rgba(255, 255, 255, 0.7)", "type": "color" }
+            },
             "panel": {
                 "width": { "value": "320px", "type": "dimension" },
                 "radius": { "value": "16px", "type": "dimension" },
+                "max_height_offset": { "value": "120px", "type": "dimension" },
                 "header_height": { "value": "56px", "type": "dimension" },
+                "sidebar_btn_padding_compact_y": { "value": "6px", "type": "dimension" },
+                "sidebar_btn_padding_compact_x": { "value": "8px", "type": "dimension" },
+                "sidebar_btn_padding_square": { "value": "6px", "type": "dimension" },
                 "padding": { "value": "20px", "type": "dimension" },
                 "header_padding_x": { "value": "16px", "type": "dimension" },
                 "content_gap": { "value": "24px", "type": "dimension" },

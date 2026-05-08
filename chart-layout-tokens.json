@@ -39,6 +39,11 @@
                     "value": 5,
                     "type": "dimension",
                     "description": "Gap between chart (x-axis/labels) and legend. Used by Bar, Line, Area, Combo."
+                },
+                "yAxisGutter": {
+                    "value": 8,
+                    "type": "dimension",
+                    "description": "Recharts margin.left so Y-axis numeric ticks are not clipped by the SVG viewport"
                 }
             }
         },

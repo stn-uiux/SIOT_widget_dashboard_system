@@ -102,7 +102,7 @@ const CATEGORIES = [
             { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률', preview: PREVIEW_ASSETS[WidgetType.DASH_RESOURCE_USAGE] },
             { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황' },
             { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태' },
-            { id: WidgetType.DASH_FACILITY_2_FIGMA, icon: Monitor, label: '시설 상태 (Figma)' },
+            { id: WidgetType.DASH_FACILITY_2_FIGMA, icon: Monitor, label: '시설 현황 (Type 3)' },
             { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
             { id: WidgetType.DASH_TRAFFIC_TOP5, icon: Activity, label: '업무망 상태' },
             { id: WidgetType.DASH_VDI_STATUS, icon: LayoutGrid, label: 'VDI 접속 현황' }

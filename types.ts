@@ -63,6 +63,10 @@ export interface ChartSeries {
   label: string;
   color?: string;
   endColor?: string;
+  colorLight?: string;
+  colorDark?: string;
+  endColorLight?: string;
+  endColorDark?: string;
 }
 
 export interface ChartConfig {

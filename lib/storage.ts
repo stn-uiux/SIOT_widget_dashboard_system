@@ -1,7 +1,7 @@
 /**
  * storage.ts — IndexedDB 및 LocalStorage 기반 프로젝트 저장소
  */
-import { Project, LayoutStore, ThemePreset, DashboardTheme, ThemeMode, DashboardPage } from "../types";
+import { Project, LayoutStore, ThemePreset, DashboardTheme, DashboardPage } from "../types";
 import { DEFAULT_THEME, DEFAULT_PAGE, DEFAULT_HEADER, INITIAL_PROJECT_LIST } from "../constants";
 
 const DB_NAME = "siot_dashboard_db";
@@ -124,23 +124,8 @@ export function migrateProjects(projects: Project[]): Project[] {
     if (!Array.isArray(projects)) return [];
 
     return projects.map((p) => {
-        // 1. 테마 보정 및 자가 치유
+        // 1. 테마 보정 — 저장 스키마와 병합만 수행 (라이트/다크 선택은 사용자 설정 유지)
         let theme = { ...DEFAULT_THEME, ...(p.theme || {}) };
-
-        // 테마 자가 교정: 배경색이 밝거나 모드가 라이트인 경우 강제로 다크 모드 동기화
-        const isLightBackground = theme.backgroundColor && (theme.backgroundColor.toLowerCase() === '#f8fafc' || theme.backgroundColor.toLowerCase() === '#ffffff');
-        if (theme.mode === ThemeMode.LIGHT || isLightBackground) {
-            console.log(`[STN] Theme mismatch detected for project ${p.id}. Forcing Dark Mode.`);
-            theme = {
-                ...theme,
-                name: "Dark Mode",
-                mode: ThemeMode.DARK,
-                backgroundColor: '#020617',
-                surfaceColor: '#0f172a',
-                titleColor: '#f8fafc',
-                textColor: '#94a3b8'
-            };
-        }
 
         // 2. 페이지 및 헤더 마이그레이션
         const mappedPages = (p.pages || []).map((pg) => {

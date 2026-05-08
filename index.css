@@ -80,6 +80,7 @@
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
+    --radius-pill: 9999px;
 
     --spacing: 16px;
     --spacing-xs: 4px;
@@ -131,9 +132,14 @@
     --loading-glow-2: rgba(99, 102, 241, 0.1);
     --loading-blur-1: 100px;
     --loading-blur-2: 60px;
+    --loading-glow-inset-outer: -80px;
+    --loading-glow-inset-inner: -40px;
     --loading-spinner-color: #3b82f6;
+    --loading-spinner-track: rgba(var(--primary-color-rgb), 0.2);
+    --loading-spinner-border-width: 4px;
     --loading-text-1: #ffffff;
     --loading-text-2: #94a3b8;
+    --progress-track-height: 4px;
 
     --action-hover-bg: var(--border-muted);
     --action-hover-text: var(--primary-color);
@@ -152,6 +158,7 @@
     /* Global Panel Tokens (Unified Source of Truth) */
     --panel-width: 320px;
     --panel-max-height: 85vh;
+    --panel-max-height-offset: 120px;
     --panel-header-height: 68px;
     --panel-radius: var(--border-radius, 16px);
     
@@ -363,6 +370,24 @@
 
     /* GNB Capsule */
     --gnb-project-name: var(--text-main); /* amCharts/Design 등 버튼 글자색과 동일 */
+    --add-widget-pill-height: 52px;
+    --icon-stroke-bold: 3px;
+    --add-widget-pill-bg: rgba(255, 255, 255, 0.1);
+    --add-widget-pill-border: rgba(255, 255, 255, 0.2);
+    --add-widget-pill-blur: 16px;
+    --add-widget-icon-wrap-size: 32px;
+    --add-widget-glow: rgba(var(--primary-color-rgb), 0.2);
+
+    --overlay-strong: rgba(0, 0, 0, 0.9);
+    --overlay-soft: rgba(0, 0, 0, 0.2);
+    --overlay-border: rgba(255, 255, 255, 0.2);
+    --overlay-border-soft: rgba(255, 255, 255, 0.05);
+    --overlay-text: rgba(255, 255, 255, 0.9);
+    --overlay-text-dim: rgba(255, 255, 255, 0.7);
+    --spacing-xxs: 6px;
+    --sidebar-btn-padding-compact-y: 6px;
+    --sidebar-btn-padding-compact-x: 8px;
+    --sidebar-btn-padding-square: 6px;
 
     /* Export Overlay Tokens */
     --export-overlay-backdrop-bg: rgba(0, 0, 0, 0.6);
@@ -525,6 +550,8 @@
     /* Mode Specifics */
     --shadow-dark-text: 0 1px 2px rgba(0, 0, 0, 0.8);
     --shadow-light-text: 0 1px 2px rgba(255, 255, 255, 0.8);
+    --add-widget-pill-bg: rgba(0, 0, 0, 0.4);
+    --add-widget-pill-border: rgba(255, 255, 255, 0.1);
 }
 
 /* Typography Utility Classes */

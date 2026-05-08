@@ -39,6 +39,13 @@ const resolveColor = (colorStr: string | undefined, fallback: string, primaryHex
   return colorStr;
 };
 
+const getSeriesColorsForMode = (series: ChartSeries, mode: ThemeMode) => {
+  const isDark = mode === ThemeMode.DARK;
+  const color = isDark ? (series.colorDark ?? series.color) : (series.colorLight ?? series.color);
+  const endColor = isDark ? (series.endColorDark ?? series.endColor) : (series.endColorLight ?? series.endColor);
+  return { color, endColor };
+};
+
 interface SidebarProps {
   theme: DashboardTheme;
   selectedWidget: Widget | null;
@@ -78,12 +85,15 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Layout Settings</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:brightness-110 shadow-lg shadow-[var(--success)]/20" title="저장하기">
+          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-[var(--white)] hover:brightness-110 shadow-lg" style={{ boxShadow: 'var(--success-button-glow)' }} title="저장하기">
             <Check className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+            className="p-1.5 rounded-xl transition-all text-muted hover:text-main"
+            style={{ backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--action-hover-bg)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             <X className="w-4 h-4" />
           </button>
@@ -124,7 +134,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value="AUTO"
                   disabled
-                  className="w-full p-2 bg-gray-100/50 dark:bg-white/5 text-[var(--text-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] cursor-not-allowed font-bold text-center text-xs tracking-widest opacity-60"
+                  className="w-full p-2 text-[var(--text-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] cursor-not-allowed font-bold text-center text-xs tracking-widest opacity-60"
+                  style={{ backgroundColor: 'var(--surface-muted)' }}
                 />
                 <div className="absolute inset-0 bg-transparent" title="Layout rows are currently calculated automatically." />
               </div>
@@ -220,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   </div>
                 </div>
 
-                <div className="w-px h-8 bg-black/10 dark:bg-white/10 shrink-0" />
+                <div className="w-px h-8 shrink-0" style={{ backgroundColor: 'var(--border-muted)' }} />
 
                 {/* Height Input Group */}
                 <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
@@ -404,8 +415,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   };
 
   const handleUpdateSeries = (key: string, updates: Partial<ChartSeries>) => {
+    const modeAwareUpdates = { ...updates };
+    const isDarkMode = theme.mode === ThemeMode.DARK;
+    if (updates.color !== undefined) {
+      if (isDarkMode) modeAwareUpdates.colorDark = updates.color;
+      else modeAwareUpdates.colorLight = updates.color;
+    }
+    if (updates.endColor !== undefined) {
+      if (isDarkMode) modeAwareUpdates.endColorDark = updates.endColor;
+      else modeAwareUpdates.endColorLight = updates.endColor;
+    }
     updateCurrentWidget({
-      config: { ...currentConfig, series: currentConfig.series.map(s => s.key === key ? { ...s, ...updates } : s) }
+      config: { ...currentConfig, series: currentConfig.series.map(s => s.key === key ? { ...s, ...modeAwareUpdates } : s) }
     });
   };
 
@@ -430,10 +451,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const handleResetSeriesColors = () => {
     const shades = [50, 70, 30, 90, 10, 60, 40, 80, 20];
     const series = currentConfig.series || [];
+    const isDarkMode = theme.mode === ThemeMode.DARK;
     const newSeries = series.map((s, i) => ({
       ...s,
-      color: i === 0 ? 'var(--primary-color)' : `var(--primary-${shades[(i - 1) % shades.length]})`,
-      endColor: undefined
+      ...(isDarkMode
+        ? { colorDark: i === 0 ? 'var(--primary-color)' : `var(--primary-${shades[(i - 1) % shades.length]})`, endColorDark: undefined }
+        : { colorLight: i === 0 ? 'var(--primary-color)' : `var(--primary-${shades[(i - 1) % shades.length]})`, endColorLight: undefined }),
     }));
     updateCurrentWidget({ config: { ...currentConfig, series: newSeries } });
   };
@@ -499,7 +522,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     { key: 'showGrid', label: 'Show Grid Lines', visible: isGridChart },
     { key: 'showXAxis', label: 'Show X-Axis', visible: isAxisChart },
     { key: 'showYAxis', label: 'Show Y-Axis', visible: isAxisChart },
-    { key: 'useGradient', label: 'Gradient Fill', visible: (isAxisChart || currentType === WidgetType.SUMMARY) && !isReallyAmCharts },
+    { key: 'useGradient', label: 'Gradient Fill', visible: (isAxisChart || currentType === WidgetType.SUMMARY) },
     { key: 'hideHeader', label: 'Hide Header', visible: true },
     { key: 'noBorder', label: 'No Border', visible: true },
     { key: 'noBezel', label: 'No Bezel (Hide Card)', visible: true },
@@ -512,7 +535,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         borderRadius: 'var(--radius-panel)',
         border: 'var(--floating-panel-border)',
       }}>
-      <header className="flex items-center justify-between h-[68px] px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" onMouseDown={onDragStart}>
+      <header className="flex items-center justify-between px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" style={{ height: 'var(--panel-header-height)' }} onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
           <Settings className="w-5 h-5 text-primary" />
@@ -524,7 +547,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-muted hover:text-main"
+            className="p-1.5 rounded-xl transition-all text-muted hover:text-main"
+            style={{ backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--action-hover-bg)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <X className="w-4 h-4" />
@@ -540,7 +566,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
       }}>
         <section className="space-y-4">
-          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
+          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]`}>
             <Layers className="w-4 h-4" /> Visualization
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -550,6 +576,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <button
                   key={id}
                   onClick={() => handleTypeChange(id as WidgetType)}
+                  title={meta.label}
                   className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
                     ? 'border-primary bg-primary/10 text-primary shadow-sm'
                     : 'border-[var(--border-base)] text-muted hover:border-primary/50'
@@ -564,7 +591,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
         {/* Premium Dashboard Templates */}
         <section className="space-y-4">
-          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gray-400`}>
+          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]`}>
             <PaletteIcon className="w-4 h-4" /> Premium Templates
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -574,6 +601,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <button
                   key={id}
                   onClick={() => handleTypeChange(id as WidgetType)}
+                  title={meta.label}
                   className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
                     ? 'border-primary bg-primary/10 text-primary shadow-sm'
                     : 'border-[var(--border-base)] text-muted hover:border-primary/50'
@@ -588,7 +616,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
         {/* General Widgets Section */}
         <section className="space-y-4">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+          <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
             <LayoutGrid className="w-4 h-4" /> General Components
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -598,6 +626,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <button
                   key={id}
                   onClick={() => handleTypeChange(id as WidgetType)}
+                  title={meta.label}
                   className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all glass-item ${currentType === id
                     ? 'border-primary bg-primary/10 text-primary shadow-sm'
                     : 'border-[var(--border-base)] text-muted hover:border-primary/50'
@@ -614,12 +643,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isSummary && !isGeneralKpi && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <Smile className="w-4 h-4" /> 트렌드 요약
               </label>
               <div className="space-y-3">
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">큰 숫자 크기 (px)</span>
                   <input
                     type="number"
                     min={12}
@@ -630,7 +659,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Google Icon Name</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Google Icon Name</span>
                   <div className="relative group mt-1">
                     <input
                       type="text"
@@ -639,7 +668,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       className="w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
                       placeholder="e.g. group, monitoring, star"
                     />
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 text-lg">
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--primary-color)] text-lg">
                       {(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'star'}
                     </span>
                   </div>
@@ -652,38 +681,41 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isTextBlock && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <Smile className="w-4 h-4" /> 텍스트 설정
               </label>
               <div className="space-y-3">
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">내용</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">내용</span>
                   <textarea
                     value={selectedWidget.mainValue ?? ''}
                     onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
                     rows={4}
-                    className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-y"
+                    className="w-full p-2.5 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 resize-y"
+                    style={{ backgroundColor: 'var(--surface-muted)' }}
                     placeholder="여기에 글자를 입력하세요."
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">글자 크기 (px)</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">글자 크기 (px)</span>
                     <input
                       type="number"
                       min={8}
                       max={72}
                       value={selectedWidget.titleSize ?? 18}
                       onChange={(e) => updateCurrentWidget({ titleSize: parseInt(e.target.value, 10) || 18 })}
-                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full p-2.5 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                      style={{ backgroundColor: 'var(--surface-muted)' }}
                     />
                   </div>
                   <div>
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">굵기</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">굵기</span>
                     <select
                       value={selectedWidget.titleWeight ?? '400'}
                       onChange={(e) => updateCurrentWidget({ titleWeight: e.target.value })}
-                      className="w-full p-2.5 bg-gray-50 dark:bg-gray-800 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full p-2.5 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                      style={{ backgroundColor: 'var(--surface-muted)' }}
                     >
                       <option value="100">100 (Thin)</option>
                       <option value="200">200 (Extra Light)</option>
@@ -705,13 +737,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isEarningProgress && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <PaletteIcon className="w-4 h-4" /> Progress
               </label>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Progress (%)</span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Progress (%)</span>
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] tabular-nums">{selectedWidget.progressValue ?? 89}%</span>
                 </div>
                 <input
                   type="range"
@@ -719,7 +751,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={100}
                   value={selectedWidget.progressValue ?? 89}
                   onChange={(e) => updateCurrentWidget({ progressValue: parseInt(e.target.value, 10) })}
-                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  style={{ backgroundColor: 'var(--border-muted)' }}
                 />
               </div>
             </section>
@@ -729,12 +762,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isEarningTrend && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" /> Earning Trend
               </label>
               <div className="space-y-3">
                 <div>
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block mb-1">큰 숫자 크기 (px)</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">큰 숫자 크기 (px)</span>
                   <input
                     type="number"
                     min={12}
@@ -745,7 +778,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Comparison text</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Comparison text</span>
                   <input
                     type="text"
                     value={selectedWidget.comparisonText ?? ''}
@@ -756,7 +789,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="space-y-1 flex-1">
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Trend %</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Trend %</span>
                     <input
                       type="number"
                       value={selectedWidget.trendPercent ?? 21}
@@ -765,7 +798,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     />
                   </div>
                   <div className="flex items-center gap-2 pt-5">
-                    <span className="text-caption uppercase font-bold text-gray-400">Direction</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)]">Direction</span>
                     <Switch
                       checked={selectedWidget.trendUp !== false}
                       onChange={(checked) => updateCurrentWidget({ trendUp: checked })}
@@ -783,7 +816,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     return (
                       <>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-caption uppercase font-bold text-gray-400 ml-1">Category bars</span>
+                          <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Category bars</span>
                           <button
                             onClick={() => updateCurrentWidget({ categoryItems: [...items, { label: 'New', value: 10 }] })}
                             className="p-1 hover:bg-primary/10 rounded text-primary transition-colors flex items-center gap-1"
@@ -829,7 +862,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                                     next[idx] = { ...next[idx], color: e.target.value || undefined };
                                     updateCurrentWidget({ categoryItems: next });
                                   }}
-                                  className="w-20 p-1.5 text-[10px] rounded border border-[var(--border-base)] bg-transparent glass-item uppercase"
+                                className="w-20 p-1.5 text-caption rounded border border-[var(--border-base)] bg-transparent glass-item uppercase"
                                   placeholder="Color"
                                 />
                               </div>
@@ -838,7 +871,10 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                                   const next = items.filter((_, i) => i !== idx);
                                   updateCurrentWidget({ categoryItems: next });
                                 }}
-                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                                className="p-1.5 rounded-lg transition-colors"
+                                style={{ color: 'var(--action-danger)' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--action-danger-subtle)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -857,15 +893,15 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isGeneralKpi && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <PaletteIcon className="w-4 h-4" /> KPI Icon
               </label>
               <div className="space-y-2">
-                <span className="text-caption uppercase font-bold text-gray-400 ml-1">Icon</span>
+                <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Icon</span>
                 <select
                   value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || 'User'}
                   onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
-                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-semibold glass-item"
+                  className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
                 >
                   {GENERAL_KPI_ICON_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -879,15 +915,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           currentType === WidgetType.VERTICAL_NAV_CARD && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <Layers className="w-4 h-4" /> 세로 네비 카드
               </label>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">카드 개수 (1~8)</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block">카드 개수 (1~8)</span>
                   <div
-                    className="inline-flex items-center rounded-[9999px] border border-[var(--border-base)] overflow-hidden"
+                    className="inline-flex items-center border border-[var(--border-base)] overflow-hidden"
                     style={{
+                      borderRadius: 'var(--radius-pill)',
                       background: 'transparent',
                       padding: 'var(--spacing-xs) var(--spacing-sm)',
                       gap: 'var(--spacing-sm)',
@@ -945,7 +982,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1 block">메뉴 문구</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block">메뉴 문구</span>
                   {((selectedWidget.navItems ?? []) as { id: string; label: string; active?: boolean }[]).map((item, idx) => (
                     <div key={item.id} className="flex gap-2 items-center">
                       <span className="text-xs text-[var(--text-muted)] w-6 tabular-nums">{idx + 1}.</span>
@@ -972,14 +1009,14 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isImage && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <Image className="w-4 h-4" /> Image Settings
               </label>
 
               <div className="space-y-4">
                 {/* File Upload */}
                 <div className="space-y-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Upload Image</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Upload Image</span>
                   <div className="relative">
                     <input
                       type="file"
@@ -1001,7 +1038,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
                 {/* URL Input */}
                 <div className="space-y-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Or Image URL</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Or Image URL</span>
                   <input
                     type="text"
                     value={currentMainValue || ''}
@@ -1013,7 +1050,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
                 {/* Caption */}
                 <div className="space-y-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Caption (Optional)</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Caption (Optional)</span>
                   <input
                     type="text"
                     value={currentSubValue || ''}
@@ -1030,13 +1067,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isIconResizable && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <PaletteIcon className="w-4 h-4" /> Icon Size
               </label>
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
-                  <span className="text-caption uppercase font-bold text-gray-400">Size (px)</span>
-                  <span className="text-xs font-bold text-blue-500">{selectedWidget.iconSize || 48}px</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)]">Size (px)</span>
+                  <span className="text-xs font-bold text-[var(--primary-color)]">{selectedWidget.iconSize || 48}px</span>
                 </div>
                 <input
                   type="range"
@@ -1045,7 +1082,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   step="4"
                   value={selectedWidget.iconSize || 48}
                   onChange={(e) => updateCurrentWidget({ iconSize: parseInt(e.target.value, 10) })}
-                  className="w-full accent-blue-500 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  style={{ backgroundColor: 'var(--border-muted)' }}
                 />
               </div>
             </section>
@@ -1055,13 +1093,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           isBarResizable && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <BarChartHorizontal className="w-4 h-4" /> Bar Settings (Graph Width)
               </label>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Graph Width (%)</span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{currentConfig.barWidth ?? 60}%</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Graph Width (%)</span>
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] tabular-nums">{currentConfig.barWidth ?? 60}%</span>
                 </div>
                 <input
                   type="range"
@@ -1070,7 +1108,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   step={5}
                   value={currentConfig.barWidth ?? 60}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, barWidth: parseInt(e.target.value, 10) } })}
-                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  style={{ backgroundColor: 'var(--border-muted)' }}
                 />
                 <p className="text-micro text-muted italic px-1 mt-1">* 수치를 낮추면 더 얇은 그래프가 됩니다.</p>
               </div>
@@ -1081,13 +1120,13 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           !isSec && (
             <section className="space-y-4 border-t border-[var(--border-base)] pt-6">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <PaletteIcon className="w-4 h-4" /> Background
               </label>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-caption uppercase font-bold text-gray-400 ml-1">Background opacity</span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
+                  <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Background opacity</span>
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] tabular-nums">{selectedWidget.backgroundOpacity ?? 100}%</span>
                 </div>
                 <input
                   type="range"
@@ -1095,7 +1134,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   max={100}
                   value={selectedWidget.backgroundOpacity ?? 100}
                   onChange={(e) => updateCurrentWidget({ backgroundOpacity: parseInt(e.target.value, 10) })}
-                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[var(--primary-color)]"
+                  style={{ backgroundColor: 'var(--border-muted)' }}
                 />
               </div>
             </section>
@@ -1105,7 +1145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         {
           appearanceOptions.length > 0 && (
             <section className="space-y-4">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                 <PaletteIcon className="w-4 h-4" /> Appearance & Display
               </label>
               <div className="space-y-2">
@@ -1113,9 +1153,12 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <div
                     key={option.key}
                     onClick={() => toggleConfig(option.key as any)}
-                    className="flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all group"
+                    className="flex items-center justify-between px-5 py-4 border rounded-2xl cursor-pointer transition-all group"
+                    style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border-base)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-muted)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface)'; }}
                   >
-                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                    <span className="text-xs font-semibold text-[var(--text-main)]">
                       {option.label}
                     </span>
                     <div className="pointer-events-none">
@@ -1151,7 +1194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <button
                     onClick={handleResetSeriesColors}
                     className="btn-base btn-surface flex items-center gap-1"
-                    style={{ padding: '6px 8px' }}
+                    style={{ padding: 'var(--sidebar-btn-padding-compact-y) var(--sidebar-btn-padding-compact-x)' }}
                     title="Reset series colors to brand/theme"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -1160,7 +1203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <button
                     onClick={handleAddSeries}
                     className="btn-base btn-surface"
-                    style={{ padding: '6px' }}
+                    style={{ padding: 'var(--sidebar-btn-padding-square)' }}
                     title="Add series"
                   >
                     <Plus className="w-4 h-4" />
@@ -1168,7 +1211,11 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 </div>
               </div>
               <div className="space-y-2">
-                {(currentConfig.series || []).map((s, idx) => (
+                {(currentConfig.series || []).map((s, idx) => {
+                  const modeSeriesColors = getSeriesColorsForMode(s, theme.mode);
+                  const startColor = resolveColor(modeSeriesColors.color, theme.primaryColor, theme.primaryColor);
+                  const endColor = resolveColor(modeSeriesColors.endColor || modeSeriesColors.color, theme.primaryColor, theme.primaryColor);
+                  return (
                   <div key={s.key} className={`p-3 rounded-xl border border-[var(--border-base)] flex items-center gap-2 group transition-all hover:border-[var(--primary-color)]/30 shadow-sm glass-item`}>
                     <div className="flex flex-col gap-0.5 mr-1">
                       <button
@@ -1176,14 +1223,14 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         onClick={() => moveSeries(idx, 'up')}
                         className="p-0.5 rounded hover:bg-[var(--primary-subtle)] disabled:opacity-0 transition-all"
                       >
-                        <ChevronUp className="w-3 h-3 text-gray-500" />
+                        <ChevronUp className="w-3 h-3 text-[var(--text-muted)]" />
                       </button>
                       <button
                         disabled={idx === (currentConfig.series?.length || 0) - 1}
                         onClick={() => moveSeries(idx, 'down')}
-                        className="p-0.5 rounded hover:bg-white/10 disabled:opacity-0 transition-all glass-item"
+                        className="p-0.5 rounded hover:bg-[var(--action-hover-bg)] disabled:opacity-0 transition-all glass-item"
                       >
-                        <ChevronDown className="w-3 h-3 text-gray-500" />
+                        <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
                       </button>
                     </div>
 
@@ -1191,26 +1238,26 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       <div className="relative group/picker">
                         <div
                           className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                          style={{ backgroundColor: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }}
+                          style={{ backgroundColor: startColor }}
                           title="Start Color"
                         />
                         <input
                           type="color"
-                          value={resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
+                          value={startColor}
                           onChange={(e) => handleUpdateSeries(s.key, { color: e.target.value })}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                         />
                       </div>
-                      {currentConfig.useGradient && !isReallyAmCharts && (
+                      {currentConfig.useGradient && (
                         <div className="relative group/picker">
                           <div
                             className="w-5 h-5 rounded-md border border-[var(--border-strong)] shadow-sm cursor-pointer"
-                            style={{ backgroundColor: resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor) }}
+                            style={{ backgroundColor: endColor }}
                             title="End Color"
                           />
                           <input
                             type="color"
-                            value={resolveColor(s.endColor || s.color, theme.primaryColor, theme.primaryColor)}
+                            value={endColor}
                             onChange={(e) => handleUpdateSeries(s.key, { endColor: e.target.value })}
                             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                           />
@@ -1218,7 +1265,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       )}
                       <input
                         type="text"
-                        value={s.color?.startsWith('var') ? '' : s.color}
+                        value={modeSeriesColors.color?.startsWith('var') ? '' : (modeSeriesColors.color || '')}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val.startsWith('#')) handleUpdateSeries(s.key, { color: val });
@@ -1246,7 +1293,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                ))}
+                )})}
               </div>
             </section>
           )
@@ -1281,7 +1328,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   type="text"
                   value={currentConfig.unit || ''}
                   onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
-                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all glass-item`}
+                  className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all glass-item`}
                   placeholder="e.g. 명, $, %"
                 />
               </div>
@@ -1291,7 +1338,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
               <>
                 {isSummaryChart && (
                   <div className="space-y-1">
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">큰 숫자 크기 (px)</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">큰 숫자 크기 (px)</span>
                     <input
                       type="number"
                       min={12}
@@ -1304,7 +1351,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 )}
                 {!isImage && !isMap && !isWeather && (
                   <div className="space-y-1">
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Current Value</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Current Value</span>
                     <input
                       type="text"
                       value={currentMainValue || ''}
@@ -1315,7 +1362,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 )}
                 {!isImage && !isEarningTrend && !isMap && !isWeather && (
                   <div className="space-y-1">
-                    <span className="text-caption uppercase font-bold text-gray-400 ml-1">Description</span>
+                    <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Description</span>
                     <input
                       type="text"
                       value={currentSubValue || ''}
@@ -1339,7 +1386,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                       <div className="w-full flex items-center gap-2">
                         {/* Primary Label (Source for Sankey) */}
                         <div className="flex-1">
-                          <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
+                          <span className="text-micro uppercase font-bold text-[var(--text-muted)] mb-0.5 block">
                             {isSankey ? 'Source' : (currentConfig.xAxisLabel || 'Label')}
                           </span>
                           <input
@@ -1354,9 +1401,9 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         {/* Secondary Label (Target for Sankey) */}
                         {isSankey && (
                           <>
-                            <span className="text-gray-400">→</span>
+                            <span className="text-[var(--text-muted)]">→</span>
                             <div className="flex-1">
-                              <span className="text-micro uppercase font-bold text-gray-400 mb-0.5 block">
+                              <span className="text-micro uppercase font-bold text-[var(--text-muted)] mb-0.5 block">
                                 {isSankey ? 'Target' : 'Category'}
                               </span>
                               <input
@@ -1382,7 +1429,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     {/* Series Values */}
                     {(currentConfig.series || [{ key: 'value', label: 'Value' }]).map((s) => (
                       <div key={s.key} className="flex items-center justify-between gap-4">
-                        <span className="text-micro font-bold text-gray-400 uppercase truncate flex-1">{s.label}</span>
+                        <span className="text-micro font-bold text-[var(--text-muted)] uppercase truncate flex-1">{s.label}</span>
                         <input
                           type="number"
                           value={item[s.key] ?? 0}

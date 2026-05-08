@@ -825,7 +825,7 @@ export const WIDGET_METADATA: Partial<Record<WidgetType, { label: string, icon: 
   [WidgetType.DASH_RESOURCE_USAGE]: { label: '리소스 사용량', icon: BarChart3, category: 'premium' },
   [WidgetType.DASH_FACILITY_1]: { label: '시설 현황 (Type 1)', icon: Database, category: 'premium' },
   [WidgetType.DASH_FACILITY_2]: { label: '시설 현황 (Type 2)', icon: Monitor, category: 'premium' },
-  [WidgetType.DASH_FACILITY_2_FIGMA]: { label: '시설 현황 (Figma)', icon: Monitor, category: 'premium' },
+  [WidgetType.DASH_FACILITY_2_FIGMA]: { label: '시설 현황 (Type 3)', icon: Monitor, category: 'premium' },
   [WidgetType.DASH_EQUIP_PERF_TOP5]: { label: '전체 장비 성능 Top5', icon: BarChart3, category: 'viz' },
   [WidgetType.DASH_RANK_LIST]: { label: '순위 리스트', icon: BarChartHorizontal, category: 'premium' },
   [WidgetType.DASH_TRAFFIC_TOP5]: { label: '업무망 트래픽 TOP5', icon: Activity, category: 'premium' },
