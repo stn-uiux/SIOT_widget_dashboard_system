@@ -36,7 +36,7 @@
                     "type": "number"
                 },
                 "legendPadding": {
-                    "value": 5,
+                    "value": 2,
                     "type": "dimension",
                     "description": "Gap between chart (x-axis/labels) and legend. Used by Bar, Line, Area, Combo."
                 },

@@ -20,54 +20,133 @@ const PREVIEW_ASSETS: Record<string, { light: string; dark: string }> = {
         dark: '/assets/widget/dark/graph/bar_graph_dark.png'
     },
     [WidgetType.CHART_BAR_HORIZONTAL]: {
-        light: '/assets/widget/light/graph/bar_horizontal_graph.png',
-        dark: '/assets/widget/dark/graph/bar_horizontal_graph.png'
+        light: '/assets/widget/light/graph/bar_horizontal_graph_light.png',
+        dark: '/assets/widget/dark/graph/bar_horizontal_graph_dark.png'
     },
     [WidgetType.CHART_LINE]: {
-        light: '/assets/widget/light/graph/line_graph.png',
-        dark: '/assets/widget/dark/graph/line_graph.png'
+        light: '/assets/widget/light/graph/line_graph_light.png',
+        dark: '/assets/widget/dark/graph/line_graph_dark.png'
     },
     [WidgetType.CHART_AREA]: {
-        light: '/assets/widget/light/graph/area_graph.png',
-        dark: '/assets/widget/dark/graph/area_graph.png'
+        light: '/assets/widget/light/graph/area_graph_light.png',
+        dark: '/assets/widget/dark/graph/area_graph_dark.png'
     },
     [WidgetType.CHART_PIE]: {
-        light: '/assets/widget/light/graph/pie_chart.png',
-        dark: '/assets/widget/dark/graph/pie_chart.png'
+        light: '/assets/widget/light/graph/pie_chart_light.png',
+        dark: '/assets/widget/dark/graph/pie_chart_dark.png'
     },
     [WidgetType.CHART_COMPOSED]: {
-        light: '/assets/widget/light/graph/composed_chart.png',
-        dark: '/assets/widget/dark/graph/composed_chart.png'
+        light: '/assets/widget/light/graph/composed_chart_light.png',
+        dark: '/assets/widget/dark/graph/composed_chart_dark.png'
     },
     [WidgetType.CHART_SANKEY]: {
-        light: '/assets/widget/light/graph/sankey_diagram.png',
-        dark: '/assets/widget/dark/graph/sankey_diagram.png'
+        light: '/assets/widget/light/graph/sankey_diagram_light.png',
+        dark: '/assets/widget/dark/graph/sankey_diagram_dark.png'
     },
     [WidgetType.SUMMARY]: {
-        light: '/assets/widget/light/premium/stat_summary.png',
-        dark: '/assets/widget/dark/premium/stat_summary.png'
+        light: '/assets/widget/light/premium/stat_summary_light.png',
+        dark: '/assets/widget/dark/premium/stat_summary_dark.png'
     },
     [WidgetType.SUMMARY_CHART]: {
-        light: '/assets/widget/light/premium/trend_summary.png',
-        dark: '/assets/widget/dark/premium/trend_summary.png'
+        light: '/assets/widget/light/premium/trend_summary_light.png',
+        dark: '/assets/widget/dark/premium/trend_summary_dark.png'
     },
     [WidgetType.DASH_FAILURE_STATUS]: {
-        light: '/assets/widget/light/premium/failure_status_kpi.png',
-        dark: '/assets/widget/dark/premium/failure_status_kpi.png'
+        light: '/assets/widget/light/premium/failure_status_kpi_light.png',
+        dark: '/assets/widget/dark/premium/failure_status_kpi_dark.png'
     },
     [WidgetType.DASH_RESOURCE_USAGE]: {
-        light: '/assets/widget/light/premium/resource_usage.png',
-        dark: '/assets/widget/dark/premium/resource_usage.png'
+        light: '/assets/widget/light/premium/resource_usage_light.png',
+        dark: '/assets/widget/dark/premium/resource_usage_dark.png'
+    },
+    [WidgetType.DASH_NET_TRAFFIC]: {
+        light: '/assets/widget/light/premium/network_traffic_light.png',
+        dark: '/assets/widget/dark/premium/network_traffic_dark.png'
     },
     [WidgetType.DASH_SECURITY_STATUS]: {
-        light: '/assets/widget/light/premium/security_status.png',
-        dark: '/assets/widget/dark/premium/security_status.png'
+        light: '/assets/widget/light/premium/security_status_v1_light.png',
+        dark: '/assets/widget/dark/premium/security_status_v1_dark.png'
+    },
+    [WidgetType.DASH_SECURITY_STATUS_V2]: {
+        light: '/assets/widget/light/premium/security_status_v2_light.png',
+        dark: '/assets/widget/dark/premium/security_status_v2_dark.png'
+    },
+    [WidgetType.DASH_FACILITY_1]: {
+        light: '/assets/widget/light/premium/facility_type1_light.png',
+        dark: '/assets/widget/dark/premium/facility_type1_dark.png'
+    },
+    [WidgetType.DASH_FACILITY_2]: {
+        light: '/assets/widget/light/premium/facility_type2_light.png',
+        dark: '/assets/widget/dark/premium/facility_type2_dark.png'
+    },
+    [WidgetType.DASH_FACILITY_2_FIGMA]: {
+        light: '/assets/widget/light/premium/facility_type3_light.png',
+        dark: '/assets/widget/dark/premium/facility_type3_dark.png'
+    },
+    [WidgetType.DASH_RANK_LIST]: {
+        light: '/assets/widget/light/premium/rank_list_light.png',
+        dark: '/assets/widget/dark/premium/rank_list_dark.png'
+    },
+    [WidgetType.DASH_TRAFFIC_TOP5]: {
+        light: '/assets/widget/light/premium/traffic_top5_light.png',
+        dark: '/assets/widget/dark/premium/traffic_top5_dark.png'
+    },
+    [WidgetType.DASH_VDI_STATUS]: {
+        light: '/assets/widget/light/premium/vdi_status_light.png',
+        dark: '/assets/widget/dark/premium/vdi_status_dark.png'
+    },
+    [WidgetType.DASH_EQUIP_PERF_TOP5]: {
+        light: '/assets/widget/light/graph/equip_perf_top5_light.png',
+        dark: '/assets/widget/dark/graph/equip_perf_top5_dark.png'
+    },
+    [WidgetType.TABLE]: {
+        light: '/assets/widget/light/general/data_table_light.png',
+        dark: '/assets/widget/dark/general/data_table_dark.png'
+    },
+    [WidgetType.IMAGE]: {
+        light: '/assets/widget/light/general/image_box_light.png',
+        dark: '/assets/widget/dark/general/image_box_dark.png'
+    },
+    [WidgetType.MAP]: {
+        light: '/assets/widget/light/general/map_widget_light.png',
+        dark: '/assets/widget/dark/general/map_widget_dark.png'
+    },
+    [WidgetType.WEATHER]: {
+        light: '/assets/widget/light/general/weather_info_light.png',
+        dark: '/assets/widget/dark/general/weather_info_dark.png'
+    },
+    [WidgetType.GENERAL_KPI]: {
+        light: '/assets/widget/light/general/kpi_general_light.png',
+        dark: '/assets/widget/dark/general/kpi_general_dark.png'
+    },
+    [WidgetType.EARNING_PROGRESS]: {
+        light: '/assets/widget/light/general/earning_progress_light.png',
+        dark: '/assets/widget/dark/general/earning_progress_dark.png'
+    },
+    [WidgetType.EARNING_TREND]: {
+        light: '/assets/widget/light/general/earning_trend_light.png',
+        dark: '/assets/widget/dark/general/earning_trend_dark.png'
+    },
+    [WidgetType.TEXT_BLOCK]: {
+        light: '/assets/widget/light/general/text_block_light.png',
+        dark: '/assets/widget/dark/general/text_block_dark.png'
+    },
+    [WidgetType.VERTICAL_NAV_CARD]: {
+        light: '/assets/widget/light/general/vertical_nav_card_light.png',
+        dark: '/assets/widget/dark/general/vertical_nav_card_dark.png'
     },
     [WidgetType.CHART_RADAR]: {
-        light: '/assets/widget/light/graph/radar_chart.png',
-        dark: '/assets/widget/light/graph/radar_chart.png'
+        light: '/assets/widget/light/graph/radar_chart_light.png',
+        dark: '/assets/widget/dark/graph/radar_chart_dark.png'
     }
 };
+
+const DEFAULT_PREVIEW = {
+    light: '/assets/widget/light/graph/bar_graph_light.png',
+    dark: '/assets/widget/dark/graph/bar_graph_dark.png',
+};
+
+const getPreview = (type: WidgetType) => PREVIEW_ASSETS[type] ?? DEFAULT_PREVIEW;
 
 const CATEGORIES = [
     {
@@ -76,15 +155,15 @@ const CATEGORIES = [
         description: '데이터 분석용 기본 차트',
         icon: BarChart3,
         items: [
-            { id: WidgetType.CHART_BAR, icon: BarChart3, label: '세로 막대', preview: PREVIEW_ASSETS[WidgetType.CHART_BAR] },
-            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대', preview: PREVIEW_ASSETS[WidgetType.CHART_BAR_HORIZONTAL] },
-            { id: WidgetType.CHART_LINE, icon: LineChart, label: '선형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_LINE] },
-            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_AREA] },
-            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_PIE] },
-            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_RADAR] },
-            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트', preview: PREVIEW_ASSETS[WidgetType.CHART_COMPOSED] },
-            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램', preview: PREVIEW_ASSETS[WidgetType.CHART_SANKEY] },
-            { id: WidgetType.DASH_EQUIP_PERF_TOP5, icon: BarChart3, label: '전체 장비 성능 Top5' }
+            { id: WidgetType.CHART_BAR, icon: BarChart3, label: '세로 막대', preview: getPreview(WidgetType.CHART_BAR) },
+            { id: WidgetType.CHART_BAR_HORIZONTAL, icon: BarChartHorizontal, label: '가로 막대', preview: getPreview(WidgetType.CHART_BAR_HORIZONTAL) },
+            { id: WidgetType.CHART_LINE, icon: LineChart, label: '선형 차트', preview: getPreview(WidgetType.CHART_LINE) },
+            { id: WidgetType.CHART_AREA, icon: AreaChart, label: '영역 차트', preview: getPreview(WidgetType.CHART_AREA) },
+            { id: WidgetType.CHART_PIE, icon: PieChart, label: '파이 차트', preview: getPreview(WidgetType.CHART_PIE) },
+            { id: WidgetType.CHART_RADAR, icon: Hexagon, label: '방사형 차트', preview: getPreview(WidgetType.CHART_RADAR) },
+            { id: WidgetType.CHART_COMPOSED, icon: Layers, label: '혼합형 차트', preview: getPreview(WidgetType.CHART_COMPOSED) },
+            { id: WidgetType.CHART_SANKEY, icon: Workflow, label: '생키 다이어그램', preview: getPreview(WidgetType.CHART_SANKEY) },
+            { id: WidgetType.DASH_EQUIP_PERF_TOP5, icon: BarChart3, label: '전체 장비 성능 Top5', preview: getPreview(WidgetType.DASH_EQUIP_PERF_TOP5) }
         ]
     },
     {
@@ -93,19 +172,19 @@ const CATEGORIES = [
         description: '고용량 데이터 최적화 템플릿',
         icon: LayoutGrid,
         items: [
-            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치 (STAT)', preview: PREVIEW_ASSETS[WidgetType.SUMMARY] },
-            { id: WidgetType.SUMMARY_CHART, icon: Activity, label: '트렌드 요약', preview: PREVIEW_ASSETS[WidgetType.SUMMARY_CHART] },
-            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)', preview: PREVIEW_ASSETS[WidgetType.DASH_FAILURE_STATUS] },
-            { id: WidgetType.DASH_NET_TRAFFIC, icon: Activity, label: '네트워크 트래픽' },
-            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황 (V1)', preview: PREVIEW_ASSETS[WidgetType.DASH_SECURITY_STATUS] },
-            { id: WidgetType.DASH_SECURITY_STATUS_V2, icon: Hexagon, label: '보안 침해 현황 (V2)' },
-            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률', preview: PREVIEW_ASSETS[WidgetType.DASH_RESOURCE_USAGE] },
-            { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황' },
-            { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태' },
-            { id: WidgetType.DASH_FACILITY_2_FIGMA, icon: Monitor, label: '시설 현황 (Type 3)' },
-            { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트' },
-            { id: WidgetType.DASH_TRAFFIC_TOP5, icon: Activity, label: '업무망 상태' },
-            { id: WidgetType.DASH_VDI_STATUS, icon: LayoutGrid, label: 'VDI 접속 현황' }
+            { id: WidgetType.SUMMARY, icon: Database, label: '단일 수치 (STAT)', preview: getPreview(WidgetType.SUMMARY) },
+            { id: WidgetType.SUMMARY_CHART, icon: Activity, label: '트렌드 요약', preview: getPreview(WidgetType.SUMMARY_CHART) },
+            { id: WidgetType.DASH_FAILURE_STATUS, icon: Activity, label: '장애 현황 (KPI)', preview: getPreview(WidgetType.DASH_FAILURE_STATUS) },
+            { id: WidgetType.DASH_NET_TRAFFIC, icon: Activity, label: '네트워크 트래픽', preview: getPreview(WidgetType.DASH_NET_TRAFFIC) },
+            { id: WidgetType.DASH_SECURITY_STATUS, icon: Hexagon, label: '보안 탐지 현황 (V1)', preview: getPreview(WidgetType.DASH_SECURITY_STATUS) },
+            { id: WidgetType.DASH_SECURITY_STATUS_V2, icon: Hexagon, label: '보안 침해 현황 (V2)', preview: getPreview(WidgetType.DASH_SECURITY_STATUS_V2) },
+            { id: WidgetType.DASH_RESOURCE_USAGE, icon: BarChart3, label: '리소스 사용률', preview: getPreview(WidgetType.DASH_RESOURCE_USAGE) },
+            { id: WidgetType.DASH_FACILITY_1, icon: Database, label: '시설 현황', preview: getPreview(WidgetType.DASH_FACILITY_1) },
+            { id: WidgetType.DASH_FACILITY_2, icon: Monitor, label: '시설 상태', preview: getPreview(WidgetType.DASH_FACILITY_2) },
+            { id: WidgetType.DASH_FACILITY_2_FIGMA, icon: Monitor, label: '시설 현황 (Type 3)', preview: getPreview(WidgetType.DASH_FACILITY_2_FIGMA) },
+            { id: WidgetType.DASH_RANK_LIST, icon: BarChartHorizontal, label: '순위 리스트', preview: getPreview(WidgetType.DASH_RANK_LIST) },
+            { id: WidgetType.DASH_TRAFFIC_TOP5, icon: Activity, label: '업무망 상태', preview: getPreview(WidgetType.DASH_TRAFFIC_TOP5) },
+            { id: WidgetType.DASH_VDI_STATUS, icon: LayoutGrid, label: 'VDI 접속 현황', preview: getPreview(WidgetType.DASH_VDI_STATUS) }
         ]
     },
     {
@@ -114,15 +193,15 @@ const CATEGORIES = [
         description: '기본 정보 노출용 컴포넌트',
         icon: Database,
         items: [
-            { id: WidgetType.TABLE, icon: LayoutGrid, label: '데이터 테이블' },
-            { id: WidgetType.IMAGE, icon: ImageIcon, label: '이미지 박스' },
-            { id: WidgetType.MAP, icon: MapPin, label: '지도 위젯' },
-            { id: WidgetType.WEATHER, icon: CloudSun, label: '날씨 정보' },
-            { id: WidgetType.GENERAL_KPI, icon: Activity, label: 'KPI (GENERAL)' },
-            { id: WidgetType.EARNING_PROGRESS, icon: TrendingUp, label: 'TOTAL EARNING (PROGRESS)' },
-            { id: WidgetType.EARNING_TREND, icon: Activity, label: 'EARNING TREND (CHART + KPI)' },
-            { id: WidgetType.TEXT_BLOCK, icon: Type, label: '텍스트 (글자만)' },
-            { id: WidgetType.VERTICAL_NAV_CARD, icon: Layers, label: '세로 네비 카드' }
+            { id: WidgetType.TABLE, icon: LayoutGrid, label: '데이터 테이블', preview: getPreview(WidgetType.TABLE) },
+            { id: WidgetType.IMAGE, icon: ImageIcon, label: '이미지 박스', preview: getPreview(WidgetType.IMAGE) },
+            { id: WidgetType.MAP, icon: MapPin, label: '지도 위젯', preview: getPreview(WidgetType.MAP) },
+            { id: WidgetType.WEATHER, icon: CloudSun, label: '날씨 정보', preview: getPreview(WidgetType.WEATHER) },
+            { id: WidgetType.GENERAL_KPI, icon: Activity, label: 'KPI (GENERAL)', preview: getPreview(WidgetType.GENERAL_KPI) },
+            { id: WidgetType.EARNING_PROGRESS, icon: TrendingUp, label: 'TOTAL EARNING (PROGRESS)', preview: getPreview(WidgetType.EARNING_PROGRESS) },
+            { id: WidgetType.EARNING_TREND, icon: Activity, label: 'EARNING TREND (CHART + KPI)', preview: getPreview(WidgetType.EARNING_TREND) },
+            { id: WidgetType.TEXT_BLOCK, icon: Type, label: '텍스트 (글자만)', preview: getPreview(WidgetType.TEXT_BLOCK) },
+            { id: WidgetType.VERTICAL_NAV_CARD, icon: Layers, label: '세로 네비 카드', preview: getPreview(WidgetType.VERTICAL_NAV_CARD) }
         ]
     }
 ];
@@ -230,6 +309,11 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                                 src={isDark ? (item as any).preview.dark : (item as any).preview.light}
                                                 alt={item.label}
                                                 className="w-full h-full object-cover filter transition-all duration-700 group-hover:scale-105"
+                                                onError={(e) => {
+                                                    const img = e.currentTarget;
+                                                    img.onerror = null;
+                                                    img.src = isDark ? DEFAULT_PREVIEW.dark : DEFAULT_PREVIEW.light;
+                                                }}
                                             />
                                         </div>
                                     ) : (

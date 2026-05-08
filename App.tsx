@@ -23,6 +23,7 @@ import {
   Download,
   Upload,
   LogOut,
+  Camera,
 } from "lucide-react";
 import { 
   getSemanticColorForMode, 
@@ -89,6 +90,7 @@ import {
   ProjectsState
 } from "./lib/storage";
 import { exportProjectToZip, importProjectFromZip } from "./lib/exportImport";
+import { exportWidgetsToZip, getWidgetCaptureFileInfo } from "./lib/exportWidgetScreenshots";
 import { supabase, getProfile, getSession, Profile } from './lib/supabase';
 import { User as AuthUser } from "@supabase/supabase-js";
 import LoginPage from "./components/LoginPage";
@@ -429,6 +431,7 @@ const DashboardGrid: React.FC<{
                   return (
                     <div
                       key={widget.id}
+                      data-widget-id={widget.id}
                       className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
                       style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
                     >
@@ -524,6 +527,7 @@ const DashboardGrid: React.FC<{
                     return (
                       <div
                         key={widget.id}
+                        data-widget-id={widget.id}
                         className={`h-full relative ${layout?.backgroundGlobe ? "pointer-events-auto" : ""} ${isThisInteracting ? "" : "transition-[background,border,box-shadow,transform] duration-200"} ${selectedWidgetId === widget.id || isThisInteracting ? "widget-selected" : ""}`}
                         style={selectedWidgetId === widget.id || isThisInteracting ? { zIndex: 50 } : {}}
                       >
@@ -1153,6 +1157,20 @@ const App: React.FC = () => {
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
   const previewTickRef = useRef(0);
+  const previewBaseDataRef = useRef<Record<string, any[]>>({});
+
+  useEffect(() => {
+    if (!isPreviewMode) {
+      previewBaseDataRef.current = {};
+      return;
+    }
+    // Preview 시작 시점의 데이터를 기준값으로 저장 (누적 floor로 한쪽 방향 드리프트 방지)
+    const base: Record<string, any[]> = {};
+    for (const w of widgets || []) {
+      base[w.id] = Array.isArray(w.data) ? w.data.map((d: any) => ({ ...d })) : [];
+    }
+    previewBaseDataRef.current = base;
+  }, [isPreviewMode, widgets]);
 
   // ── 2. Real-time Preview Simulation (optimized updates) ──
   useEffect(() => {
@@ -1170,14 +1188,27 @@ const App: React.FC = () => {
             const updatedWidgets = pg.widgets.map((w, idx) => {
               // Update only half of widgets per tick to reduce heavy chart rerenders.
               if (idx % 2 !== tickGroup) return w;
-              const newData = (w.data || []).map((d: any) => {
+              const newData = (w.data || []).map((d: any, rowIdx: number) => {
+                const baseRow = previewBaseDataRef.current[w.id]?.[rowIdx] ?? null;
                 const nextD = { ...d };
                 if (w.config?.series) {
                   w.config.series.forEach((s) => {
-                    const val = Number(nextD[s.key]);
+                    const baseVal = baseRow ? Number((baseRow as any)[s.key]) : Number(nextD[s.key]);
+                    const val = Number.isFinite(baseVal) ? baseVal : Number(nextD[s.key]);
                     if (!isNaN(val)) {
-                      const variation = (Math.random() - 0.5) * 0.1;
-                      nextD[s.key] = Math.max(0, Math.floor(val * (1 + variation)));
+                      // Preview 시뮬레이션: 일반 차트는 정수로 내려도 무방하지만,
+                      // Sankey는 링크 value가 0이 많아지면 레이아웃이 깨지므로 최소 1을 보장합니다.
+                      const isSankey = w.type === WidgetType.CHART_SANKEY;
+                      const variation = (Math.random() - 0.5) * (isSankey ? 0.08 : 0.1);
+                      const next = val * (1 + variation);
+                      const isPercent = w.type === WidgetType.DASH_RESOURCE_USAGE;
+                      if (isSankey) {
+                        nextD[s.key] = Math.max(1, Math.round(next));
+                      } else if (isPercent) {
+                        nextD[s.key] = Math.max(0, Math.min(100, Math.round(next)));
+                      } else {
+                        nextD[s.key] = Math.max(0, Math.round(next));
+                      }
                     }
                   });
                 }
@@ -1286,6 +1317,148 @@ const App: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const [widgetExportNonce, setWidgetExportNonce] = useState(0);
+  const [isCapturingWidgets, setIsCapturingWidgets] = useState(false);
+  const [widgetCaptureProgress, setWidgetCaptureProgress] = useState<{ index: number; total: number; title: string } | null>(null);
+  const [isWidgetCapturePickerOpen, setIsWidgetCapturePickerOpen] = useState(false);
+  const [selectedCaptureWidgetIds, setSelectedCaptureWidgetIds] = useState<string[]>([]);
+  const [widgetCaptureThumbs, setWidgetCaptureThumbs] = useState<Record<string, string>>({});
+  const [widgetThumbRefreshProgress, setWidgetThumbRefreshProgress] = useState<{ done: number; total: number } | null>(null);
+  const widgetExportPayloadRef = useRef<{ list: { id: string; title: string; type: string }[]; projectName: string } | null>(null);
+  const widgetExportRestoreRef = useRef<{ preview: boolean; edit: boolean } | null>(null);
+
+  const handleOpenWidgetCapturePicker = useCallback(() => {
+    if (!widgets.length) {
+      showToast("캡처할 위젯이 없습니다.", "error");
+      return;
+    }
+    if (isCapturingWidgets || capturingForExport || exportPhase) return;
+    setSelectedCaptureWidgetIds(widgets.map((w) => w.id));
+    setIsProjectDropdownOpen(false);
+    setIsWidgetCapturePickerOpen(true);
+  }, [widgets, isCapturingWidgets, capturingForExport, exportPhase]);
+
+  const handleConfirmWidgetScreensExport = useCallback(() => {
+    const selected = widgets.filter((w) => selectedCaptureWidgetIds.includes(w.id));
+    if (!selected.length) {
+      showToast("최소 1개 이상 선택해주세요.", "error");
+      return;
+    }
+    if (isCapturingWidgets || capturingForExport || exportPhase) return;
+    setIsWidgetCapturePickerOpen(false);
+    showToast(`위젯 PNG 캡처 시작… (${selected.length}개)`, "success");
+    widgetExportRestoreRef.current = { preview: isPreviewMode, edit: isEditMode };
+    widgetExportPayloadRef.current = {
+      list: selected.map((w) => ({ id: w.id, title: w.title || String(w.type), type: String(w.type) })),
+      projectName: currentProject?.name || "export",
+    };
+    setIsPreviewMode(true);
+    setIsEditMode(false);
+    setSelectedWidgetId(null);
+    setIsProjectDropdownOpen(false);
+    setIsCapturingWidgets(true);
+    setWidgetCaptureProgress({ index: 0, total: selected.length, title: selected[0]?.title || String(selected[0]?.type || '') });
+    setWidgetExportNonce((n) => n + 1);
+  }, [widgets, selectedCaptureWidgetIds, isCapturingWidgets, capturingForExport, exportPhase, isPreviewMode, isEditMode, currentProject?.name]);
+
+  const allCaptureSelected = widgets.length > 0 && selectedCaptureWidgetIds.length === widgets.length;
+  const someCaptureSelected = selectedCaptureWidgetIds.length > 0 && selectedCaptureWidgetIds.length < widgets.length;
+  const captureMode: "light" | "dark" = theme.mode === ThemeMode.DARK ? "dark" : "light";
+  const widgetCaptureIdsKey = useMemo(() => widgets.map((w) => w.id).join("|"), [widgets]);
+
+  const resolveWidgetNodeForThumb = useCallback((id: string): HTMLElement | null => {
+    const esc = (raw: string) => {
+      if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(raw);
+      return raw.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    };
+    const safeId = esc(id);
+    const inner = document.querySelector(`[data-widget-capture-id="${safeId}"]`) as HTMLElement | null;
+    if (inner) return inner;
+    return document.querySelector(`[data-widget-id="${safeId}"]`) as HTMLElement | null;
+  }, []);
+
+  const clearLiveCaptureThumbs = useCallback(() => {
+    setWidgetCaptureThumbs({});
+    setWidgetThumbRefreshProgress(null);
+  }, []);
+
+  useEffect(() => {
+    if (!isWidgetCapturePickerOpen) {
+      clearLiveCaptureThumbs();
+      return;
+    }
+    let cancelled = false;
+    const run = async () => {
+      await new Promise((r) => setTimeout(r, 80));
+      if (cancelled) return;
+      try {
+        const mod = await import("html-to-image");
+        const currentWidgetIds = widgetCaptureIdsKey ? widgetCaptureIdsKey.split("|") : [];
+        setWidgetThumbRefreshProgress({ done: 0, total: currentWidgetIds.length });
+        const firstNode = currentWidgetIds.length > 0 ? resolveWidgetNodeForThumb(currentWidgetIds[0]) : null;
+        let fontCSS = "";
+        try {
+          if (firstNode && (mod as any).getFontEmbedCSS) {
+            fontCSS = await (mod as any).getFontEmbedCSS(firstNode);
+          }
+        } catch {
+          fontCSS = "";
+        }
+        for (const id of currentWidgetIds) {
+          if (cancelled) return;
+          const node = resolveWidgetNodeForThumb(id);
+          if (!node) {
+            setWidgetThumbRefreshProgress((prev) =>
+              prev ? { ...prev, done: Math.min(prev.done + 1, prev.total) } : prev
+            );
+            continue;
+          }
+          try {
+            const rect = node.getBoundingClientRect();
+            const srcW = Math.max(1, Math.round(rect.width));
+            const srcH = Math.max(1, Math.round(rect.height));
+            const dataUrl = await mod.toPng(node, {
+              pixelRatio: 1,
+              cacheBust: true,
+              backgroundColor: "transparent",
+              skipFonts: !fontCSS,
+              preferredFontFormat: "woff2",
+              ...(fontCSS ? { fontEmbedCSS: fontCSS } : {}),
+              width: srcW,
+              height: srcH,
+              style: {
+                width: `${srcW}px`,
+                height: `${srcH}px`,
+                transform: "none",
+              } as Partial<CSSStyleDeclaration>,
+            });
+            if (!dataUrl || cancelled) continue;
+            setWidgetCaptureThumbs((prev) => ({ ...prev, [id]: dataUrl }));
+          } catch {
+            // 정적 asset fallback 사용
+          } finally {
+            setWidgetThumbRefreshProgress((prev) =>
+              prev ? { ...prev, done: Math.min(prev.done + 1, prev.total) } : prev
+            );
+          }
+          await new Promise((r) => setTimeout(r, 12));
+        }
+      } catch {
+        // html-to-image 로드 실패 시 정적 asset fallback 사용
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isWidgetCapturePickerOpen, widgetCaptureIdsKey, resolveWidgetNodeForThumb, clearLiveCaptureThumbs, captureMode]);
+
+  const thumbRefreshPercent = useMemo(() => {
+    if (!widgetThumbRefreshProgress || widgetThumbRefreshProgress.total <= 0) return 0;
+    return Math.min(100, Math.round((widgetThumbRefreshProgress.done / widgetThumbRefreshProgress.total) * 100));
+  }, [widgetThumbRefreshProgress]);
+  const isThumbRefreshing = !!widgetThumbRefreshProgress && widgetThumbRefreshProgress.done < widgetThumbRefreshProgress.total;
+
   const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
 
   const exportPreviewRef = useRef<HTMLDivElement>(null);
@@ -1305,6 +1478,72 @@ const App: React.FC = () => {
         });
     }
   }, [capturingForExport, isPreviewMode, performExportCapture]);
+
+  useEffect(() => {
+    if (widgetExportNonce === 0) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await new Promise((r) => setTimeout(r, 750));
+        if (cancelled) return;
+        const payload = widgetExportPayloadRef.current;
+        if (!payload) return;
+        const { zipBlob, capturedCount } = await exportWidgetsToZip(payload.list, {
+          targetWidth: 900,
+          targetHeight: 610,
+          onProgress: (p) => {
+            setWidgetCaptureProgress({ index: p.index, total: p.total, title: p.title });
+          },
+        });
+        if (cancelled) return;
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        const safe = payload.projectName.replace(/[^\w\-가-힣]+/g, "_").slice(0, 56) || "export";
+        a.download = `widget-screenshots_${safe}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`위젯 ${capturedCount}개 PNG를 ZIP으로 저장했습니다.`, "success");
+      } catch (e) {
+        if (!cancelled) {
+          showToast(e instanceof Error ? e.message : "위젯 캡처 실패", "error");
+        }
+      } finally {
+        const r = widgetExportRestoreRef.current;
+        if (!cancelled && r) {
+          if (isAdmin) {
+            setIsPreviewMode(r.preview);
+            setIsEditMode(r.edit);
+          } else {
+            setIsPreviewMode(true);
+            setIsEditMode(false);
+          }
+          widgetExportRestoreRef.current = null;
+        }
+        widgetExportPayloadRef.current = null;
+        setIsCapturingWidgets(false);
+        setWidgetCaptureProgress(null);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      const r = widgetExportRestoreRef.current;
+      if (r) {
+        if (isAdmin) {
+          setIsPreviewMode(r.preview);
+          setIsEditMode(r.edit);
+        } else {
+          setIsPreviewMode(true);
+          setIsEditMode(false);
+        }
+        widgetExportRestoreRef.current = null;
+      }
+      widgetExportPayloadRef.current = null;
+      setIsCapturingWidgets(false);
+      setWidgetCaptureProgress(null);
+    };
+  }, [widgetExportNonce, isAdmin]);
 
   // Shortcuts to current state for components (페이지 없을 때 fallback으로 빈 화면 방지)
   const _page = currentPage ?? (currentProject?.pages?.[0]);
@@ -1753,6 +1992,27 @@ const App: React.FC = () => {
                                   </span>
                                 </button>
                               </div>
+
+                              <button
+                                type="button"
+                                onClick={handleOpenWidgetCapturePicker}
+                                disabled={capturingForExport || !!exportPhase || isCapturingWidgets || widgets.length === 0}
+                                className="btn-base btn-ghost w-full p-2 rounded-lg flex flex-row items-center justify-center gap-2 group/btn border border-transparent transition-all"
+                                style={{ borderColor: "transparent" }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = "var(--gnb-export-hover-border)";
+                                  e.currentTarget.style.backgroundColor = "var(--gnb-export-hover-bg)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = "transparent";
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                }}
+                              >
+                                <Camera className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform shrink-0" style={{ color: "var(--gnb-export-text)" }} />
+                                <span className="font-extrabold uppercase" style={{ fontSize: "var(--text-micro)", color: "var(--text-muted)" }}>
+                                  {isCapturingWidgets ? "Capturing…" : "Widget PNG (ZIP)"}
+                                </span>
+                              </button>
 
                               {isAdmin && (
                                 <button
@@ -2347,6 +2607,139 @@ const App: React.FC = () => {
         }}
         isDark={theme.mode === ThemeMode.DARK}
       />
+
+      {isWidgetCapturePickerOpen && (
+        <div className="widget-capture-modal-overlay">
+          <div className="widget-capture-modal-backdrop" onClick={() => setIsWidgetCapturePickerOpen(false)} />
+          <div className="widget-capture-modal">
+            <div className="widget-capture-modal-header">
+              <div className="widget-capture-modal-title-wrap">
+                <h3 className="widget-capture-modal-title">Widget PNG 선택 캡처</h3>
+                <p className="widget-capture-modal-desc">
+                  캡처 대상 선택 후 저장합니다. 파일명은 타입 기반으로 자동 지정됩니다.
+                </p>
+              </div>
+              <button className="widget-action-btn widget-capture-close-btn" onClick={() => setIsWidgetCapturePickerOpen(false)}>
+                <X />
+              </button>
+            </div>
+
+            <div className="widget-capture-modal-toolbar">
+              <label className="widget-capture-toolbar-check">
+                <input
+                  type="checkbox"
+                  checked={allCaptureSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someCaptureSelected;
+                  }}
+                  onChange={() => {
+                    if (allCaptureSelected) setSelectedCaptureWidgetIds([]);
+                    else setSelectedCaptureWidgetIds(widgets.map((w) => w.id));
+                  }}
+                />
+                <span className="widget-capture-item-title">
+                  전체 선택 / 해제 ({selectedCaptureWidgetIds.length}/{widgets.length})
+                </span>
+              </label>
+              <span className="widget-capture-item-type">현재 모드: {captureMode}</span>
+            </div>
+
+            <div className="widget-capture-modal-list">
+              {widgets.map((w) => {
+                const checked = selectedCaptureWidgetIds.includes(w.id);
+                const info = getWidgetCaptureFileInfo({ id: w.id, title: w.title || String(w.type), type: String(w.type) }, captureMode);
+                return (
+                  <label
+                    key={`capture-pick-${w.id}`}
+                    className={`widget-capture-item ${checked ? 'is-selected' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="widget-capture-item-check"
+                      checked={checked}
+                      onChange={() => {
+                        setSelectedCaptureWidgetIds((prev) =>
+                          checked ? prev.filter((id) => id !== w.id) : [...prev, w.id]
+                        );
+                      }}
+                    />
+                    <img
+                      src={widgetCaptureThumbs[w.id] || info.previewSrc}
+                      alt={w.title || String(w.type)}
+                      className="widget-capture-item-thumb"
+                      data-fallback-light={`/assets/widget/light/${info.category}/${info.base}_light.png`}
+                      data-fallback-dark-default="/assets/widget/dark/graph/bar_graph_dark.png"
+                      data-fallback-light-default="/assets/widget/light/graph/bar_graph_light.png"
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        const currentSrc = img.getAttribute('src') || '';
+                        const sameTypeLight = img.dataset.fallbackLight || '';
+                        const defaultDark = img.dataset.fallbackDarkDefault || '';
+                        const defaultLight = img.dataset.fallbackLightDefault || '';
+
+                        // 다크 모드에서는 절대 라이트 썸네일로 폴백하지 않음
+                        if (captureMode === 'dark') {
+                          if (defaultDark && currentSrc !== defaultDark) {
+                            img.src = defaultDark;
+                            return;
+                          }
+                          img.onerror = null;
+                          return;
+                        }
+
+                        // 라이트 모드에서는 동일 타입 라이트 -> 공통 라이트 순서 폴백
+                        if (sameTypeLight && currentSrc !== sameTypeLight) {
+                          img.src = sameTypeLight;
+                          return;
+                        }
+                        if (defaultLight && currentSrc !== defaultLight) {
+                          img.src = defaultLight;
+                          return;
+                        }
+                        if (defaultDark && currentSrc !== defaultDark) {
+                          img.src = defaultDark;
+                          return;
+                        }
+                        img.onerror = null;
+                      }}
+                    />
+                    <div className="widget-capture-item-meta">
+                      <div className="widget-capture-item-title truncate">{w.title || String(w.type)}</div>
+                      <div className="widget-capture-item-type truncate">{String(w.type)}</div>
+                      <div className="widget-capture-item-file truncate">
+                        {`${info.category}/${info.filename}`}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="widget-capture-modal-footer">
+              <button className="btn-base btn-surface widget-capture-btn-cancel" onClick={() => setIsWidgetCapturePickerOpen(false)}>
+                취소
+              </button>
+              <button
+                className="btn-base widget-capture-btn-confirm text-white"
+                style={{ backgroundColor: 'var(--primary-color)' }}
+                onClick={handleConfirmWidgetScreensExport}
+                disabled={selectedCaptureWidgetIds.length === 0}
+              >
+                선택한 위젯 캡처 ({selectedCaptureWidgetIds.length})
+              </button>
+            </div>
+            {isThumbRefreshing && (
+              <div className="widget-capture-refresh-progress-wrap" role="status" aria-live="polite">
+                <div
+                  className="widget-capture-refresh-progress-bar"
+                  style={{ width: `${thumbRefreshPercent}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded min-w-[var(--panel-min-width)]">
@@ -2372,6 +2765,46 @@ const App: React.FC = () => {
             >
               <Plus className="w-4 h-4 rotate-45 text-muted" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {isCapturingWidgets && widgetCaptureProgress && (
+        <div className="fixed inset-0 z-[120] pointer-events-none">
+          <div className="absolute inset-0" style={{ backgroundColor: 'color-mix(in srgb, var(--black) 25%, transparent)' }} />
+          <div className="absolute left-1/2 top-10 -translate-x-1/2 pointer-events-none">
+            <div className="px-6 py-4 rounded shadow-premium border border-[var(--border-base)] bg-[var(--surface)] min-w-[320px]">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full animate-spin"
+                    style={{
+                      border: '3px solid color-mix(in srgb, var(--primary-color) 25%, transparent)',
+                      borderTopColor: 'var(--primary-color)',
+                    }}
+                  />
+                  <div>
+                    <div className="uppercase font-black tracking-widest text-muted" style={{ fontSize: 'var(--text-caption)' }}>
+                      Widget PNG 캡처 중
+                    </div>
+                    <div className="font-bold text-main" style={{ fontSize: 'var(--text-small)' }}>
+                      {Math.min(widgetCaptureProgress.index + 1, widgetCaptureProgress.total)} / {widgetCaptureProgress.total} · {widgetCaptureProgress.title}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 h-2 w-full rounded bg-[var(--surface-muted)] overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${Math.round((Math.min(widgetCaptureProgress.index + 1, widgetCaptureProgress.total) / widgetCaptureProgress.total) * 100)}%`,
+                    backgroundColor: 'var(--primary-color)',
+                  }}
+                />
+              </div>
+              <div className="mt-2 text-[var(--text-muted)]" style={{ fontSize: 'var(--text-tiny)' }}>
+                브라우저 다운로드가 뜰 때까지 잠시 기다려주세요.
+              </div>
+            </div>
           </div>
         </div>
       )}

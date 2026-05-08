@@ -13,7 +13,7 @@ import * as am5radar from "@amcharts/amcharts5/radar";
 import * as am5flow from "@amcharts/amcharts5/flow";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import am5themes_Dark from "@amcharts/amcharts5/themes/Dark";
-import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, Trash2, TrendingDown, User, Repeat, Activity, BarChart3, TrendingUp, Database, Users, Clock } from 'lucide-react';
+import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, Trash2, TrendingDown, User, Repeat, Activity, BarChart3, TrendingUp, Database, Users, Clock, CloudSun, ShieldCheck, Workflow, Server, Network, CircleHelp } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary, ChartConfig, ChartSeries } from '../types';
 import { GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import MapWidget from './MapWidget';
@@ -30,6 +30,15 @@ const FACILITY_BG_DARK_SRC = new URL('../assets/resource/dark/bg3 1.png', import
 
 const GENERAL_KPI_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   TrendingDown, User, Repeat, Activity, BarChart3, TrendingUp, Database, Users, Clock,
+};
+
+const MATERIAL_SYMBOL_ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  partly_cloudy_day: CloudSun,
+  verified_user: ShieldCheck,
+  schema: Workflow,
+  dns: Server,
+  lan: Network,
+  database: Database,
 };
 
 /** hex 색상으로 ±percent 밝기 조절 (DesignSystem과 동일 로직, 브랜드 변경 시 즉시 반영용) */
@@ -1094,6 +1103,22 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
   const chartKey = `chart-${widget.id}-${widget.type}-${series.map(s => s.key).join('-')}`;
 
+  const renderSymbolIcon = (iconName: string | undefined, opts?: { className?: string; size?: string; style?: React.CSSProperties }) => {
+    const raw = String(iconName || '').trim();
+    const key = raw.toLowerCase();
+    const IconComp = MATERIAL_SYMBOL_ICON_MAP[key];
+    const style: React.CSSProperties = {
+      width: opts?.size,
+      height: opts?.size,
+      ...opts?.style,
+    };
+    if (IconComp) {
+      return <IconComp className={opts?.className} style={style} />;
+    }
+    // 폰트 글리프 캡처 실패 시 텍스트로 떨어지는 문제를 피하기 위해, 미매핑 아이콘도 SVG fallback으로 처리
+    return <CircleHelp className={opts?.className} style={style} />;
+  };
+
   const renderGoogleIcon = (iconName?: string) => {
     const icon = iconName || widget.icon;
     if (!icon) return null;
@@ -1103,12 +1128,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         className="p-3 rounded-2xl flex items-center justify-center transition-all bg-[var(--border-muted)] text-[var(--text-main)] border border-[var(--border-base)]"
         style={customIconSize ? { width: `${customIconSize}px`, height: `${customIconSize}px`, padding: 0 } : {}}
       >
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: customIconSize ? `${customIconSize * 0.6}px` : `calc(var(--content-size) * 2.5)` }}
-        >
-          {icon}
-        </span>
+        {renderSymbolIcon(icon, {
+          className: "text-[var(--text-main)]",
+          size: customIconSize ? `${customIconSize * 0.6}px` : `calc(var(--content-size) * 2.5)`,
+        })}
       </div>
     );
   };
@@ -1166,7 +1189,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
     };
 
     const renderCustomLegend = (items: { value: string, color: string }[]) => (
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-1 px-2">
+      <div
+        className="flex flex-nowrap items-center justify-center whitespace-nowrap overflow-x-auto no-scrollbar"
+        style={{ columnGap: 'var(--spacing-sm)', rowGap: '0', paddingInline: 'var(--spacing-xs)' }}
+      >
         {items.map((entry, index) => (
           <div key={`item-${index}`} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -1176,7 +1202,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           </div>
         ))}
         {showUnitInLegend && unit && (
-          <div className="flex items-center gap-1.5 border-l pl-4 border-[var(--border-base)]">
+          <div
+            className="flex items-center border-l border-[var(--border-base)]"
+            style={{ gap: 'var(--spacing-xs)', paddingLeft: 'var(--spacing-xs)', marginLeft: 'var(--spacing-xs)' }}
+          >
             <span className="font-bold tracking-tight uppercase opacity-80" style={{ fontSize: 'calc(var(--content-size) * 0.85)', color: theme.textColor || 'var(--text-muted)' }}>
               단위: {unit}
             </span>
@@ -1614,9 +1643,11 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         return (
           <div className="h-full flex flex-col justify-center items-center gap-2 text-center" style={{ contain: 'layout style' }}>
             <div className="flex flex-col items-center gap-3">
-              <span className="material-symbols-outlined text-primary leading-none" style={{ fontSize: widget.iconSize ? `${widget.iconSize}px` : 'var(--text-hero)', opacity: 0.9 }}>
-                {widget.icon || 'partly_cloudy_day'}
-              </span>
+              {renderSymbolIcon(widget.icon || 'partly_cloudy_day', {
+                className: 'text-primary leading-none',
+                size: widget.iconSize ? `${widget.iconSize}px` : 'var(--text-hero)',
+                style: { opacity: 0.9 },
+              })}
               <div className="space-y-1">
                 <h4 className="font-black text-main tracking-tighter leading-tight m-0" style={{ fontSize: 'var(--text-hero)' }}>{currentMainValue}</h4>
                 <p className="text-muted font-bold m-0" style={{ fontSize: 'var(--text-md)', opacity: 0.8 }}>{currentSubValue}</p>
@@ -1925,8 +1956,9 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         return (
           <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
             {(yAxisWidth) => (
-              <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
+              <div className={`h-full flex flex-col`}>
+                <div className="flex-1 min-h-0">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
                   <BarChart {...commonProps}>
                     {currentConfig.useGradient && (
                       <defs>
@@ -1970,7 +2002,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
+                    {/* Recharts 내부 Legend는 타입/축 계산에 따라 간격 편차가 생겨, Bar/Top5는 외부 공통 Legend로 고정 */}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       const fbColor = parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor));
@@ -1987,7 +2019,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       );
                     })}
                   </BarChart>
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                </div>
+                {showLegend && (
+                  <div style={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }}>
+                    {renderCustomLegend(localSeries.map((s) => ({
+                      value: s.label,
+                      color: resolveColor(s.color, theme.primaryColor, theme.primaryColor),
+                    })))}
+                  </div>
+                )}
               </div>
             )}
           </RechartsNumericYAxisMeasure>
@@ -2106,7 +2147,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return (
@@ -2182,7 +2223,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return (
@@ -2220,15 +2261,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   minAngle={15}
                   dataKey={localSeries[0]?.key || 'value'}
                   nameKey={xAxisKey}
-                  label={showLabels ? ({
-                    cx, cy, midAngle, innerRadius, outerRadius, value, name
-                  }) => {
+                  label={({ cx, cy, midAngle, outerRadius, percent }) => {
                     const RADIAN = Math.PI / 180;
                     const radius = outerRadius + 20;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                    const formattedValue = typeof value === 'number' ? value.toLocaleString() : value;
-                    const labelText = `${formattedValue}${unit ? unit : ''}`;
+                    const pct = Math.max(0, Math.round((Number(percent) || 0) * 100));
+                    const labelText = `${pct}%`;
 
                     return (
                       <text
@@ -2242,7 +2281,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                         {labelText}
                       </text>
                     );
-                  } : false}
+                  }}
                 >
                   {currentData.map((entry, index) => (
                     <Cell
@@ -2329,9 +2368,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
         return (
           <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer
+              key={`${chartKey}-${isPreviewMode ? 'preview' : 'edit'}`}
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
+            >
               <Sankey
                 data={sankeyData}
+                nodePadding={Math.max(8, Math.round(contentSize * 0.8))}
                 node={({ x, y, width, height, payload }) => (
                   <g>
                     <rect
@@ -2365,11 +2411,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   const path = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
                   return (
                     <path
+                      key={`${payload?.source?.name ?? payload?.source ?? 's'}->${payload?.target?.name ?? payload?.target ?? 't'}-${String(payload?.value ?? '')}`}
                       d={path}
                       fill="none"
                       stroke={linkColor}
                       strokeOpacity={isDark ? 0.82 : 0.75}
                       strokeWidth={Math.max(1.5, linkWidth ?? 2)}
+                      strokeLinecap="round"
                     />
                   );
                 }}
@@ -2440,7 +2488,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     )}
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                     {localSeries.map((s, idx) => {
                       const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
                       return idx === 0 ? (
@@ -2582,7 +2630,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       padding: widget.iconSize ? 0 : undefined
                     }}
                   >
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: widget.iconSize ? `${widget.iconSize * 0.6}px` : '1.5rem' }}>{d.icon}</span>
+                    {renderSymbolIcon(d.icon, {
+                      className: 'text-white',
+                      size: widget.iconSize ? `${widget.iconSize * 0.6}px` : '1.5rem',
+                    })}
                   </div>
                   <span className="font-bold text-muted uppercase tracking-tight" style={{ fontSize: 'var(--text-md)' }}>{d.name}</span>
                 </div>
@@ -2659,9 +2710,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         return (
           <div className="h-full flex items-center gap-8 px-4 overflow-hidden">
             <div className="flex-shrink-0 flex items-center justify-center">
-              <span className="material-symbols-outlined text-muted opacity-40 select-none" style={{ fontSize: widget.iconSize ? `${widget.iconSize}px` : 'min(90px, 10vh)' }}>
-                {currentIcon || 'schema'}
-              </span>
+              {renderSymbolIcon(currentIcon || 'schema', {
+                className: 'text-muted opacity-40 select-none',
+                size: widget.iconSize ? `${widget.iconSize}px` : 'min(90px, 10vh)',
+              })}
             </div>
 
             <div className="flex-1 flex flex-col gap-3 py-1 overflow-y-auto no-scrollbar justify-center h-full">
@@ -2750,7 +2802,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 <XAxis dataKey={xAxisKey} axisLine={false} tickLine={false} stroke={labelColor} fontSize={parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-tiny')) || 10} fontWeight="600" height={24} />
                 <YAxis hide />
                 <Tooltip contentStyle={tooltipStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: 2 }} />}
+                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                 {localSeries.map((s, idx) => (
                   <Area
                     key={s.key}
@@ -2847,7 +2899,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     <XAxis dataKey={xAxisKey} hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24} padding={{ left: 0, right: 0 }} />
                     <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: 2 }} />}
+                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
                     {localSeries.map((s, idx) => (
                       <Area
                         key={idx}
@@ -2879,7 +2931,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 }}
               >
                 <div className="absolute inset-2 rounded-full bg-[var(--primary-color)]/5 group-hover:bg-[var(--primary-color)]/10 transition-colors" />
-                <span className="material-symbols-outlined text-[var(--primary-color)]" style={{ fontSize: widget.iconSize ? `${widget.iconSize * 0.4}px` : '2.25rem' }}>verified_user</span>
+                {renderSymbolIcon('verified_user', {
+                  className: 'text-[var(--primary-color)]',
+                  size: widget.iconSize ? `${widget.iconSize * 0.4}px` : '2.25rem',
+                })}
                 <div className="absolute -bottom-2 bg-[var(--primary-color)] text-white px-3 py-1 rounded-full font-black shadow-lg shadow-[var(--primary-color)]/40" style={{ fontSize: 'var(--text-tiny)' }}>{currentMainValue}</div>
               </div>
               <span className="font-black text-muted uppercase tracking-widest" style={{ fontSize: 'var(--text-tiny)' }}>보안성공/탐지</span>
@@ -3205,6 +3260,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         />
       )}
       <div
+        data-widget-capture-id={widget.id}
         className={`flex-1 flex flex-col overflow-hidden ${isInteracting ? '' : 'transition-all duration-300'} 
           ${!widget.noBezel && !glassStyle ? `rounded-design shadow-base p-design ${bgOpacity >= 100 ? 'bg-surface' : ''}` : ''} 
           ${glassStyle ? 'rounded-design p-design widget-glass' : ''} 
