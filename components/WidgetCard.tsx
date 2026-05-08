@@ -5,7 +5,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   ComposedChart, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Sankey, Label
 } from 'recharts';
-import Chart from 'react-apexcharts';
 import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, Trash2, TrendingUp, User, CircleHelp } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary, ChartConfig, ChartSeries } from '../types';
 import { GENERAL_KPI_ICON_OPTIONS } from '../constants';
@@ -30,12 +29,11 @@ import {
 } from './widgetCard/facilityAssetUrls';
 import { GENERAL_KPI_ICON_MAP, MATERIAL_SYMBOL_ICON_MAP } from './widgetCard/widgetCardIconMaps';
 import {
-  HorizontalBarChartYAxisMeasure,
   RechartsNumericYAxisMeasure,
 } from './widgetCard/chartAxisMeasureComponents';
 import { TrafficStatusChart } from './widgetCard/TrafficStatusChart';
-import { AmChartComponent } from './widgetCard/AmChartComponent';
-import { ApexSankeyWidget } from './widgetCard/ApexSankeyWidget';
+import { renderApexChart as renderApexLibraryChart, renderAmChart as renderAmLibraryChart } from './widgetCard/chartLibraryRenderers';
+import { renderRechartsCoreChart } from './widgetCard/rechartsCoreRenderer';
 
 interface WidgetCardProps {
   widget: Widget;
@@ -240,264 +238,36 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
       return renderCustomLegend(orderedItems);
     };
 
-    const PIE_COLORS_LOCAL = PIE_COLORS;
-
     const renderApexChart = () => {
-      const { xAxisKey, showLegend, showGrid, showXAxis, showYAxis, unit } = currentConfig;
-
-      if (currentType === WidgetType.CHART_SANKEY) {
-        const sKey = xAxisKey || 'source';
-        const tKey = currentConfig.yAxisKey || 'target';
-        const vKey = localSeries[0]?.key || 'value';
-        const nodeIds = new Set<string>();
-        const edges: { source: string; target: string; value: number }[] = [];
-        currentData.forEach((item: any) => {
-          const sName = String(item[sKey] ?? item.source ?? item.from ?? '');
-          const tName = String(item[tKey] ?? item.target ?? item.to ?? '');
-          const val = Number(item[vKey] ?? item.value ?? 0);
-          if (sName && tName) {
-            nodeIds.add(sName);
-            nodeIds.add(tName);
-            edges.push({ source: sName, target: tName, value: val });
-          }
-        });
-        const nodes = Array.from(nodeIds).map((id) => ({ id, title: id }));
-        const resolvedFontColor = theme.textColor || 'var(--text-secondary)';
-        return (
-          <div className="w-full h-full min-w-0 min-h-0 flex flex-col border-0 outline-none [&_*]:outline-none" style={{ border: 'none', boxShadow: 'none' }}>
-            <ApexSankeyWidget data={{ nodes, edges }} fontColor={resolvedFontColor} nodeWidth={Math.max(14, theme.chartRadius * 2)} />
-          </div>
-        );
-      }
-
-      const categories = currentData.map(d => String(d[xAxisKey] || ''));
-      const apexSeries = localSeries.map(s => ({
-        name: s.label,
-        data: currentData.map(d => d[s.key])
-      }));
-
-      const colors = localSeries.map(s => resolveColor(s.color, theme.primaryColor, theme.primaryColor));
-      const resolvedLabelColor = resolveColor(labelColor, 'var(--text-muted)');
-      const resolvedStrokeColor = resolveColor(strokeColor, 'var(--text-secondary)');
-
-      const options: any = {
-        chart: {
-          toolbar: { show: false },
-          parentHeightOffset: 0,
-          background: 'transparent',
-          foreColor: resolvedLabelColor,
-          fontFamily: 'inherit',
-          stacked: chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked',
-          animations: {
-            enabled: true,
-            easing: 'easeinout',
-            speed: 800,
-          }
-        },
-        theme: {
-          mode: isDark ? 'dark' : 'light',
-        },
-        colors: colors,
-        grid: {
-          show: showGrid,
-          borderColor: resolvedStrokeColor,
-          strokeDashArray: 4,
-          opacity: chartLayoutTokens.tokens.charts.common.gridOpacity.value,
-          padding: { top: 0, right: 0, bottom: 0, left: 0 }
-        },
-        xaxis: {
-          categories: categories,
-          axisBorder: { show: false },
-          axisTicks: { show: false },
-          labels: {
-            show: showXAxis,
-            style: { fontSize: `${contentSize}px`, fontWeight: 500 }
-          }
-        },
-        yaxis: {
-          show: showYAxis,
-          labels: {
-            style: { fontSize: `${contentSize}px`, fontWeight: 500 },
-            formatter: (val: number) => `${val.toLocaleString()}${unit}`
-          }
-        },
-        legend: {
-          show: false // We use our custom legend
-        },
-        tooltip: {
-          theme: isDark ? 'dark' : 'light',
-          style: { fontSize: `${contentSize}px` },
-          y: {
-            formatter: (val: number) => `${val.toLocaleString()} ${unit}`
-          }
-        },
-        stroke: {
-          show: true,
-          width: 3,
-          curve: 'smooth'
-        },
-        dataLabels: { enabled: false },
-        plotOptions: {
-          bar: {
-            borderRadius: theme.chartRadius,
-            columnWidth: currentConfig.barWidth ? `${currentConfig.barWidth}%` : '60%',
-          },
-          pie: {
-            expandOnClick: false,
-            dataLabels: { offset: -5 },
-            customScale: 1.05 // Increase internal pie/donut size
-          }
-        }
-      };
-
-      let type: any = 'line';
-      let chartData: any = apexSeries;
-      let legendItems = localSeries.map(s => ({ value: s.label, color: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }));
-
-      switch (currentType) {
-        case WidgetType.CHART_BAR: type = 'bar'; break;
-        case WidgetType.DASH_EQUIP_PERF_TOP5: type = 'bar'; break;
-        case WidgetType.CHART_BAR_HORIZONTAL:
-          type = 'bar';
-          options.plotOptions.bar.horizontal = true;
-          break;
-        case WidgetType.CHART_AREA: type = 'area'; break;
-        case WidgetType.CHART_PIE:
-          type = 'pie';
-          options.labels = categories;
-          chartData = apexSeries[0].data;
-          options.colors = PIE_COLORS.map(c => resolveColor(c, theme.primaryColor, theme.primaryColor));
-          legendItems = categories.map((cat, idx) => ({
-            value: cat,
-            color: resolveColor(PIE_COLORS[idx % PIE_COLORS.length], theme.primaryColor, theme.primaryColor)
-          }));
-          delete options.xaxis;
-          delete options.yaxis;
-          delete options.grid;
-          break;
-        case WidgetType.CHART_RADAR:
-          type = 'radar';
-          options.xaxis = { categories };
-          break;
-        case WidgetType.CHART_COMPOSED:
-          // Apex mixed chart: first series as column, rest as lines
-          type = 'line';
-          chartData = apexSeries.map((s, idx) => ({
-            ...s,
-            type: idx === 0 ? 'column' : 'line'
-          }));
-          options.stroke = {
-            ...options.stroke,
-            width: apexSeries.map((_, idx) => (idx === 0 ? 0 : 3)),
-            curve: 'smooth'
-          };
-          break;
-        case WidgetType.DASH_TRAFFIC_STATUS:
-          type = 'area';
-          options.stroke.curve = 'smooth';
-          options.fill = {
-            type: 'gradient',
-            gradient: {
-              shadeIntensity: 1,
-              opacityFrom: 0.6,
-              opacityTo: 0.1,
-              stops: [0, 90, 100]
-            }
-          };
-          break;
-        case WidgetType.DASH_NET_TRAFFIC:
-          type = 'area';
-          options.chart.stacked = true;
-          break;
-        case WidgetType.DASH_FAILURE_STATS:
-          type = 'area';
-          break;
-        case WidgetType.DASH_RANK_LIST:
-          type = 'bar';
-          options.plotOptions.bar.horizontal = true;
-          options.plotOptions.bar.borderRadius = theme.chartRadius;
-          break;
-      }
-
-      if (currentType === WidgetType.CHART_RADAR) {
-        options.grid = { ...options.grid, show: false };
-      }
-      if (currentType === WidgetType.CHART_BAR || currentType === WidgetType.CHART_BAR_HORIZONTAL || currentType === WidgetType.CHART_LINE || currentType === WidgetType.CHART_AREA || currentType === WidgetType.CHART_COMPOSED || currentType === WidgetType.DASH_TRAFFIC_STATUS || currentType === WidgetType.DASH_RANK_LIST) {
-        const pad = options.grid?.padding || {};
-        options.grid = { ...options.grid, padding: { ...pad, top: 0, left: 10, right: 10, bottom: 0 } };
-        options.yaxis = { ...options.yaxis, labels: { ...(options.yaxis?.labels || {}), offsetX: 0 } };
-      }
-      if (currentType === WidgetType.CHART_BAR) {
-        let apexMaxVal = 0;
-        for (const d of currentData || []) {
-          for (const s of localSeries) {
-            const v = Number(d[s.key]);
-            if (!Number.isNaN(v)) apexMaxVal = Math.max(apexMaxVal, v);
-          }
-        }
-        const formattedLen = apexMaxVal.toLocaleString().length;
-        const yAxisMaxWidth = Math.max(32, Math.min(100, Math.ceil(formattedLen * (contentSize * 0.55)) + 8));
-        options.yaxis = { ...options.yaxis, labels: { ...(options.yaxis?.labels || {}), maxWidth: yAxisMaxWidth } };
-      }
-
-      if (currentConfig.useGradient) {
-        options.fill = {
-          type: 'gradient',
-          gradient: {
-            shade: isDark ? 'dark' : 'light',
-            type: currentType === WidgetType.CHART_BAR_HORIZONTAL ? 'horizontal' : 'vertical',
-            shadeIntensity: 0.5,
-            gradientToColors: localSeries.map((s) => {
-              const start = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-              const endRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-              return getGradientEndColor(start, endRaw, isDark);
-            }),
-            inverseColors: false,
-            opacityFrom: 1,
-            opacityTo: 1,
-            stops: [0, 100]
-          }
-        };
-      }
-
-      return (
-        <div className="h-full flex flex-col">
-          <div className="flex-1 min-h-0">
-            <Chart options={options} series={chartData} type={type} height="100%" width="100%" />
-          </div>
-          {showLegend && renderCustomLegend(legendItems)}
-        </div>
-      );
+      return renderApexLibraryChart({
+        currentType,
+        currentConfig,
+        currentData,
+        localSeries,
+        theme,
+        isDark,
+        contentSize,
+        labelColor,
+        strokeColor,
+        widget,
+        renderCustomLegend,
+      });
     };
 
     const renderAmChart = () => {
-      const { showLegend, xAxisKey } = currentConfig;
-      let legendItems = localSeries.map(s => ({ value: s.label, color: resolveColor(s.color, theme.primaryColor, theme.primaryColor) }));
-
-      if (currentType === WidgetType.CHART_PIE) {
-        legendItems = (currentData || []).map((d, idx) => ({
-          value: String(d[xAxisKey] || ''),
-          color: PIE_COLORS[idx % PIE_COLORS.length]
-        }));
-      }
-
-      const amChartLabelColor = isDark ? 'var(--text-main)' : labelColor;
-      const isAmXY = [WidgetType.CHART_LINE, WidgetType.CHART_AREA, WidgetType.CHART_BAR, WidgetType.DASH_EQUIP_PERF_TOP5, WidgetType.CHART_BAR_HORIZONTAL, WidgetType.CHART_COMPOSED].includes(currentType);
-      return (
-        <div className="h-full flex flex-col">
-          <div className={`flex-1 min-h-0 overflow-hidden`}>
-            <AmChartComponent
-              widget={{ ...widget, type: currentType, config: currentConfig, data: currentData }}
-              theme={theme}
-              isDark={isDark}
-              contentSize={contentSize}
-              labelColor={amChartLabelColor}
-              strokeColor={strokeColor}
-            />
-          </div>
-          {showLegend && renderCustomLegend(legendItems)}
-        </div>
-      );
+      return renderAmLibraryChart({
+        currentType,
+        currentConfig,
+        currentData,
+        localSeries,
+        theme,
+        isDark,
+        contentSize,
+        labelColor,
+        strokeColor,
+        widget,
+        renderCustomLegend,
+      });
     };
 
     const isGeneralWidget = [
@@ -939,571 +709,66 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
       case WidgetType.CHART_BAR:
       case WidgetType.DASH_EQUIP_PERF_TOP5:
-        return (
-          <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
-            {(yAxisWidth) => (
-              <div className={`h-full flex flex-col`}>
-                <div className="flex-1 min-h-0">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-                  <BarChart {...commonProps}>
-                    {currentConfig.useGradient && (
-                      <defs>
-                        {localSeries.map((s, idx) => {
-                          const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-                          const color = parseToHex(rawColor);
-                          const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
-                          const stopEndOpacity = endColorRaw ? 1 : 0.2;
-
-                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                          const gradId = `g-bar-${idx}-${safeWidgetId}`;
-
-                          return (
-                            <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={color} stopOpacity={1} />
-                              <stop offset="95%" stopColor={stopEndColor} stopOpacity={stopEndOpacity} />
-                            </linearGradient>
-                          );
-                        })}
-                      </defs>
-                    )}
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
-                    {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
-                        {xAxisLabel && (
-                          <Label
-                            value={xAxisLabel}
-                            position="insideBottom"
-                            offset={-10}
-                            style={{
-                              fontSize: 'var(--text-tiny)',
-                              fontWeight: '900',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)'
-                            }}
-                          />
-                        )}
-                      </XAxis>
-                    )}
-                    <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                    <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {/* Recharts 내부 Legend는 타입/축 계산에 따라 간격 편차가 생겨, Bar/Top5는 외부 공통 Legend로 고정 */}
-                    {localSeries.map((s, idx) => {
-                      const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                      const fbColor = parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor));
-                      return (
-                        <Bar
-                          key={s.key}
-                          name={s.label}
-                          dataKey={s.key}
-                          stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
-                          fill={currentConfig.useGradient ? `url(#g-bar-${idx}-${safeWidgetId})` : fbColor}
-                          radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
-                          barSize={currentConfig.barWidth ? (currentConfig.barWidth * 1) : undefined}
-                        />
-                      );
-                    })}
-                  </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                {showLegend && (
-                  <div style={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }}>
-                    {renderCustomLegend(localSeries.map((s) => ({
-                      value: s.label,
-                      color: resolveColor(s.color, theme.primaryColor, theme.primaryColor),
-                    })))}
-                  </div>
-                )}
-              </div>
-            )}
-          </RechartsNumericYAxisMeasure>
-        );
-
-      case WidgetType.CHART_BAR_HORIZONTAL: {
-        return (
-          <HorizontalBarChartYAxisMeasure currentData={currentData} xAxisKey={xAxisKey} contentSize={contentSize}>
-            {(yAxisWidth) => (
-              <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-                  <BarChart layout="vertical" data={currentData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                    {currentConfig.useGradient && (
-                      <defs>
-                        {localSeries.map((s, idx) => {
-                          const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-                          const color = parseToHex(rawColor);
-                          const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
-                          const stopEndOpacity = endColorRaw ? 1 : 0.2;
-
-                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                          const gradId = `g-hbar-${idx}-${safeWidgetId}`;
-
-                          return (
-                            <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor={color} stopOpacity={1} />
-                              <stop offset="95%" stopColor={getGradientEndColor(color, endColorRaw, isDark)} stopOpacity={1} />
-                            </linearGradient>
-                          );
-                        })}
-                      </defs>
-                    )}
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={strokeColor} />}
-                    <XAxis type="number" hide={!showXAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                    <YAxis
-                      dataKey={xAxisKey}
-                      type="category"
-                      hide={!showYAxis}
-                      stroke={labelColor}
-                      fontSize={contentSize}
-                      tickLine={false}
-                      axisLine={false}
-                      width={showYAxis ? yAxisWidth : 0}
-                      tick={{ style: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Tooltip cursor={{ fill: isDark ? 'var(--white-alpha-05)' : 'var(--black-alpha-03)' }} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-                    {localSeries.map((s, idx) => {
-                      const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                      return (
-                        <Bar
-                          key={s.key}
-                          name={s.label}
-                          dataKey={s.key}
-                          stackId={chartLayoutTokens.tokens.charts.bar.mode.value === 'stacked' ? 'stack1' : undefined}
-                          fill={currentConfig.useGradient ? `url(#g-hbar-${idx}-${safeWidgetId})` : resolveColor(s.color, theme.primaryColor, theme.primaryColor)}
-                          radius={[0, theme.chartRadius, theme.chartRadius, 0]}
-                          barSize={currentConfig.barWidth != null ? Math.max(2, (currentConfig.barWidth * 0.4)) : undefined}
-                        />
-                      );
-                    })}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </HorizontalBarChartYAxisMeasure>
-        );
-      }
+      case WidgetType.CHART_BAR_HORIZONTAL:
+        return renderRechartsCoreChart({
+          currentType,
+          currentData,
+          currentConfig,
+          localSeries,
+          theme,
+          isDark,
+          contentSize,
+          labelColor,
+          strokeColor,
+          showGrid,
+          showXAxis,
+          showYAxis,
+          showLegend,
+          xAxisKey,
+          xAxisLabel,
+          chartKey,
+          commonProps,
+          tooltipStyle,
+          tooltipItemStyle,
+          tooltipLabelStyle,
+          renderLegend,
+          renderCustomLegend,
+          widgetId: widget.id,
+          isPreviewMode,
+        });
 
       case WidgetType.CHART_LINE:
-        return (
-          <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
-            {(yAxisWidth) => (
-              <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-                  <LineChart {...commonProps}>
-                    {currentConfig.useGradient && (
-                      <defs>
-                        {localSeries.map((s, idx) => {
-                          const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-                          const color = parseToHex(rawColor);
-                          const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
-
-                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                          const gradId = `g-ln-${idx}-${safeWidgetId}`;
-
-                          return (
-                            <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor={color} stopOpacity={1} />
-                              <stop offset="100%" stopColor={stopEndColor} stopOpacity={1} />
-                            </linearGradient>
-                          );
-                        })}
-                      </defs>
-                    )}
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
-                    {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
-                        {xAxisLabel && (
-                          <Label
-                            value={xAxisLabel}
-                            position="insideBottom"
-                            offset={-10}
-                            style={{
-                              fontSize: 'var(--text-tiny)',
-                              fontWeight: '900',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)'
-                            }}
-                          />
-                        )}
-                      </XAxis>
-                    )}
-                    <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-                    {localSeries.map((s, idx) => {
-                      const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                      return (
-                        <Line
-                          key={s.key}
-                          name={s.label}
-                          type="natural"
-                          dataKey={s.key}
-                          stroke={currentConfig.useGradient ? `url(#g-ln-${idx}-${safeWidgetId})` : parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor))}
-                          strokeWidth={currentConfig.barWidth != null ? Math.max(1, (currentConfig.barWidth * 0.1)) : 3}
-                          dot={{
-                            r: 4,
-                            strokeWidth: 2,
-                            fill: (isDark ? 'var(--surface-elevated)' : 'var(--surface)'),
-                            stroke: parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor))
-                          }}
-                          activeDot={{ r: 8, strokeWidth: 0 }}
-                        />
-                      );
-                    })}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </RechartsNumericYAxisMeasure>
-        );
-
       case WidgetType.CHART_AREA:
-        return (
-          <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
-            {(yAxisWidth) => (
-              <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-                  <AreaChart {...commonProps}>
-                    {currentConfig.useGradient ? (
-                      <defs>
-                        {localSeries.map((s, idx) => {
-                          const rawColor = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-                          const color = parseToHex(rawColor);
-                          const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
-
-                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                          const gradId = `g-ar-${idx}-${safeWidgetId}`;
-
-                          return (
-                            <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={color} stopOpacity={0.6} />
-                              <stop offset="100%" stopColor={stopEndColor} stopOpacity={0.05} />
-                            </linearGradient>
-                          );
-                        })}
-                      </defs>
-                    ) : null}
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
-                    {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
-                        {xAxisLabel && (
-                          <Label
-                            value={xAxisLabel}
-                            position="insideBottom"
-                            offset={-10}
-                            style={{
-                              fontSize: 'var(--text-tiny)',
-                              fontWeight: '900',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)'
-                            }}
-                          />
-                        )}
-                      </XAxis>
-                    )}
-                    <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-                    {localSeries.map((s, idx) => {
-                      const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                      return (
-                        <Area
-                          key={s.key}
-                          name={s.label}
-                          type="natural"
-                          dataKey={s.key}
-                          stroke={parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor))}
-                          strokeWidth={currentConfig.barWidth != null ? Math.max(1, (currentConfig.barWidth * 0.1)) : 3}
-                          fillOpacity={currentConfig.useGradient ? 1 : 0.3}
-                          fill={currentConfig.useGradient ? `url(#g-ar-${idx}-${safeWidgetId})` : parseToHex(resolveColor(s.color, theme.primaryColor, theme.primaryColor))}
-                        />
-                      );
-                    })}
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </RechartsNumericYAxisMeasure>
-        );
-
       case WidgetType.CHART_PIE:
-        return (
-          <div className={`h-full`}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-              <PieChart>
-                <Pie
-                  data={currentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="50%"
-                  outerRadius="60%"
-                  paddingAngle={5}
-                  minAngle={15}
-                  dataKey={localSeries[0]?.key || 'value'}
-                  nameKey={xAxisKey}
-                  label={({ cx, cy, midAngle, outerRadius, percent }) => {
-                    const RADIAN = Math.PI / 180;
-                    const radius = outerRadius + 20;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                    const pct = Math.max(0, Math.round((Number(percent) || 0) * 100));
-                    const labelText = `${pct}%`;
-
-                    return (
-                      <text
-                        x={x}
-                        y={y}
-                        fill={'var(--text-secondary)'}
-                        textAnchor={x > cx ? 'start' : 'end'}
-                        dominantBaseline="central"
-                        style={{ fontSize: `${contentSize}px`, fontWeight: 'var(--title-weight)' }}
-                      >
-                        {labelText}
-                      </text>
-                    );
-                  }}
-                >
-                  {currentData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      stroke={'var(--surface)'}
-                      strokeWidth={2}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        );
-
       case WidgetType.CHART_RADAR:
-        return (
-          <div className="h-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={currentData}>
-                <PolarAngleAxis dataKey={xAxisKey} tick={{ fill: labelColor, fontSize: contentSize }} />
-                <PolarRadiusAxis stroke={strokeColor} tick={{ fill: labelColor, fontSize: contentSize }} />
-                {localSeries.map(s => (
-                  <Radar
-                    key={s.key}
-                    name={s.label}
-                    dataKey={s.key}
-                    stroke={s.color || theme.primaryColor}
-                    fill={s.color || theme.primaryColor}
-                    fillOpacity={0.6}
-                  />
-                ))}
-                <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-                {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        );
-
-      case WidgetType.CHART_SANKEY: {
-        const sankeyData = (() => {
-          const nodes: { name: string }[] = [];
-          const links: { source: number; target: number; value: number }[] = [];
-          const nodeMap = new Map<string, number>();
-
-          const sKey = xAxisKey || 'source';
-          const tKey = currentConfig.yAxisKey || 'target';
-          const vKey = localSeries[0]?.key || 'value';
-
-          currentData.forEach(item => {
-            const sName = item[sKey] || item['source'] || item['from'];
-            const tName = item[tKey] || item['target'] || item['to'];
-            const val = Number(item[vKey] || item['value']) || 0;
-
-            if (sName && tName) {
-              if (!nodeMap.has(sName)) {
-                nodeMap.set(sName, nodes.length);
-                nodes.push({ name: sName });
-              }
-              if (!nodeMap.has(tName)) {
-                nodeMap.set(tName, nodes.length);
-                nodes.push({ name: tName });
-              }
-              links.push({
-                source: nodeMap.get(sName)!,
-                target: nodeMap.get(tName)!,
-                value: val
-              });
-            }
-          });
-          return { nodes, links };
-        })();
-
-        /* 노드별 색상 (theme.chartPalette 있으면 커스텀 팔레트, 없으면 PIE_COLORS 기반) */
-        const sankeyPalette = theme.chartPalette?.length ? theme.chartPalette : PIE_COLORS.map(c => resolveColor(c, theme.primaryColor, theme.primaryColor));
-        const sankeyNodeColorByName = new Map<string, string>();
-        sankeyData.nodes.forEach((n, i) => {
-          const raw = sankeyPalette[i % sankeyPalette.length];
-          sankeyNodeColorByName.set(n.name, raw.startsWith('var(') ? resolveColor(raw, theme.primaryColor, theme.primaryColor) : raw);
-        });
-        const getNodeColor = (name: string) => sankeyNodeColorByName.get(name) ?? theme.primaryColor;
-
-        return (
-          <div className="h-full">
-            <ResponsiveContainer
-              key={`${chartKey}-${isPreviewMode ? 'preview' : 'edit'}`}
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <Sankey
-                data={sankeyData}
-                nodePadding={Math.max(8, Math.round(contentSize * 0.8))}
-                node={({ x, y, width, height, payload }) => (
-                  <g>
-                    <rect
-                      x={x}
-                      y={y}
-                      width={width}
-                      height={height}
-                      fill={getNodeColor(payload.name)}
-                      fillOpacity={1}
-                      stroke={isDark ? 'var(--white-alpha-20)' : 'var(--black-alpha-08)'}
-                      strokeWidth={1}
-                      rx={theme.chartRadius}
-                    />
-                    <text
-                      x={x + width / 2}
-                      y={y + height / 2}
-                      dy={contentSize / 2 - 2}
-                      fontSize={contentSize}
-                      fill={isDark ? 'var(--white)' : 'var(--black)'}
-                      textAnchor="middle"
-                      pointerEvents="none"
-                      style={{ textShadow: isDark ? 'var(--shadow-dark-text)' : 'var(--shadow-light-text)' }}
-                    >
-                      {payload.name}
-                    </text>
-                  </g>
-                )}
-                link={({ sourceX, sourceY, sourceControlX, targetX, targetY, targetControlX, linkWidth, payload }: any) => {
-                  const sourceName = payload?.source?.name ?? payload?.source;
-                  const linkColor = typeof sourceName === 'string' ? getNodeColor(sourceName) : theme.primaryColor;
-                  const path = `M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`;
-                  return (
-                    <path
-                      key={`${payload?.source?.name ?? payload?.source ?? 's'}->${payload?.target?.name ?? payload?.target ?? 't'}-${String(payload?.value ?? '')}`}
-                      d={path}
-                      fill="none"
-                      stroke={linkColor}
-                      strokeOpacity={isDark ? 0.82 : 0.75}
-                      strokeWidth={Math.max(1.5, linkWidth ?? 2)}
-                      strokeLinecap="round"
-                    />
-                  );
-                }}
-              >
-                <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
-              </Sankey>
-            </ResponsiveContainer>
-          </div>
-        );
-      }
-
+      case WidgetType.CHART_SANKEY:
       case WidgetType.CHART_COMPOSED:
-        return (
-          <RechartsNumericYAxisMeasure currentData={currentData} localSeries={localSeries} contentSize={contentSize} showYAxis={showYAxis}>
-            {(yAxisWidth) => (
-              <div className={`h-full`}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} key={chartKey}>
-                  <ComposedChart {...commonProps}>
-                    {currentConfig.useGradient && (
-                      <defs>
-                        {localSeries.map((s, idx) => {
-                          const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                          const color = resolveColor(s.color, theme.primaryColor, theme.primaryColor);
-                          const endColorRaw = s.endColor ? resolveColor(s.endColor, theme.primaryColor, theme.primaryColor) : undefined;
-                          const stopEndColor = getGradientEndColor(color, endColorRaw, isDark);
-
-                          if (idx === 0) {
-                            // Bar Gradient (Vertical)
-                            const stopEndOpacity = endColorRaw ? 1 : 0.2;
-                            const gradId = `g-cbar-${idx}-${safeWidgetId}`;
-                            return (
-                              <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor={color} stopOpacity={1} />
-                                <stop offset="95%" stopColor={stopEndColor} stopOpacity={stopEndOpacity} />
-                              </linearGradient>
-                            );
-                          } else {
-                            // Line Gradient (Horizontal)
-                            const gradId = `g-cln-${idx}-${safeWidgetId}`;
-                            return (
-                              <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor={color} stopOpacity={1} />
-                                <stop offset="100%" stopColor={stopEndColor} stopOpacity={1} />
-                              </linearGradient>
-                            );
-                          }
-                        })}
-                      </defs>
-                    )}
-                    {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={strokeColor} />}
-                    {showXAxis && (
-                      <XAxis dataKey={xAxisKey} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} height={24}>
-                        {xAxisLabel && (
-                          <Label
-                            value={xAxisLabel}
-                            position="insideBottom"
-                            offset={-10}
-                            style={{
-                              fontSize: 'var(--text-tiny)',
-                              fontWeight: '900',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              fill: 'var(--text-muted)'
-                            }}
-                          />
-                        )}
-                      </XAxis>
-                    )}
-                    <YAxis width={yAxisWidth} hide={!showYAxis} stroke={labelColor} fontSize={contentSize} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    {showLegend && <Legend content={renderLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: `${chartLayoutTokens.tokens.charts.common.legendPadding.value}px` }} />}
-                    {localSeries.map((s, idx) => {
-                      const safeWidgetId = widget.id.replace(/[^a-zA-Z0-9]/g, '_');
-                      return idx === 0 ? (
-                        <Bar
-                          key={s.key}
-                          name={s.label}
-                          dataKey={s.key}
-                          fill={currentConfig.useGradient ? `url(#g-cbar-${idx}-${safeWidgetId})` : (s.color || theme.primaryColor)}
-                          radius={[theme.chartRadius, theme.chartRadius, 0, 0]}
-                          barSize={currentConfig.barWidth != null ? Math.max(2, (currentConfig.barWidth * 0.4)) : undefined}
-                        />
-                      ) : (
-                        <Line
-                          key={s.key}
-                          name={s.label}
-                          type="monotone"
-                          dataKey={s.key}
-                          stroke={currentConfig.useGradient ? `url(#g-cln-${idx}-${safeWidgetId})` : (s.color || 'var(--red-500)')}
-                          strokeWidth={3}
-                          dot={{ r: 4, strokeWidth: 2, fill: theme.surfaceColor, stroke: s.color || 'var(--red-500)' }}
-                        />
-                      );
-                    })}
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </RechartsNumericYAxisMeasure>
-        );
+        return renderRechartsCoreChart({
+          currentType,
+          currentData,
+          currentConfig,
+          localSeries,
+          theme,
+          isDark,
+          contentSize,
+          labelColor,
+          strokeColor,
+          showGrid,
+          showXAxis,
+          showYAxis,
+          showLegend,
+          xAxisKey,
+          xAxisLabel,
+          chartKey,
+          commonProps,
+          tooltipStyle,
+          tooltipItemStyle,
+          tooltipLabelStyle,
+          renderLegend,
+          renderCustomLegend,
+          widgetId: widget.id,
+          isPreviewMode,
+        });
 
       case WidgetType.TABLE:
         return (

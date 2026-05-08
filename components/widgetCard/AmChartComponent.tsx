@@ -314,7 +314,7 @@ export const AmChartComponent = React.memo<{
                   { color: toAm5Color(s.endColor || s.color), opacity: 1 }
                 ],
                 rotation: isHorizontal ? 0 : 90
-              })
+              } as any)
               : undefined,
             fillOpacity: 1,
             visible: true,
@@ -523,7 +523,7 @@ export const AmChartComponent = React.memo<{
                     { color: toAm5Color(s.endColor || s.color), opacity: 1 }
                   ],
                   rotation: 90
-                })
+                } as any)
                 : undefined
             });
 

@@ -26,3 +26,5 @@ export {
 export { TrafficStatusChart, type TrafficStatusChartProps } from './TrafficStatusChart';
 export { AmChartComponent } from './AmChartComponent';
 export { ApexSankeyWidget } from './ApexSankeyWidget';
+export { renderApexChart, renderAmChart } from './chartLibraryRenderers';
+export { renderRechartsCoreChart } from './rechartsCoreRenderer';
