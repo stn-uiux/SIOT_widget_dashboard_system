@@ -519,6 +519,8 @@
             "gnb": {
                 "height": { "value": "var(--ai-fab-size)", "type": "dimension" },
                 "radius": { "value": "9999px", "type": "dimension" },
+                "z_index": { "value": 100, "type": "number" },
+                "add_widget_pill_z_index": { "value": 120, "type": "number" },
                 "add_widget_pill_height": { "value": "52px", "type": "dimension" },
                 "add_widget_pill_bg_light": { "value": "rgba(255, 255, 255, 0.1)", "type": "color" },
                 "add_widget_pill_bg_dark": { "value": "rgba(0, 0, 0, 0.4)", "type": "color" },

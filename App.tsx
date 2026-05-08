@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 // v1.1.5 - Forced reload for HMR sync
 import { GridLayout, ResponsiveGridLayout, useContainerWidth, getCompactor } from "react-grid-layout";
 import type { LayoutItem } from "react-grid-layout";
@@ -572,9 +573,10 @@ const DashboardGrid: React.FC<{
               </>
             )}
 
-            {isEditMode && (
+            {isEditMode && typeof document !== "undefined" && createPortal(
               <div
-                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-auto pointer-events-none flex flex-col items-center"
+                className="fixed bottom-10 left-1/2 -translate-x-1/2 w-auto pointer-events-none flex flex-col items-center"
+                style={{ zIndex: 'var(--add-widget-pill-z-index)' }}
               >
                 {/* Dynamic Island Style Pill Button */}
                 <div className="group pointer-events-auto relative">
@@ -633,7 +635,8 @@ const DashboardGrid: React.FC<{
                 >
                   <span className="uppercase tracking-widest font-bold" style={{ fontSize: 'var(--text-micro)', color: 'var(--overlay-text-dim)' }}>Pick analysis component</span>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </>
         )}

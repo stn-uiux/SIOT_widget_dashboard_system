@@ -134,6 +134,7 @@
     --loading-blur-2: 60px;
     --loading-glow-inset-outer: -80px;
     --loading-glow-inset-inner: -40px;
+    --loading-spinner-size: 48px;
     --loading-spinner-color: #3b82f6;
     --loading-spinner-track: rgba(var(--primary-color-rgb), 0.2);
     --loading-spinner-border-width: 4px;
@@ -388,6 +389,8 @@
     --ai-fab-blur: 12px;
 
     /* GNB Capsule */
+    --gnb-z-index: 100;
+    --add-widget-pill-z-index: 120;
     --gnb-project-name: var(--text-main); /* amCharts/Design 등 버튼 글자색과 동일 */
     --add-widget-pill-height: 52px;
     --icon-stroke-bold: 3px;
