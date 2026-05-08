@@ -637,7 +637,12 @@
                 "action_danger_hover_text": { "value": "var(--error)", "type": "color" },
                 "selected_overlay_bg": { "value": "rgba(59, 130, 246, 0.08)", "type": "color" },
                 "selected_inner_glow": { "value": "inset 0 0 25px rgba(59, 130, 246, 0.15)", "type": "string" },
-                "bar_width_default": { "value": "60", "type": "number" }
+                "bar_width_default": { "value": "60", "type": "number" },
+                "resize_hint_z_index": { "value": 100, "type": "number" },
+                "map_badge_z_index": { "value": 1000, "type": "number" },
+                "vertical_nav_item_width": { "value": "80px", "type": "dimension" },
+                "vertical_nav_item_height": { "value": "36px", "type": "dimension" },
+                "vertical_nav_indicator_width": { "value": "80px", "type": "dimension" }
             },
             "glassmorphism": {
                 "blur": { "value": "12px", "type": "dimension" },

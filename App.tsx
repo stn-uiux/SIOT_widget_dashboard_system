@@ -182,6 +182,11 @@ const DashboardGrid: React.FC<{
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [liveSize, setLiveSize] = useState<{ w: number; h: number } | null>(null);
   const resizeRafRef = useRef<number | null>(null);
+  const layoutRafRef = useRef<number | null>(null);
+  const pendingLayoutRef = useRef<readonly LayoutItem[] | null>(null);
+  const [localLayout, setLocalLayout] = useState<readonly LayoutItem[] | null>(null);
+  const pendingResponsiveLayoutsRef = useRef<Record<string, LayoutItem[]> | null>(null);
+  const [localResponsiveLayouts, setLocalResponsiveLayouts] = useState<Record<string, LayoutItem[]> | null>(null);
 
   const { containerRef: gridContainerRef, width: gridWidth } = useContainerWidth({
     initialWidth: 1280,
@@ -244,43 +249,81 @@ const DashboardGrid: React.FC<{
     });
   }, [usePixelGrid, currentRglLayout, layout.columns, rglCols, rglRowH, rglRowHeight, gridWidth, theme.spacing]);
 
+  const toGridLayout = useCallback((next: readonly LayoutItem[]) => {
+    if (!usePixelGrid) return next;
+    const cols = Math.max(1, layout.columns);
+    const spacing = theme.spacing;
+    const colWidth = (gridWidth - (cols - 1) * spacing) / cols;
+    const unitX = gridWidth / rglCols;
+
+    return next.map((item) => {
+      // In Pixel mode, left = x * unitX
+      // In Grid mode, left = xGrid * (colWidth + spacing)
+      // so xGrid = (x * unitX) / (colWidth + spacing)
+      const left = finite(Number(item.x), 0) * unitX;
+      const top = finite(Number(item.y), 0) * rglRowH;
+      const width = finite(Number(item.w), 4) * unitX;
+      const height = finite(Number(item.h), 4) * rglRowH;
+
+      const xGrid = left / (colWidth + spacing);
+      const yGrid = top / (rglRowHeight + spacing);
+      const wGrid = (width + spacing) / (colWidth + spacing);
+      const hGrid = (height + spacing) / (rglRowHeight + spacing);
+
+      return {
+        ...item,
+        x: Math.max(0, finite(Math.round(xGrid * 100) / 100, 0)),
+        y: Math.max(0, finite(Math.round(yGrid * 100) / 100, 0)),
+        w: Math.max(0.5, finite(Math.round(wGrid * 100) / 100, 4)),
+        h: Math.max(0.5, finite(Math.round(hGrid * 100) / 100, 4)),
+      };
+    });
+  }, [finite, gridWidth, layout.columns, rglCols, rglRowH, rglRowHeight, theme.spacing, usePixelGrid]);
+
   const handleLayoutChange = useCallback(
     (next: readonly LayoutItem[]) => {
-      if (!usePixelGrid) {
-        onLayoutChange(next);
-        return;
-      }
-      const cols = Math.max(1, layout.columns);
-      const spacing = theme.spacing;
-      const colWidth = (gridWidth - (cols - 1) * spacing) / cols;
-      const unitX = gridWidth / rglCols;
-
-      const gridLayout = next.map((item) => {
-        // In Pixel mode, left = x * unitX
-        // In Grid mode, left = xGrid * (colWidth + spacing)
-        // so xGrid = (x * unitX) / (colWidth + spacing)
-        const left = finite(Number(item.x), 0) * unitX;
-        const top = finite(Number(item.y), 0) * rglRowH;
-        const width = finite(Number(item.w), 4) * unitX;
-        const height = finite(Number(item.h), 4) * rglRowH;
-
-        const xGrid = left / (colWidth + spacing);
-        const yGrid = top / (rglRowHeight + spacing);
-        const wGrid = (width + spacing) / (colWidth + spacing);
-        const hGrid = (height + spacing) / (rglRowHeight + spacing);
-
-        return {
-          ...item,
-          x: Math.max(0, finite(Math.round(xGrid * 100) / 100, 0)),
-          y: Math.max(0, finite(Math.round(yGrid * 100) / 100, 0)),
-          w: Math.max(0.5, finite(Math.round(wGrid * 100) / 100, 4)),
-          h: Math.max(0.5, finite(Math.round(hGrid * 100) / 100, 4)),
-        };
+      // 드래그/리사이즈 중 layout 변경이 매우 빈번하므로:
+      // - Interaction 중: 상위 커밋을 미루고 로컬 프리뷰만 업데이트
+      // - Interaction 아님: 기존처럼 커밋
+      pendingLayoutRef.current = next;
+      if (layoutRafRef.current) cancelAnimationFrame(layoutRafRef.current);
+      layoutRafRef.current = requestAnimationFrame(() => {
+        const latest = pendingLayoutRef.current;
+        if (!latest) return;
+        if (draggingId || resizingId) {
+          setLocalLayout(latest);
+          return;
+        }
+        onLayoutChange(toGridLayout(latest));
       });
-      onLayoutChange(gridLayout);
     },
-    [usePixelGrid, layout.columns, rglCols, rglRowH, rglRowHeight, gridWidth, theme.spacing, onLayoutChange]
+    [draggingId, resizingId, onLayoutChange, toGridLayout]
   );
+
+  const commitPendingLayout = useCallback((explicitLayout?: readonly LayoutItem[]) => {
+    const next = explicitLayout ?? pendingLayoutRef.current;
+    if (!next) return;
+    onLayoutChange(toGridLayout(next));
+    pendingLayoutRef.current = null;
+    setLocalLayout(null);
+  }, [onLayoutChange, toGridLayout]);
+
+  const handleResponsiveLayoutsChange = useCallback((layouts: Record<string, LayoutItem[]>) => {
+    pendingResponsiveLayoutsRef.current = layouts;
+    if (draggingId || resizingId) {
+      setLocalResponsiveLayouts(layouts);
+      return;
+    }
+    onResponsiveLayoutChange?.(layouts);
+  }, [draggingId, resizingId, onResponsiveLayoutChange]);
+
+  const commitPendingResponsiveLayouts = useCallback((explicitLayouts?: Record<string, LayoutItem[]>) => {
+    const next = explicitLayouts ?? pendingResponsiveLayoutsRef.current;
+    if (!next) return;
+    onResponsiveLayoutChange?.(next);
+    pendingResponsiveLayoutsRef.current = null;
+    setLocalResponsiveLayouts(null);
+  }, [onResponsiveLayoutChange]);
 
   const hasLayoutBackground = !!(layout?.backgroundGlobe || layout?.backgroundImage || layout?.backgroundImageLight || layout?.backgroundImageDark);
   const gridAreaBg = hasLayoutBackground
@@ -386,7 +429,7 @@ const DashboardGrid: React.FC<{
                 width={gridWidth}
                 breakpoints={RESPONSIVE_BREAKPOINTS}
                 cols={RESPONSIVE_COLS}
-                layouts={responsiveLayouts}
+                layouts={(draggingId || resizingId) ? (localResponsiveLayouts ?? responsiveLayouts) : responsiveLayouts}
                 rowHeight={rglRowHeight}
                 margin={[theme.spacing, theme.spacing] as [number, number]}
                 containerPadding={[0, 0] as [number, number]}
@@ -398,16 +441,20 @@ const DashboardGrid: React.FC<{
                   handles: ["se", "sw", "ne", "nw", "e", "w", "n", "s"] as const,
                 }}
                 autoSize={!layout.fitToScreen}
-                onLayoutChange={(_layout, layouts) => onResponsiveLayoutChange(layouts)}
+                onLayoutChange={(_layout, layouts) => handleResponsiveLayoutsChange(layouts)}
                 onDragStart={(layout, oldItem, newItem) => {
                   setDraggingId(newItem.i);
+                  // 첫 프레임 드래그 시작 시점의 불필요한 대형 상태 업데이트를 피하기 위해
+                  // 실제 레이아웃 변화가 들어올 때(onLayoutChange) 로컬 프리뷰를 채웁니다.
                 }}
-                onDragStop={() => {
+                onDragStop={(_layout, layouts) => {
                   setDraggingId(null);
+                  commitPendingResponsiveLayouts(layouts);
                 }}
                 onResizeStart={(layout, oldItem, newItem) => {
                   setResizingId(newItem.i);
                   setLiveSize({ w: newItem.w, h: newItem.h });
+                  // 로컬 프리뷰는 onLayoutChange에서 채웁니다.
                 }}
                 onResize={(layout, oldItem, newItem) => {
                   if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
@@ -415,10 +462,11 @@ const DashboardGrid: React.FC<{
                     setLiveSize({ w: newItem.w, h: newItem.h });
                   });
                 }}
-                onResizeStop={() => {
+                onResizeStop={(_layout, _oldItem, _newItem, layouts) => {
                   if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
                   setResizingId(null);
                   setLiveSize(null);
+                  commitPendingResponsiveLayouts(layouts);
                 }}
                 style={{
                   position: "relative",
@@ -454,8 +502,9 @@ const DashboardGrid: React.FC<{
                       />
                       {isEditMode && isThisResizing && liveSize && (
                         <div
-                          className="absolute z-[100] w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
+                          className="absolute w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
                           style={{
+                            zIndex: 'var(--widget-resize-hint-z-index)',
                             bottom: 'var(--spacing-sm)',
                             right: 'var(--spacing-sm)',
                             padding: 'var(--spacing-xs) var(--spacing-sm)',
@@ -478,7 +527,7 @@ const DashboardGrid: React.FC<{
               <>
                 <GridLayout
                   className={resizingId || draggingId ? "is-interacting" : ""}
-                  layout={displayLayout}
+                  layout={(draggingId || resizingId) ? (localLayout ?? displayLayout) : displayLayout}
                   width={gridWidth}
                   gridConfig={{
                     cols: rglCols,
@@ -497,13 +546,16 @@ const DashboardGrid: React.FC<{
                   onLayoutChange={handleLayoutChange}
                   onDragStart={(layout, oldItem, newItem) => {
                     setDraggingId(newItem.i);
+                    // 로컬 프리뷰는 첫 onLayoutChange에서 채웁니다.
                   }}
-                  onDragStop={() => {
+                  onDragStop={(layout) => {
                     setDraggingId(null);
+                    commitPendingLayout(layout);
                   }}
                   onResizeStart={(layout, oldItem, newItem) => {
                     setResizingId(newItem.i);
                     setLiveSize({ w: newItem.w, h: newItem.h });
+                    // 로컬 프리뷰는 첫 onLayoutChange에서 채웁니다.
                   }}
                   onResize={(layout, oldItem, newItem) => {
                     if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
@@ -511,10 +563,11 @@ const DashboardGrid: React.FC<{
                       setLiveSize({ w: newItem.w, h: newItem.h });
                     });
                   }}
-                  onResizeStop={() => {
+                  onResizeStop={(layout) => {
                     if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
                     setResizingId(null);
                     setLiveSize(null);
+                    commitPendingLayout(layout);
                   }}
                   style={{
                     position: "relative",
@@ -545,13 +598,14 @@ const DashboardGrid: React.FC<{
                           isResizing={isThisResizing}
                           isDragging={draggingId === widget.id}
                           isPreviewMode={isPreviewMode}
-                          onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
+                          onTogglePreview={onTogglePreview}
                           userRole={userRole}
                         />
                         {isEditMode && isThisResizing && liveSize && (
                           <div
-                            className="absolute z-[100] w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
+                            className="absolute w-fit h-fit rounded backdrop-blur-sm shadow-2xl pointer-events-none overflow-hidden"
                             style={{
+                              zIndex: 'var(--widget-resize-hint-z-index)',
                               bottom: 'var(--spacing-sm)',
                               right: 'var(--spacing-sm)',
                               padding: 'var(--spacing-xs) var(--spacing-sm)',
@@ -1159,6 +1213,10 @@ const App: React.FC = () => {
   const [isLayoutSidebarOpen, setIsLayoutSidebarOpen] = useState(false);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  const handleTogglePreview = useCallback(() => {
+    setIsPreviewMode((prev) => !prev);
+  }, []);
   const [pendingPanelSwitch, setPendingPanelSwitch] = useState<'design' | 'layout' | 'close' | null>(null);
   const previewTickRef = useRef(0);
   const previewBaseDataRef = useRef<Record<string, any[]>>({});
@@ -1182,60 +1240,64 @@ const App: React.FC = () => {
     const interval = setInterval(() => {
       previewTickRef.current += 1;
       const tickGroup = previewTickRef.current % 2;
-      setProjects((prev) => {
-        return prev.map((p) => {
-          if (p.id !== activeProjectId) return p;
-          let projectChanged = false;
-          const updatedPages = p.pages.map((pg) => {
-            if (pg.id !== p.activePageId) return pg;
-            let pageChanged = false;
-            const updatedWidgets = pg.widgets.map((w, idx) => {
-              // Update only half of widgets per tick to reduce heavy chart rerenders.
-              if (idx % 2 !== tickGroup) return w;
-              const newData = (w.data || []).map((d: any, rowIdx: number) => {
-                const baseRow = previewBaseDataRef.current[w.id]?.[rowIdx] ?? null;
-                const nextD = { ...d };
-                if (w.config?.series) {
-                  w.config.series.forEach((s) => {
-                    const baseVal = baseRow ? Number((baseRow as any)[s.key]) : Number(nextD[s.key]);
-                    const val = Number.isFinite(baseVal) ? baseVal : Number(nextD[s.key]);
-                    if (!isNaN(val)) {
-                      // Preview 시뮬레이션: 일반 차트는 정수로 내려도 무방하지만,
-                      // Sankey는 링크 value가 0이 많아지면 레이아웃이 깨지므로 최소 1을 보장합니다.
-                      const isSankey = w.type === WidgetType.CHART_SANKEY;
-                      const variation = (Math.random() - 0.5) * (isSankey ? 0.08 : 0.1);
-                      const next = val * (1 + variation);
-                      const isPercent = w.type === WidgetType.DASH_RESOURCE_USAGE;
-                      if (isSankey) {
-                        nextD[s.key] = Math.max(1, Math.round(next));
-                      } else if (isPercent) {
-                        nextD[s.key] = Math.max(0, Math.min(100, Math.round(next)));
-                      } else {
-                        nextD[s.key] = Math.max(0, Math.round(next));
+      // Preview simulation updates can be heavy; run them as a low-priority transition
+      // so hover/cursor interactions stay responsive.
+      startTransition(() => {
+        setProjects((prev) => {
+          return prev.map((p) => {
+            if (p.id !== activeProjectId) return p;
+            let projectChanged = false;
+            const updatedPages = p.pages.map((pg) => {
+              if (pg.id !== p.activePageId) return pg;
+              let pageChanged = false;
+              const updatedWidgets = pg.widgets.map((w, idx) => {
+                // Update only half of widgets per tick to reduce heavy chart rerenders.
+                if (idx % 2 !== tickGroup) return w;
+                const newData = (w.data || []).map((d: any, rowIdx: number) => {
+                  const baseRow = previewBaseDataRef.current[w.id]?.[rowIdx] ?? null;
+                  const nextD = { ...d };
+                  if (w.config?.series) {
+                    w.config.series.forEach((s) => {
+                      const baseVal = baseRow ? Number((baseRow as any)[s.key]) : Number(nextD[s.key]);
+                      const val = Number.isFinite(baseVal) ? baseVal : Number(nextD[s.key]);
+                      if (!isNaN(val)) {
+                        // Preview 시뮬레이션: 일반 차트는 정수로 내려도 무방하지만,
+                        // Sankey는 링크 value가 0이 많아지면 레이아웃이 깨지므로 최소 1을 보장합니다.
+                        const isSankey = w.type === WidgetType.CHART_SANKEY;
+                        const variation = (Math.random() - 0.5) * (isSankey ? 0.08 : 0.1);
+                        const next = val * (1 + variation);
+                        const isPercent = w.type === WidgetType.DASH_RESOURCE_USAGE;
+                        if (isSankey) {
+                          nextD[s.key] = Math.max(1, Math.round(next));
+                        } else if (isPercent) {
+                          nextD[s.key] = Math.max(0, Math.min(100, Math.round(next)));
+                        } else {
+                          nextD[s.key] = Math.max(0, Math.round(next));
+                        }
                       }
-                    }
-                  });
+                    });
+                  }
+                  return nextD;
+                });
+                let newMainValue = w.mainValue;
+                if (w.mainValue) {
+                  const mainValNum = parseFloat(w.mainValue.replace(/[^0-9.-]/g, ""));
+                  if (!isNaN(mainValNum)) {
+                    const variation = (Math.random() - 0.5) * 2;
+                    const unit = w.mainValue.replace(/[0-9.-]/g, "");
+                    newMainValue = (mainValNum + variation).toFixed(1) + unit;
+                  }
                 }
-                return nextD;
+                pageChanged = true;
+                return { ...w, data: newData, mainValue: newMainValue };
               });
-              let newMainValue = w.mainValue;
-              if (w.mainValue) {
-                const mainValNum = parseFloat(w.mainValue.replace(/[^0-9.-]/g, ''));
-                if (!isNaN(mainValNum)) {
-                  const variation = (Math.random() - 0.5) * 2;
-                  const unit = w.mainValue.replace(/[0-9.-]/g, '');
-                  newMainValue = (mainValNum + variation).toFixed(1) + unit;
-                }
-              }
-              pageChanged = true;
-              return { ...w, data: newData, mainValue: newMainValue };
+              if (!pageChanged) return pg;
+              projectChanged = true;
+              return { ...pg, widgets: updatedWidgets };
             });
-            if (!pageChanged) return pg;
-            projectChanged = true;
-            return { ...pg, widgets: updatedWidgets };
+            if (!projectChanged) return p;
+            return { ...p, pages: updatedPages };
           });
-          if (!projectChanged) return p;
-          return { ...p, pages: updatedPages };
         });
       });
     }, 1600);
@@ -2455,7 +2517,7 @@ const App: React.FC = () => {
                 onOpenExcel={openExcelModal}
                 onOpenWidgetPicker={handleOpenWidgetPicker}
                 isPreviewMode={isPreviewMode}
-                onTogglePreview={() => setIsPreviewMode(!isPreviewMode)}
+                onTogglePreview={handleTogglePreview}
                 userRole={userRole}
               />
             </div>

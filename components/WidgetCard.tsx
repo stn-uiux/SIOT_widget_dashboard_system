@@ -701,7 +701,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
               <MapWidget lat={lat || 37.5665} lng={lng || 126.9780} zoom={13} provider="osm" isDark={isDark} />
             </div>
             {!widget.noBezel && (
-              <div className="absolute top-2 left-2 z-[1000] bg-[var(--white-alpha-90)] dark:bg-[var(--black-alpha-80)] px-2 py-1 rounded font-bold shadow-sm pointer-events-none" style={{ fontSize: 'var(--text-tiny)' }}>
+              <div
+                className="absolute top-2 left-2 bg-[var(--white-alpha-90)] dark:bg-[var(--black-alpha-80)] px-2 py-1 rounded font-bold shadow-sm pointer-events-none"
+                style={{ fontSize: 'var(--text-tiny)', zIndex: 'var(--widget-map-badge-z-index)' }}
+              >
                 {currentMainValue}
               </div>
             )}
@@ -921,8 +924,8 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
             <div
               className="flex-shrink-0 flex items-center overflow-hidden"
               style={{
-                minWidth: '80px',
-                width: '80px',
+                minWidth: 'var(--widget-vertical-nav-indicator-width)',
+                width: 'var(--widget-vertical-nav-indicator-width)',
                 paddingLeft: 'var(--spacing-xs)',
                 paddingRight: 0,
               }}
@@ -936,7 +939,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
             </div>
             <div
               className="flex-1 flex flex-col min-w-0 overflow-auto justify-center"
-              style={{ gap: 'var(--nav-card-gap)', marginLeft: '8px' }}
+              style={{ gap: 'var(--nav-card-gap)', marginLeft: 'var(--spacing-xs)' }}
             >
               {items.map((item, index) => {
                 const isActive = item.active;
@@ -1058,7 +1061,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                   </h3>
                 )}
                 {isEditMode && widget.hideHeader && (
-                  <span className="text-[10px] uppercase tracking-tighter font-black px-1.5 py-0.5 rounded border border-muted/30 text-muted/50 flex-shrink-0 ml-1">
+                  <span className="text-caption uppercase tracking-tighter font-black px-1.5 py-0.5 rounded border border-muted/30 text-muted/50 flex-shrink-0 ml-1">
                     Hidden in View
                   </span>
                 )}
@@ -1094,7 +1097,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                     </>
                   ) : (
                     <div className="px-2 py-1 rounded bg-[var(--surface-muted)] border border-[var(--border-base)]">
-                      <span className="text-[9px] font-black uppercase tracking-tighter opacity-40">View Only</span>
+                      <span className="text-micro font-black uppercase tracking-tighter opacity-40">View Only</span>
                     </div>
                   )}
                 </div>
@@ -1113,13 +1116,13 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
               >
                 <div className="flex-1 min-h-0 overflow-hidden">
                   {widget.showSubTitles && widget.subTitle1 && (
-                    <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle1}</div>
+                    <div className="text-caption font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle1}</div>
                   )}
                   {renderChart()}
                 </div>
                 <div className="flex-1 min-h-0 overflow-hidden">
                   {widget.showSubTitles && widget.subTitle2 && (
-                    <div className="text-[10px] font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle2}</div>
+                    <div className="text-caption font-black uppercase text-muted mb-2 tracking-widest">{widget.subTitle2}</div>
                   )}
                   {renderChart({
                     type: widget.secondaryType,

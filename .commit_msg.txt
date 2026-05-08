@@ -1,4 +1,5 @@
-refactor: 사이드바(설정 패널) 열림 속도 최적화 (버튼 버벅임 개선)
+fix: 사이드바 입력 랙(Lag) 해결 및 맵 위젯 z-index 디자인 토큰 적용
 
-- 톱니바퀴 버튼 클릭 시 UI 반응을 최우선으로 처리하도록 렌더링 우선순위 조정(React Transition 적용)
-- 패널이 열릴 때 발생하는 체감상의 끊김(프리징) 현상을 해결하여 더 부드러운 조작감 제공
+- Sidebar.tsx: 설명(Description) 및 차트/테이블 데이터 수정 시 렌더링 병목으로 인해 타이핑이 심하게 지연되는 문제(Lag) 해결 (입력 시 로컬 Draft 상태를 업데이트하고 onBlur/Enter 시 최종 반영하는 패턴 적용)
+- WidgetCard.tsx: 맵 위젯의 지도 위 텍스트 배지에 하드코딩 되어있던 z-index(1000) 값 제거
+- index.css, design-tokens.json: 맵 위젯 배지용 CSS 변수(--widget-map-badge-z-index)를 새로 추가하여 디자인 시스템 단일 출처(SSoT) 원칙 준수

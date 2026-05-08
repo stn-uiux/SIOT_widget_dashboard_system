@@ -391,6 +391,11 @@
     /* GNB Capsule */
     --gnb-z-index: 100;
     --add-widget-pill-z-index: 120;
+    --widget-resize-hint-z-index: 100;
+    --widget-map-badge-z-index: 1000;
+    --widget-vertical-nav-item-width: 80px;
+    --widget-vertical-nav-item-height: 36px;
+    --widget-vertical-nav-indicator-width: 80px;
     --gnb-project-name: var(--text-main); /* amCharts/Design 등 버튼 글자색과 동일 */
     --add-widget-pill-height: 52px;
     --icon-stroke-bold: 3px;
@@ -429,9 +434,9 @@
 /* Vertical nav card: Pixel-Perfect restoration using CSS layers */
 .nav-card-item {
   flex-shrink: 0;
-  width: 80px;
-  height: var(--nav-card-item-height);
-  min-height: var(--nav-card-item-height);
+  width: var(--widget-vertical-nav-item-width);
+  height: var(--widget-vertical-nav-item-height);
+  min-height: var(--widget-vertical-nav-item-height);
   padding: 0;
   border-radius: var(--radius-sm);
   display: flex;
@@ -1668,22 +1673,19 @@ html[data-widget-capture="1"] .widget-header-row .widget-header-title-input {
     perspective: 1000;
 }
 
-/* Disable transitions globally within active items to ensure perfect mouse following */
-.is-interacting,
-.is-interacting .react-grid-item,
-.is-interacting .react-grid-item * {
+/* Disable transitions only for the actively manipulated item (avoid global style-recalc spikes). */
+.react-grid-item.resizing,
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing *,
+.react-grid-item.react-draggable-dragging * {
     transition: none !important;
     user-select: none !important;
 }
 
-/* 
-   CRITICAL: Disable pointer events on ALL widgets EXCEPT the one being manipulated.
-   This prevents mousemove events from triggering hover states or calculations 
-   on background widgets, keeping the event loop dedicated to the resizing operation.
+/* NOTE:
+   Do not globally disable pointer-events during interaction.
+   It can block widget action button hovers (settings/excel/delete).
 */
-.is-interacting .react-grid-item:not(.resizing):not(.react-draggable-dragging) {
-    pointer-events: none !important;
-}
 
 /* Disable pointer events on complex content while resizing to speed up event loop */
 .react-grid-item.resizing .recharts-wrapper, 

@@ -120,6 +120,46 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     }
   }, [selectedWidget?.id]);
 
+  // Local drafts for high-frequency text inputs (avoid global rerender on every keystroke)
+  const [mainValueDraft, setMainValueDraft] = React.useState('');
+  const [subValueDraft, setSubValueDraft] = React.useState('');
+  const [iconDraft, setIconDraft] = React.useState('');
+  const [comparisonTextDraft, setComparisonTextDraft] = React.useState('');
+  const [xAxisLabelDraft, setXAxisLabelDraft] = React.useState('');
+  const [unitDraft, setUnitDraft] = React.useState('');
+  const [seriesLabelDrafts, setSeriesLabelDrafts] = React.useState<Record<string, string>>({});
+  const [dataTextDrafts, setDataTextDrafts] = React.useState<Record<string, string>>({});
+  const [dataNumberDrafts, setDataNumberDrafts] = React.useState<Record<string, string>>({});
+  React.useEffect(() => {
+    if (!selectedWidget) return;
+    setMainValueDraft(selectedWidget.mainValue ?? '');
+    setSubValueDraft(selectedWidget.subValue ?? '');
+    setIconDraft(selectedWidget.icon ?? '');
+    setComparisonTextDraft(selectedWidget.comparisonText ?? '');
+    setXAxisLabelDraft(selectedWidget.config?.xAxisLabel ?? '');
+    setUnitDraft(selectedWidget.config?.unit ?? '');
+    const nextSeriesLabelDrafts: Record<string, string> = {};
+    (selectedWidget.config?.series || []).forEach((s) => {
+      nextSeriesLabelDrafts[s.key] = s.label ?? '';
+    });
+    setSeriesLabelDrafts(nextSeriesLabelDrafts);
+    const xKey = selectedWidget.config?.xAxisKey || 'name';
+    const yKey = selectedWidget.config?.yAxisKey;
+    const nextDataTextDrafts: Record<string, string> = {};
+    (selectedWidget.data || []).forEach((row, idx) => {
+      nextDataTextDrafts[`${idx}:${xKey}`] = String((row as any)?.[xKey] ?? (row as any)?.name ?? '');
+      if (yKey) nextDataTextDrafts[`${idx}:${yKey}`] = String((row as any)?.[yKey] ?? '');
+    });
+    setDataTextDrafts(nextDataTextDrafts);
+    const nextDataNumberDrafts: Record<string, string> = {};
+    (selectedWidget.data || []).forEach((row, idx) => {
+      (selectedWidget.config?.series || [{ key: 'value', label: 'Value' }]).forEach((s) => {
+        nextDataNumberDrafts[`${idx}:${s.key}`] = String((row as any)?.[s.key] ?? 0);
+      });
+    });
+    setDataNumberDrafts(nextDataNumberDrafts);
+  }, [selectedWidget?.id, selectedWidget?.mainValue, selectedWidget?.subValue, selectedWidget?.icon, selectedWidget?.comparisonText, selectedWidget?.config?.xAxisLabel, selectedWidget?.config?.unit]);
+
   const clearWidgetTypePreviewLeaveTimer = () => {
     if (widgetTypePreviewLeaveTimerRef.current != null) {
       window.clearTimeout(widgetTypePreviewLeaveTimerRef.current);
@@ -388,6 +428,42 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     onUpdateWidget(selectedWidget.id, updates);
   };
 
+  const commitMainValueDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (mainValueDraft === (selectedWidget.mainValue ?? '')) return;
+    updateCurrentWidget({ mainValue: mainValueDraft });
+  }, [mainValueDraft, selectedWidget]);
+
+  const commitSubValueDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (subValueDraft === (selectedWidget.subValue ?? '')) return;
+    updateCurrentWidget({ subValue: subValueDraft });
+  }, [subValueDraft, selectedWidget]);
+
+  const commitIconDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (iconDraft === (selectedWidget.icon ?? '')) return;
+    updateCurrentWidget({ icon: iconDraft });
+  }, [iconDraft, selectedWidget]);
+
+  const commitComparisonTextDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (comparisonTextDraft === (selectedWidget.comparisonText ?? '')) return;
+    updateCurrentWidget({ comparisonText: comparisonTextDraft });
+  }, [comparisonTextDraft, selectedWidget]);
+
+  const commitXAxisLabelDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (xAxisLabelDraft === (selectedWidget.config?.xAxisLabel ?? '')) return;
+    updateCurrentWidget({ config: { ...selectedWidget.config, xAxisLabel: xAxisLabelDraft } });
+  }, [xAxisLabelDraft, selectedWidget]);
+
+  const commitUnitDraft = React.useCallback(() => {
+    if (!selectedWidget) return;
+    if (unitDraft === (selectedWidget.config?.unit ?? '')) return;
+    updateCurrentWidget({ config: { ...selectedWidget.config, unit: unitDraft } });
+  }, [unitDraft, selectedWidget]);
+
   const toggleConfig = (key: string) => {
     if (key === 'noBezel' || key === 'noBorder') {
       const updates = { [key]: !(selectedWidget as any)[key] };
@@ -516,6 +592,32 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
       config: { ...currentConfig, series: currentConfig.series.map(s => s.key === key ? { ...s, ...modeAwareUpdates } : s) }
     });
   };
+
+  const commitSeriesLabelDraft = React.useCallback((key: string) => {
+    const draft = seriesLabelDrafts[key] ?? '';
+    const original = currentConfig.series?.find((s) => s.key === key)?.label ?? '';
+    if (draft === original) return;
+    handleUpdateSeries(key, { label: draft });
+  }, [seriesLabelDrafts, currentConfig.series]);
+
+  const commitDataTextDraft = React.useCallback((index: number, key: string, fallback?: string) => {
+    const draftKey = `${index}:${key}`;
+    const draft = dataTextDrafts[draftKey] ?? '';
+    const originalRaw = (currentData[index] as any)?.[key] ?? fallback ?? '';
+    const original = String(originalRaw);
+    if (draft === original) return;
+    handleDataChange(index, key, draft);
+  }, [dataTextDrafts, currentData]);
+
+  const commitDataNumberDraft = React.useCallback((index: number, key: string) => {
+    const draftKey = `${index}:${key}`;
+    const raw = dataNumberDrafts[draftKey];
+    const original = Number((currentData[index] as any)?.[key] ?? 0);
+    const parsed = raw === '' || raw == null ? 0 : Number(raw);
+    const safe = Number.isFinite(parsed) ? parsed : 0;
+    if (safe === original) return;
+    handleDataChange(index, key, safe);
+  }, [dataNumberDrafts, currentData]);
 
   const handleRemoveSeries = (key: string) => {
     updateCurrentWidget({
@@ -737,8 +839,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <div className="relative group mt-1">
                     <input
                       type="text"
-                      value={(isSec ? selectedWidget.secondaryIcon : selectedWidget.icon) || ''}
-                      onChange={(e) => updateCurrentWidget({ icon: e.target.value })}
+                      value={iconDraft}
+                      onChange={(e) => setIconDraft(e.target.value)}
+                      onBlur={commitIconDraft}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        if (e.key === 'Escape') {
+                          setIconDraft(selectedWidget.icon ?? '');
+                          (e.currentTarget as HTMLInputElement).blur();
+                        }
+                      }}
                       className="w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all font-semibold glass-item"
                       placeholder="e.g. group, monitoring, star"
                     />
@@ -762,8 +872,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <div>
                   <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1 block mb-1">내용</span>
                   <textarea
-                    value={selectedWidget.mainValue ?? ''}
-                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    value={mainValueDraft}
+                    onChange={(e) => setMainValueDraft(e.target.value)}
+                    onBlur={commitMainValueDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        (e.currentTarget as HTMLTextAreaElement).blur();
+                      }
+                      if (e.key === 'Escape') {
+                        setMainValueDraft(selectedWidget.mainValue ?? '');
+                        (e.currentTarget as HTMLTextAreaElement).blur();
+                      }
+                    }}
                     rows={4}
                     className="w-full p-2.5 border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 resize-y"
                     style={{ backgroundColor: 'var(--surface-muted)' }}
@@ -855,8 +975,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Comparison text</span>
                   <input
                     type="text"
-                    value={selectedWidget.comparisonText ?? ''}
-                    onChange={(e) => updateCurrentWidget({ comparisonText: e.target.value })}
+                    value={comparisonTextDraft}
+                    onChange={(e) => setComparisonTextDraft(e.target.value)}
+                    onBlur={commitComparisonTextDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setComparisonTextDraft(selectedWidget.comparisonText ?? '');
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                     className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 glass-item"
                     placeholder="Compared of $11,750 last year"
                   />
@@ -1115,8 +1243,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Or Image URL</span>
                   <input
                     type="text"
-                    value={currentMainValue || ''}
-                    onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    value={mainValueDraft}
+                    onChange={(e) => setMainValueDraft(e.target.value)}
+                    onBlur={commitMainValueDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setMainValueDraft(selectedWidget.mainValue ?? '');
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                     className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
                     placeholder="https://example.com/image.jpg"
                   />
@@ -1127,8 +1263,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                   <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Caption (Optional)</span>
                   <input
                     type="text"
-                    value={currentSubValue || ''}
-                    onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
+                    value={subValueDraft}
+                    onChange={(e) => setSubValueDraft(e.target.value)}
+                    onBlur={commitSubValueDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setSubValueDraft(selectedWidget.subValue ?? '');
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                     className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
                     placeholder="Image description..."
                   />
@@ -1353,8 +1497,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <div className="flex-1">
                       <input
                         type="text"
-                        value={s.label}
-                        onChange={(e) => handleUpdateSeries(s.key, { label: e.target.value })}
+                        value={seriesLabelDrafts[s.key] ?? s.label}
+                        onChange={(e) => setSeriesLabelDrafts((prev) => ({ ...prev, [s.key]: e.target.value }))}
+                        onBlur={() => commitSeriesLabelDraft(s.key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                            (e.currentTarget as HTMLInputElement).blur();
+                          }
+                          if (e.key === 'Escape') {
+                            setSeriesLabelDrafts((prev) => ({ ...prev, [s.key]: s.label ?? '' }));
+                            (e.currentTarget as HTMLInputElement).blur();
+                          }
+                        }}
                         className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
                       />
                     </div>
@@ -1385,8 +1539,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <div className="relative group">
                   <input
                     type="text"
-                    value={currentConfig.xAxisLabel || ''}
-                    onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, xAxisLabel: e.target.value } })}
+                    value={xAxisLabelDraft}
+                    onChange={(e) => setXAxisLabelDraft(e.target.value)}
+                    onBlur={commitXAxisLabelDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setXAxisLabelDraft(selectedWidget.config?.xAxisLabel ?? '');
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                     className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold glass-item`}
                     placeholder="e.g. Month, Project Name"
                   />
@@ -1400,8 +1562,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                 <span className="text-caption uppercase font-bold text-muted ml-1">Unit</span>
                 <input
                   type="text"
-                  value={currentConfig.unit || ''}
-                  onChange={(e) => updateCurrentWidget({ config: { ...currentConfig, unit: e.target.value } })}
+                  value={unitDraft}
+                  onChange={(e) => setUnitDraft(e.target.value)}
+                  onBlur={commitUnitDraft}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                    if (e.key === 'Escape') {
+                      setUnitDraft(selectedWidget.config?.unit ?? '');
+                      (e.currentTarget as HTMLInputElement).blur();
+                    }
+                  }}
                   className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 transition-all glass-item`}
                   placeholder="e.g. 명, $, %"
                 />
@@ -1428,8 +1598,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Current Value</span>
                     <input
                       type="text"
-                      value={currentMainValue || ''}
-                      onChange={(e) => updateCurrentWidget({ mainValue: e.target.value })}
+                    value={mainValueDraft}
+                    onChange={(e) => setMainValueDraft(e.target.value)}
+                    onBlur={commitMainValueDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                      if (e.key === 'Escape') {
+                        setMainValueDraft(selectedWidget.mainValue ?? '');
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                       className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono font-bold glass-item"
                     />
                   </div>
@@ -1439,8 +1617,16 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                     <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Description</span>
                     <input
                       type="text"
-                      value={currentSubValue || ''}
-                      onChange={(e) => updateCurrentWidget({ subValue: e.target.value })}
+                      value={subValueDraft}
+                      onChange={(e) => setSubValueDraft(e.target.value)}
+                      onBlur={commitSubValueDraft}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+                        if (e.key === 'Escape') {
+                          setSubValueDraft(selectedWidget.subValue ?? '');
+                          (e.currentTarget as HTMLInputElement).blur();
+                        }
+                      }}
                       className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all glass-item"
                     />
                   </div>
@@ -1465,8 +1651,22 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                           </span>
                           <input
                             type="text"
-                            value={item[currentConfig.xAxisKey] || item.name || ''}
-                            onChange={(e) => handleDataChange(idx, currentConfig.xAxisKey || 'name', e.target.value)}
+                            value={dataTextDrafts[`${idx}:${currentConfig.xAxisKey || 'name'}`] ?? String(item[currentConfig.xAxisKey] || item.name || '')}
+                            onChange={(e) => setDataTextDrafts((prev) => ({
+                              ...prev,
+                              [`${idx}:${currentConfig.xAxisKey || 'name'}`]: e.target.value,
+                            }))}
+                            onBlur={() => commitDataTextDraft(idx, currentConfig.xAxisKey || 'name', String(item.name || ''))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.nativeEvent.isComposing) (e.currentTarget as HTMLInputElement).blur();
+                              if (e.key === 'Escape') {
+                                setDataTextDrafts((prev) => ({
+                                  ...prev,
+                                  [`${idx}:${currentConfig.xAxisKey || 'name'}`]: String(item[currentConfig.xAxisKey] || item.name || ''),
+                                }));
+                                (e.currentTarget as HTMLInputElement).blur();
+                              }
+                            }}
                             className="bg-transparent border-none p-0 text-xs font-black text-blue-600 dark:text-blue-400 focus:ring-0 w-full"
                             placeholder={isSankey ? "Source Node" : "Label..."}
                           />
@@ -1482,8 +1682,22 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                               </span>
                               <input
                                 type="text"
-                                value={item[currentConfig.yAxisKey] || ''}
-                                onChange={(e) => handleDataChange(idx, currentConfig.yAxisKey, e.target.value)}
+                                value={dataTextDrafts[`${idx}:${currentConfig.yAxisKey}`] ?? String(item[currentConfig.yAxisKey] || '')}
+                                onChange={(e) => setDataTextDrafts((prev) => ({
+                                  ...prev,
+                                  [`${idx}:${currentConfig.yAxisKey}`]: e.target.value,
+                                }))}
+                                onBlur={() => commitDataTextDraft(idx, currentConfig.yAxisKey, '')}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) (e.currentTarget as HTMLInputElement).blur();
+                                  if (e.key === 'Escape') {
+                                    setDataTextDrafts((prev) => ({
+                                      ...prev,
+                                      [`${idx}:${currentConfig.yAxisKey}`]: String(item[currentConfig.yAxisKey] || ''),
+                                    }));
+                                    (e.currentTarget as HTMLInputElement).blur();
+                                  }
+                                }}
                                 className="bg-transparent border-none p-0 text-xs font-black text-purple-600 dark:text-purple-400 focus:ring-0 w-full text-right"
                                 placeholder={isSankey ? "Target Node" : "Value..."}
                               />
@@ -1506,8 +1720,22 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         <span className="text-micro font-bold text-[var(--text-muted)] uppercase truncate flex-1">{s.label}</span>
                         <input
                           type="number"
-                          value={item[s.key] ?? 0}
-                          onChange={(e) => handleDataChange(idx, s.key, parseFloat(e.target.value) || 0)}
+                          value={dataNumberDrafts[`${idx}:${s.key}`] ?? String(item[s.key] ?? 0)}
+                          onChange={(e) => setDataNumberDrafts((prev) => ({
+                            ...prev,
+                            [`${idx}:${s.key}`]: e.target.value,
+                          }))}
+                          onBlur={() => commitDataNumberDraft(idx, s.key)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.nativeEvent.isComposing) (e.currentTarget as HTMLInputElement).blur();
+                            if (e.key === 'Escape') {
+                              setDataNumberDrafts((prev) => ({
+                                ...prev,
+                                [`${idx}:${s.key}`]: String(item[s.key] ?? 0),
+                              }));
+                              (e.currentTarget as HTMLInputElement).blur();
+                            }
+                          }}
                           className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white glass-item"
                         />
                       </div>
