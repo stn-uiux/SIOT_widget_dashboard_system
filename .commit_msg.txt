@@ -1,7 +1,5 @@
-feat: 위젯 미리보기 썸네일 추출 기능 추가 및 픽커 UI 에셋 연동
+refactor: WidgetCard 서브컴포넌트 및 상수 분리 (무해 추출)
 
-- `lib/exportWidgetScreenshots.ts` 추가: 카테고리(graph, premium, general) 및 테마(라이트/다크)별 위젯 스크린샷 자동 추출 및 분류 로직 구현
-- 썸네일 에셋 위치 재구조화: 기존 `assets/` 경로에 있던 이미지들을 `public/assets/widget/`로 이동하여 정적 에셋 서빙 경로 최적화
-- `components/WidgetPicker.tsx` 및 `WidgetCard.tsx` 개선: 새로 생성된 썸네일 이미지를 위젯 픽커 모달에 연동하고 시각적으로 렌더링하도록 뷰 업데이트
-- `App.tsx` 수정: 썸네일 추출 유틸리티 연결 및 대시보드 구조 수정 사항 반영
-- `design-tokens.json` 및 `index.css`: 위젯 픽커와 썸네일 UI에 필요한 디자인 시스템 토큰(CSS 변수) 신규 추가 및 적용
+- `WidgetCard.tsx` 내부에 혼재되어 있던 순수 함수, 상수(색상 팔레트, 아이콘 맵, Asset URL 등)를 `components/widgetCard/` 폴더 내 모듈로 추출
+- 재사용이 가능한 서브 컴포넌트(`chartAxisMeasureComponents`, `TrafficStatusChart` 등)를 독립된 파일로 분리
+- 기존 기능과 렌더링 경로의 변경 없이 코드 구조만 개선(무해 추출)하여 가독성 및 유지보수성 향상
