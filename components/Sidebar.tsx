@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, Layers, BarChart3, TrendingUp, PieChart as PieIcon,
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
@@ -9,7 +10,40 @@ import {
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
+import { DEFAULT_WIDGET_PREVIEW, getWidgetPreviewPaths } from '../lib/widgetPreviewAssets';
 import Switch from './Switch';
+
+/** 루트 CSS 변수(px) 해석 — arbitrary 숫자 하드코딩 대신 변수 계산용 */
+function readCssLengthPx(cssVarName: string, fallbackPx: number): number {
+  if (typeof document === 'undefined') return fallbackPx;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(cssVarName).trim();
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? n : fallbackPx;
+}
+
+function computeWidgetPreviewPopoverPosition(rect: DOMRect): { top: number; left: number } {
+  const gap = readCssLengthPx('--spacing-sm', 8);
+  const popoverW = readCssLengthPx('--widget-settings-preview-popover-width', 168);
+  const thumbMax = readCssLengthPx('--widget-settings-preview-thumb-max-height', 132);
+  const estH =
+    thumbMax + readCssLengthPx('--spacing-xl', 24) + readCssLengthPx('--spacing-md', 16) + gap * 4;
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 720;
+
+  let left = rect.right + gap;
+  if (left + popoverW > vw - gap) {
+    left = Math.max(gap, rect.left - popoverW - gap);
+  }
+  if (left < gap) left = gap;
+
+  let top = rect.top;
+  if (top + estH > vh - gap) {
+    top = Math.max(gap, vh - estH - gap);
+  }
+  if (top < gap) top = gap;
+
+  return { top, left };
+}
 
 function shadeColor(hex: string, percent: number): string {
   if (!hex || !hex.startsWith('#')) return hex;
@@ -63,6 +97,59 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const [activeDualTab, setActiveDualTab] = React.useState<0 | 1>(0);
   const [batchW, setBatchW] = React.useState<number>(6);
   const [batchH, setBatchH] = React.useState<number>(10);
+  const [widgetTypePreviewPopover, setWidgetTypePreviewPopover] = React.useState<{
+    type: WidgetType;
+    top: number;
+    left: number;
+  } | null>(null);
+  const widgetTypePreviewLeaveTimerRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (widgetTypePreviewLeaveTimerRef.current != null) {
+        window.clearTimeout(widgetTypePreviewLeaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setWidgetTypePreviewPopover(null);
+    if (widgetTypePreviewLeaveTimerRef.current != null) {
+      window.clearTimeout(widgetTypePreviewLeaveTimerRef.current);
+      widgetTypePreviewLeaveTimerRef.current = null;
+    }
+  }, [selectedWidget?.id]);
+
+  const clearWidgetTypePreviewLeaveTimer = () => {
+    if (widgetTypePreviewLeaveTimerRef.current != null) {
+      window.clearTimeout(widgetTypePreviewLeaveTimerRef.current);
+      widgetTypePreviewLeaveTimerRef.current = null;
+    }
+  };
+
+  const handleWidgetTypePreviewMouseEnter = (t: WidgetType, e: React.MouseEvent<HTMLButtonElement>) => {
+    clearWidgetTypePreviewLeaveTimer();
+    const pos = computeWidgetPreviewPopoverPosition(e.currentTarget.getBoundingClientRect());
+    setWidgetTypePreviewPopover({ type: t, top: pos.top, left: pos.left });
+  };
+
+  const handleWidgetTypePreviewLeaveBtn = () => {
+    clearWidgetTypePreviewLeaveTimer();
+    widgetTypePreviewLeaveTimerRef.current = window.setTimeout(() => {
+      setWidgetTypePreviewPopover(null);
+      widgetTypePreviewLeaveTimerRef.current = null;
+    }, 160);
+  };
+
+  const handleWidgetTypePreviewFloatEnter = () => {
+    clearWidgetTypePreviewLeaveTimer();
+  };
+
+  const handleWidgetTypePreviewFloatLeave = () => {
+    clearWidgetTypePreviewLeaveTimer();
+    setWidgetTypePreviewPopover(null);
+  };
+
   if (!selectedWidget) return (
     <div className={`flex flex-col overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
       }`} style={{
@@ -528,13 +615,48 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     { key: 'noBezel', label: 'No Bezel (Hide Card)', visible: true },
   ].filter(opt => opt.visible);
 
+  const widgetPreviewMode = theme.mode === ThemeMode.DARK ? 'dark' : 'light';
+  const widgetPreviewHoveredType = widgetTypePreviewPopover?.type ?? null;
+  const widgetPreviewPaths = widgetPreviewHoveredType ? getWidgetPreviewPaths(widgetPreviewHoveredType) : null;
+  const widgetPreviewSrc =
+    widgetPreviewPaths != null
+      ? widgetPreviewMode === 'dark'
+        ? widgetPreviewPaths.dark
+        : widgetPreviewPaths.light
+      : '';
+  const widgetPreviewFallback =
+    widgetPreviewMode === 'dark' ? DEFAULT_WIDGET_PREVIEW.dark : DEFAULT_WIDGET_PREVIEW.light;
+  const widgetPreviewLabel =
+    widgetPreviewHoveredType != null ? (WIDGET_METADATA[widgetPreviewHoveredType]?.label ?? '') : '';
+
+  const renderWidgetTypeGrid = (category: 'viz' | 'premium' | 'general') => (
+    <div className="widget-settings-type-grid">
+      {Object.entries(WIDGET_METADATA)
+        .filter(([_, meta]) => meta.category === category)
+        .map(([id, meta]) => (
+          <button
+            type="button"
+            key={id}
+            onClick={() => handleTypeChange(id as WidgetType)}
+            title={meta.label}
+            className={`widget-settings-type-btn${currentType === id ? ' widget-settings-type-btn-active' : ''}`}
+            onMouseEnter={(ev) => handleWidgetTypePreviewMouseEnter(id as WidgetType, ev)}
+            onMouseLeave={handleWidgetTypePreviewLeaveBtn}
+          >
+            <meta.icon className="widget-settings-type-btn-icon" />
+            <span className="widget-settings-type-btn-label">{meta.label}</span>
+          </button>
+        ))}
+    </div>
+  );
 
   return (
+    <>
     <div className={`w-[var(--panel-width)] max-h-[var(--panel-max-height)] flex flex-col panel-inner-container overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
       }`} style={{
-        borderRadius: 'var(--radius-panel)',
-        border: 'var(--floating-panel-border)',
-      }}>
+      borderRadius: 'var(--radius-panel)',
+      border: 'var(--floating-panel-border)',
+    }}>
       <header className="flex items-center justify-between px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" style={{ height: 'var(--panel-header-height)' }} onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
           <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
@@ -565,79 +687,31 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
       }}>
-        <section className="space-y-4">
-          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]`}>
-            <Layers className="w-4 h-4" /> Visualization
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {Object.entries(WIDGET_METADATA)
-              .filter(([_, meta]) => meta.category === 'viz')
-              .map(([id, meta]) => (
-                <button
-                  key={id}
-                  onClick={() => handleTypeChange(id as WidgetType)}
-                  title={meta.label}
-                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                    }`}
-                >
-                  <meta.icon className="w-4 h-4" />
-                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-                </button>
-              ))}
-          </div>
-        </section>
+        <div className="widget-settings-type-groups">
+          <section className="widget-settings-type-section">
+            <label className="widget-settings-type-section-label">
+              <Layers className="widget-settings-type-section-icon" />
+              Visualization
+            </label>
+            {renderWidgetTypeGrid('viz')}
+          </section>
 
-        {/* Premium Dashboard Templates */}
-        <section className="space-y-4">
-          <label className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-[var(--text-muted)]`}>
-            <PaletteIcon className="w-4 h-4" /> Premium Templates
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {Object.entries(WIDGET_METADATA)
-              .filter(([_, meta]) => meta.category === 'premium')
-              .map(([id, meta]) => (
-                <button
-                  key={id}
-                  onClick={() => handleTypeChange(id as WidgetType)}
-                  title={meta.label}
-                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl transition-all border glass-item ${currentType === id
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                    }`}
-                >
-                  <meta.icon className="w-4 h-4" />
-                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-                </button>
-              ))}
-          </div>
-        </section>
+          <section className="widget-settings-type-section">
+            <label className="widget-settings-type-section-label">
+              <PaletteIcon className="widget-settings-type-section-icon" />
+              Premium Templates
+            </label>
+            {renderWidgetTypeGrid('premium')}
+          </section>
 
-        {/* General Widgets Section */}
-        <section className="space-y-4">
-          <label className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" /> General Components
-          </label>
-          <div className="grid grid-cols-4 gap-2">
-            {Object.entries(WIDGET_METADATA)
-              .filter(([_, meta]) => meta.category === 'general')
-              .map(([id, meta]) => (
-                <button
-                  key={id}
-                  onClick={() => handleTypeChange(id as WidgetType)}
-                  title={meta.label}
-                  className={`p-2 flex flex-col items-center gap-1 min-w-0 rounded-xl border transition-all glass-item ${currentType === id
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                    : 'border-[var(--border-base)] text-muted hover:border-primary/50'
-                    }`}
-                >
-                  <meta.icon className="w-4 h-4" />
-                  <span className="text-micro font-bold truncate w-full text-center uppercase tracking-tighter">{meta.label}</span>
-                </button>
-              ))}
-          </div>
-        </section>
+          <section className="widget-settings-type-section">
+            <label className="widget-settings-type-section-label">
+              <LayoutGrid className="widget-settings-type-section-icon" />
+              General Components
+            </label>
+            {renderWidgetTypeGrid('general')}
+          </section>
+        </div>
 
 
         {
@@ -1475,6 +1549,37 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
         </section>
       </div>
     </div>
+    {widgetTypePreviewPopover !== null &&
+      typeof document !== 'undefined' &&
+      createPortal(
+        <div
+          className="widget-settings-preview-float"
+          style={{ top: widgetTypePreviewPopover.top, left: widgetTypePreviewPopover.left }}
+          role="dialog"
+          aria-label={widgetPreviewLabel || '위젯 미리보기'}
+          onMouseEnter={handleWidgetTypePreviewFloatEnter}
+          onMouseLeave={handleWidgetTypePreviewFloatLeave}
+        >
+          <div className="widget-settings-preview-float-inner">
+            <img
+              className="widget-settings-type-preview-img"
+              src={widgetPreviewSrc}
+              alt=""
+              onError={(e) => {
+                const img = e.currentTarget;
+                img.onerror = null;
+                img.src = widgetPreviewFallback;
+              }}
+            />
+            {widgetPreviewLabel ? (
+              <p className="widget-settings-type-preview-caption">{widgetPreviewLabel}</p>
+            ) : null}
+          </div>
+        </div>,
+        document.body,
+      )
+    }
+    </>
   );
 };
 

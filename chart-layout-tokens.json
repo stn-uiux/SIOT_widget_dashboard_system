@@ -63,6 +63,18 @@
                     "value": "16px",
                     "type": "dimension"
                 }
+            },
+            "settingsTypePreview": {
+                "popoverWidth": {
+                    "value": "168px",
+                    "type": "dimension",
+                    "description": "타입 호버 부동 미리보기 창 너비 (--widget-settings-preview-popover-width)"
+                },
+                "thumbMaxHeight": {
+                    "value": "132px",
+                    "type": "dimension",
+                    "description": "미리보기 이미지 최대 높이 (--widget-settings-preview-thumb-max-height)"
+                }
             }
         }
     }

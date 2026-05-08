@@ -303,6 +303,18 @@
                     "type": "color"
                 }
             },
+            "widgetSettingsPreview": {
+                "popoverWidth": {
+                    "value": "168px",
+                    "type": "dimension",
+                    "description": "설정 패널 타입 호버 시 부동 미리보기 창 너비 (--widget-settings-preview-popover-width)"
+                },
+                "thumbMaxHeight": {
+                    "value": "132px",
+                    "type": "dimension",
+                    "description": "타입 미리보기 이미지 최대 높이 (--widget-settings-preview-thumb-max-height)"
+                }
+            },
             "widgetBorderWidth": {
                 "value": "1px",
                 "type": "dimension"

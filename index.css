@@ -167,6 +167,9 @@
     --widget-capture-thumb-width: calc(var(--spacing-sm) * 10);
     --widget-capture-thumb-height: calc(var(--spacing-sm) * 7);
     --widget-capture-thumb-fit: contain;
+    --widget-settings-preview-thumb-max-height: 132px;
+    --widget-settings-preview-popover-width: 168px;
+    --widget-settings-preview-popover-z: calc(var(--export-overlay-z-index, 120) + 42);
     --widget-capture-refresh-track-height: var(--spacing-2xs, 2px);
     --widget-capture-refresh-track-bg: var(--border-muted);
     --widget-capture-refresh-fill-bg: var(--primary-color);
@@ -1403,6 +1406,129 @@ body {
     height: 100%;
     background: var(--widget-capture-refresh-fill-bg, var(--primary-color));
     transition: width var(--transition-speed);
+}
+
+/* Widget Settings: 타입 선택 + 호버 시 별도 부동 미리보기 (토큰 기반, portal로 body에 렌더) */
+.widget-settings-type-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.widget-settings-type-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.widget-settings-type-section-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--text-caption);
+    font-weight: var(--title-weight);
+    letter-spacing: var(--ls-widest, 0.08em);
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.widget-settings-type-section-icon {
+    width: var(--text-md);
+    height: var(--text-md);
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.widget-settings-type-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--spacing-xs);
+}
+
+.widget-settings-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2xs, 2px);
+    min-width: 0;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-base);
+    background: color-mix(in srgb, var(--surface-muted) 40%, transparent);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.widget-settings-type-btn:hover {
+    border-color: color-mix(in srgb, var(--primary-color) 50%, var(--border-base));
+    color: var(--text-main);
+}
+
+.widget-settings-type-btn-active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm, 0 1px 2px color-mix(in srgb, var(--black) 6%, transparent));
+}
+
+.widget-settings-type-btn-icon {
+    width: var(--text-md);
+    height: var(--text-md);
+    flex-shrink: 0;
+}
+
+.widget-settings-type-btn-label {
+    font-size: var(--text-ultra-tiny);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.15;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-tight, -0.02em);
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.widget-settings-preview-float {
+    position: fixed;
+    z-index: var(--widget-settings-preview-popover-z);
+    width: var(--widget-settings-preview-popover-width);
+    pointer-events: auto;
+}
+
+.widget-settings-preview-float-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-base);
+    background: var(--surface-muted);
+    box-shadow: var(--shadow-premium);
+}
+
+.widget-settings-type-preview-img {
+    display: block;
+    width: 100%;
+    max-height: var(--widget-settings-preview-thumb-max-height);
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+}
+
+.widget-settings-type-preview-caption {
+    margin: 0;
+    font-size: var(--text-ultra-tiny);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-main);
+    text-align: center;
+    line-height: 1.25;
+    word-break: keep-all;
 }
 
 /* 캡처 모드: 헤더 truncate(...) 해제해서 타이틀이 ...로 끝나는 현상 방지 */
