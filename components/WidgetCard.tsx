@@ -69,6 +69,17 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   const contentSize = theme.contentSize;
   const titleSize = widget.titleSize ?? theme.titleSize;
   const titleWeight = widget.titleWeight ?? theme.titleWeight;
+  const [titleDraft, setTitleDraft] = React.useState(widget.title);
+
+  React.useEffect(() => {
+    setTitleDraft(widget.title);
+  }, [widget.id, widget.title]);
+
+  const commitTitleDraft = React.useCallback(() => {
+    const next = titleDraft.trim();
+    if (next.length === 0 || next === widget.title) return;
+    onUpdate?.(widget.id, { title: next });
+  }, [onUpdate, titleDraft, widget.id, widget.title]);
 
   const strokeColor = 'var(--border-base)';
   const labelColor = theme.textColor || 'var(--text-muted)';
@@ -1026,8 +1037,18 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                 {isEditMode ? (
                   <input
                     type="text"
-                    value={widget.title}
-                    onChange={(e) => onUpdate?.(widget.id, { title: e.target.value })}
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={commitTitleDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                      if (e.key === 'Escape') {
+                        setTitleDraft(widget.title);
+                        (e.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
                     className="widget-header-title-input bg-transparent border-none p-0 font-bold focus:ring-0 outline-none w-full truncate text-main"
                     style={{ fontSize: widget.titleSize ? `${widget.titleSize}px` : 'var(--title-size)', fontWeight: widget.titleWeight || 'var(--title-weight)' }}
                   />
