@@ -109,13 +109,24 @@ export const ApexSankeyWidget: React.FC<{
 
   if (loadError) {
     return (
-      <div className="w-full h-full min-h-[200px] flex items-center justify-center p-4 text-center text-sm text-red-400 bg-red-950/20 rounded">
+      <div
+        className="w-full h-full flex items-center justify-center p-4 text-center text-sm rounded"
+        style={{
+          minHeight: 'var(--widget-error-min-height)',
+          color: 'var(--widget-error-text)',
+          backgroundColor: 'var(--widget-error-bg)',
+        }}
+      >
         {loadError}
       </div>
     );
   }
   return (
-    <div ref={wrapperRef} className="w-full h-full min-w-0 min-h-[200px]" style={{ minHeight: '200px' }}>
+    <div
+      ref={wrapperRef}
+      className="w-full h-full min-w-0"
+      style={{ minHeight: 'var(--widget-error-min-height)' }}
+    >
       <div ref={containerRef} className="apex-sankey-container w-full h-full" />
     </div>
   );

@@ -383,10 +383,48 @@
     
     /* AI Assistant FAB */
     --ai-fab-size: 72px;
+    --ai-fab-z-index: 100;
     --ai-fab-gradient: linear-gradient(135deg, #00f2ff 0%, #7000ff 50%, #00f2ff 100%);
     --ai-fab-glow: 0 0 25px rgba(0, 242, 255, 0.4), 0 0 50px rgba(112, 0, 255, 0.2);
     --ai-fab-inner-glow: inset 0 0 20px rgba(255, 255, 255, 0.2);
     --ai-fab-blur: 12px;
+    --ai-fab-outer-glow-bg: rgba(var(--primary-color-rgb), 0.2);
+    --ai-fab-glass-bg: rgba(255, 255, 255, 0.1);
+    --ai-fab-glass-border: rgba(255, 255, 255, 0.3);
+    --ai-fab-hover-ring-border: rgba(255, 255, 255, 0.4);
+    --ai-fab-swirl-a: linear-gradient(to top right, rgba(56, 189, 248, 0) 0%, rgba(56, 189, 248, 0.5) 50%, rgba(56, 189, 248, 0) 100%);
+    --ai-fab-swirl-b: linear-gradient(to bottom left, rgba(168, 85, 247, 0) 0%, rgba(168, 85, 247, 0.5) 50%, rgba(168, 85, 247, 0) 100%);
+
+    /* Widget Picker */
+    --widget-picker-z-index: 1000;
+    --widget-picker-backdrop-bg: rgba(0, 0, 0, 0.4);
+    --widget-picker-backdrop-blur: 10px;
+    --widget-picker-modal-max-width: 810px;
+    --widget-picker-modal-height: 660px;
+    --widget-picker-modal-blur: 40px;
+    --widget-picker-modal-glow: 0 0 30px rgba(var(--primary-color-rgb), 0.1);
+    --widget-picker-top-accent-height: 1.2px;
+    --widget-picker-top-accent-opacity: 0.6;
+    --widget-picker-top-accent-shadow: 0 0 10px rgba(var(--primary-color-rgb), 1);
+    --widget-picker-shimmer-color: rgba(255, 255, 255, 0.2);
+    --widget-picker-close-hover-bg: rgba(0, 0, 0, 0.05);
+    --widget-picker-icon-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    --widget-picker-icon-border: rgba(255, 255, 255, 0.1);
+    --widget-picker-sidebar-tint: rgba(0, 0, 0, 0.01);
+    --widget-picker-pill-tint: rgba(0, 0, 0, 0.05);
+    --widget-picker-pill-tint-active: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    --widget-picker-pill-border-active: rgba(var(--primary-color-rgb), 0.2);
+    --widget-picker-pill-border-hover: rgba(var(--primary-color-rgb), 0.3);
+    --widget-picker-pill-shadow-active: 0 0 12px rgba(var(--primary-color-rgb), 1);
+    --widget-picker-card-border: rgba(255, 255, 255, 0.2);
+    --widget-picker-card-shadow-base: 0 6px 20px rgba(0, 0, 0, 0.03);
+    --widget-picker-card-shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.1);
+    --widget-picker-label-light: #050a1a;
+
+    /* Widget Error */
+    --widget-error-min-height: 200px;
+    --widget-error-text: #f87171;
+    --widget-error-bg: rgba(239, 68, 68, 0.12);
 
     /* GNB Capsule */
     --gnb-z-index: 100;
@@ -1674,6 +1712,38 @@ html[data-widget-capture="1"] .widget-header-row .widget-header-title-input {
     background: conic-gradient(from 0deg, transparent, var(--primary-color), transparent);
     animation: add-widget-pill-conic-spin 4s linear infinite;
     opacity: 0.4;
+}
+
+@keyframes ai-fab-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ai-fab-spin-reverse {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+.ai-fab-swirl-a {
+    background: var(--ai-fab-swirl-a);
+}
+
+.ai-fab-swirl-b {
+    background: var(--ai-fab-swirl-b);
+}
+
+.ai-fab-spin-8 {
+    animation: ai-fab-spin 8s linear infinite;
+}
+
+.ai-fab-spin-12-reverse {
+    animation: ai-fab-spin-reverse 12s linear infinite;
+}
+
+.anim-shimmer-2s {
+    animation: shimmer 2s infinite;
 }
 
 @keyframes shimmer {

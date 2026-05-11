@@ -14,7 +14,7 @@ interface FloatingAssistantButtonProps {
 const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onClick, isPreview }) => {
     return (
         <div 
-            className="fixed z-[100] group"
+            className="fixed z-[var(--ai-fab-z-index)] group"
             style={{ 
                 bottom: 'var(--spacing-xl)', 
                 right: 'var(--spacing-xl)' 
@@ -22,8 +22,8 @@ const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onCli
         >
             {/* Outer Glow & Breathing Effect */}
             <div 
-                className="absolute inset-0 bg-primary/20 rounded-full scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse" 
-                style={{ filter: 'blur(calc(var(--ai-fab-blur) * 2))' }}
+                className="absolute inset-0 rounded-full scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"
+                style={{ backgroundColor: 'var(--ai-fab-outer-glow-bg)', filter: 'blur(calc(var(--ai-fab-blur) * 2))' }}
             />
             
             <button
@@ -32,45 +32,46 @@ const FloatingAssistantButton: React.FC<FloatingAssistantButtonProps> = ({ onCli
                 style={{
                     width: 'var(--ai-fab-size)',
                     height: 'var(--ai-fab-size)',
-                    borderRadius: 'var(--layout-borderRadius-full, 9999px)',
+                    borderRadius: 'var(--radius-pill)',
                     background: isPreview ? 'var(--primary-gradient)' : 'var(--ai-fab-gradient)',
                     boxShadow: 'var(--ai-fab-glow)',
                 }}
             >
                 {/* Glassmorphism layer */}
                 <div 
-                    className="absolute rounded-full border border-white/30"
+                    className="absolute rounded-full border"
                     style={{
                         inset: '2px', // Very small spacing for border effect
                         backdropFilter: 'blur(var(--ai-fab-blur))',
-                        background: 'rgba(255, 255, 255, 0.1)',
+                        background: 'var(--ai-fab-glass-bg)',
+                        borderColor: 'var(--ai-fab-glass-border)',
                         boxShadow: 'var(--ai-fab-inner-glow)',
                     }}
                 />
 
                 {/* Abstract Swirls (Decorative) */}
                 <div className="absolute inset-0 opacity-40">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-cyan-400/0 via-cyan-400/50 to-cyan-400/0 rotate-45 transform -translate-x-1/2 scale-150 animate-[spin_8s_linear_infinite]" />
-                    <div className="absolute bottom-0 right-0 w-full h-full bg-gradient-to-bl from-purple-500/0 via-purple-500/50 to-purple-500/0 -rotate-45 transform translate-x-1/2 scale-150 animate-[spin_12s_linear_infinite_reverse]" />
+                    <div className="absolute top-0 left-0 w-full h-full ai-fab-swirl-a rotate-45 transform -translate-x-1/2 scale-150 ai-fab-spin-8" />
+                    <div className="absolute bottom-0 right-0 w-full h-full ai-fab-swirl-b -rotate-45 transform translate-x-1/2 scale-150 ai-fab-spin-12-reverse" />
                 </div>
 
                 {/* Center Icon */}
                 <div className="relative z-10 flex items-center justify-center">
                     {isPreview ? (
                         <Eye 
-                            className="text-white drop-shadow-lg scale-110 transition-transform group-hover:scale-125" 
+                            className="text-[var(--white)] drop-shadow-lg scale-110 transition-transform group-hover:scale-125" 
                             style={{ width: 'calc(var(--ai-fab-size) * 0.45)', height: 'calc(var(--ai-fab-size) * 0.45)' }}
                         />
                     ) : (
                         <SparklesIcon 
-                            className="text-white drop-shadow-lg scale-110 transition-transform group-hover:rotate-12" 
+                            className="text-[var(--white)] drop-shadow-lg scale-110 transition-transform group-hover:rotate-12" 
                             style={{ width: 'calc(var(--ai-fab-size) * 0.45)', height: 'calc(var(--ai-fab-size) * 0.45)' }}
                         />
                     )}
                 </div>
 
                 {/* Hover Highlight Ring */}
-                <div className="absolute inset-0 border-2 border-white/0 group-hover:border-white/40 rounded-full transition-all duration-500 scale-90 group-hover:scale-100" />
+                <div className="absolute inset-0 border-2 border-transparent group-hover:border-[var(--ai-fab-hover-ring-border)] rounded-full transition-all duration-500 scale-90 group-hover:scale-100" />
             </button>
             
             {/* Tooltip Label Removed */}

@@ -81,40 +81,56 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[var(--widget-picker-z-index)] flex items-center justify-center p-4">
             {/* Glass Backdrop */}
             <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-[10px] animate-in fade-in duration-500"
+                className="absolute inset-0 animate-in fade-in duration-500"
+                style={{
+                    backgroundColor: 'var(--widget-picker-backdrop-bg)',
+                    backdropFilter: `blur(var(--widget-picker-backdrop-blur))`,
+                    WebkitBackdropFilter: `blur(var(--widget-picker-backdrop-blur))`,
+                }}
                 onClick={onClose}
             />
 
             {/* Modal Body: Slim-Sharp & Bezelless Preview V2.0 */}
             <div
-                className="relative w-full max-w-[810px] h-[660px] overflow-hidden rounded-[var(--radius-modal,24px)] border animate-in zoom-in-95 duration-500 flex flex-col backdrop-blur-[40px]"
+                className="relative w-full overflow-hidden rounded-[var(--radius-modal)] border animate-in zoom-in-95 duration-500 flex flex-col"
                 style={{
+                    maxWidth: 'var(--widget-picker-modal-max-width)',
+                    height: 'var(--widget-picker-modal-height)',
                     backgroundColor: 'var(--modal-bg)',
                     borderColor: 'var(--modal-border)',
-                    boxShadow: 'var(--modal-shadow), 0 0 30px rgba(59, 130, 246, 0.1)',
+                    boxShadow: 'var(--modal-shadow), var(--widget-picker-modal-glow)',
+                    backdropFilter: `blur(var(--widget-picker-modal-blur))`,
+                    WebkitBackdropFilter: `blur(var(--widget-picker-modal-blur))`,
                     color: 'var(--modal-text)'
                 }}
             >
                 {/* Aurora Neon Top Highlight Line */}
-                <div className="absolute top-0 left-0 right-0 h-[1.2px] bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent opacity-60 z-20 shadow-[0_0_10px_var(--primary-color)]" />
+                <div
+                    className="absolute top-0 left-0 right-0 bg-gradient-to-r from-transparent via-[var(--primary-color)] to-transparent z-20"
+                    style={{
+                        height: 'var(--widget-picker-top-accent-height)',
+                        opacity: 'var(--widget-picker-top-accent-opacity)',
+                        boxShadow: 'var(--widget-picker-top-accent-shadow)',
+                    }}
+                />
 
                 {/* Header Section: Tightened */}
                 <div className="px-6 py-4 border-b flex items-center justify-between shrink-0 z-10" style={{ borderColor: 'var(--modal-border)' }}>
                     <div className="flex items-center gap-3.5">
-                        <div className="relative w-9 h-9 rounded-xl bg-[var(--primary-color)]/10 flex items-center justify-center border border-white/10 shadow-inner">
+                        <div className="relative w-9 h-9 rounded-xl bg-[var(--widget-picker-icon-bg)] flex items-center justify-center border border-[var(--widget-picker-icon-border)] shadow-inner">
                             <Layers className="w-5 h-5 text-[var(--primary-color)]" />
                         </div>
                         <div>
-                            <h3 className="text-[15px] font-bold tracking-tight uppercase leading-none">ADD NEW WIDGET</h3>
-                            <p className="text-[9px] font-medium tracking-[0.5em] mt-1.5 uppercase text-primary/40" style={{ color: 'var(--modal-subtext)' }}>AURORA SYSTEM CONFIG</p>
+                            <h3 className="font-bold tracking-tight uppercase leading-none" style={{ fontSize: 'var(--text-ultra-heading)' }}>ADD NEW WIDGET</h3>
+                            <p className="font-medium mt-1.5 uppercase" style={{ fontSize: 'var(--text-micro)', letterSpacing: '0.5em', color: 'var(--modal-subtext)' }}>AURORA SYSTEM CONFIG</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-all group"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-[var(--widget-picker-close-hover-bg)] rounded-full transition-all group"
                     >
                         <X className="w-5 h-5 opacity-30 group-hover:opacity-100 transition-opacity" />
                     </button>
@@ -123,26 +139,29 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Sidebar: Sharp Sidebar */}
                     <div className="w-64 border-r flex flex-col p-4 gap-2 z-10" style={{ borderColor: 'var(--modal-border)', backgroundColor: 'var(--modal-sidebar-bg)' }}>
-                        <span className="text-[9px] font-bold tracking-[0.6em] uppercase px-3 mb-3 opacity-20">M O D U L E S</span>
+                        <span className="font-bold uppercase px-3 mb-3 opacity-20" style={{ fontSize: 'var(--text-micro)', letterSpacing: '0.6em' }}>M O D U L E S</span>
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
                                 className={`relative flex items-center p-2.5 px-4 rounded-xl transition-all duration-300 group ${activeCategory === cat.id
-                                    ? 'bg-[var(--primary-color)]/10 border border-[var(--primary-color)]/20 shadow-sm'
-                                    : 'hover:bg-black/5 dark:hover:bg-white/[0.03] border border-transparent opacity-40 hover:opacity-80'}`}
+                                    ? 'border shadow-sm'
+                                    : 'border border-transparent opacity-40 hover:opacity-80'}`}
+                                style={activeCategory === cat.id
+                                    ? { backgroundColor: 'var(--widget-picker-pill-tint-active)', borderColor: 'var(--widget-picker-pill-border-active)' }
+                                    : { backgroundColor: 'transparent' }}
                             >
                                 {activeCategory === cat.id && (
-                                    <div className="absolute left-0 w-1 h-5 bg-[var(--primary-color)] rounded-full shadow-[0_0_12px_var(--primary-color)]" />
+                                    <div className="absolute left-0 w-1 h-5 bg-[var(--primary-color)] rounded-full" style={{ boxShadow: 'var(--widget-picker-pill-shadow-active)' }} />
                                 )}
 
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${activeCategory === cat.id ? 'bg-[var(--primary-color)] shadow-inner' : 'bg-black/5 dark:bg-white/5'}`}>
-                                    <cat.icon className={`w-4 h-4 ${activeCategory === cat.id ? 'text-white' : 'opacity-40'}`} />
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: activeCategory === cat.id ? 'var(--primary-color)' : 'var(--widget-picker-pill-tint)' }}>
+                                    <cat.icon className={`w-4 h-4 ${activeCategory === cat.id ? 'text-[var(--white)]' : 'opacity-40'}`} />
                                 </div>
 
                                 <div className="ml-4 flex flex-col items-start leading-tight">
-                                    <span className={`font-bold uppercase tracking-tight ${activeCategory === cat.id ? 'text-[13.5px]' : 'text-[12.5px]'}`}>{cat.label}</span>
-                                    <span className={`text-[9px] font-medium tracking-widest mt-1 ${activeCategory === cat.id ? 'text-[var(--primary-color)]' : 'opacity-15'}`}>
+                                    <span className="font-bold uppercase tracking-tight" style={{ fontSize: activeCategory === cat.id ? 'var(--text-small)' : 'var(--text-base)' }}>{cat.label}</span>
+                                    <span className="font-medium tracking-widest mt-1" style={{ fontSize: 'var(--text-micro)', color: activeCategory === cat.id ? 'var(--primary-color)' : 'currentColor', opacity: activeCategory === cat.id ? 1 : 0.15 }}>
                                         {cat.items.length} MODULES
                                     </span>
                                 </div>
@@ -152,12 +171,12 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                     </div>
 
                     {/* Main Content: Slim Bezelless Card Grid */}
-                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-black/[0.01]">
+                    <div className="flex-1 overflow-y-auto p-6 custom-scrollbar" style={{ backgroundColor: 'var(--widget-picker-sidebar-tint)' }}>
                         <div className="mb-5 border-l-[3.5px] border-[var(--primary-color)] pl-4 ml-1">
-                            <h4 className="text-[17px] font-bold tracking-tight uppercase opacity-90">
+                            <h4 className="font-bold tracking-tight uppercase opacity-90" style={{ fontSize: 'var(--text-compact-heading)' }}>
                                 {CATEGORIES.find(c => c.id === activeCategory)?.label}
                             </h4>
-                            <p className="text-[11.5px] mt-1.5 font-medium" style={{ color: 'var(--modal-subtext)' }}>
+                            <p className="mt-1.5 font-medium" style={{ fontSize: 'var(--text-ultra-label)', color: 'var(--modal-subtext)' }}>
                                 {CATEGORIES.find(c => c.id === activeCategory)?.description}
                             </p>
                         </div>
@@ -168,7 +187,12 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                 <button
                                     key={item.id}
                                     onClick={() => onSelect(item.id as WidgetType)}
-                                    className="group relative flex flex-col h-40 overflow-hidden rounded-xl border border-white/20 hover:border-[var(--primary-color)]/30 transition-all duration-500 hover:-translate-y-1 shadow-[0_6px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.1)] bg-black/5 dark:bg-white/5"
+                                    className="group relative flex flex-col h-40 overflow-hidden rounded-xl border transition-all duration-500 hover:-translate-y-1"
+                                    style={{
+                                        borderColor: 'var(--widget-picker-card-border)',
+                                        boxShadow: 'var(--widget-picker-card-shadow-base)',
+                                        backgroundColor: 'var(--widget-picker-pill-tint)',
+                                    }}
                                 >
                                     {/* Bezelless Preview Content */}
                                     {(item as any).preview ? (
@@ -187,25 +211,31 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
                                         </div>
                                     ) : (
                                         /* Minimal Icon Placeholder */
-                                        <div className="flex flex-col items-center justify-center h-full gap-2.5 opacity-[0.1] group-hover:opacity-30 group-hover:text-[var(--primary-color)] transition-all duration-500">
+                                        <div className="flex flex-col items-center justify-center h-full gap-2.5 opacity-10 group-hover:opacity-30 group-hover:text-[var(--primary-color)] transition-all duration-500">
                                             <item.icon className="w-10 h-10" />
                                         </div>
                                     )}
 
                                     {/* Text Overlay: Ultra-Clear Translucent Glass Blur */}
-                                    <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border border-white/20 dark:border-white/5"
+                                    <div className="absolute bottom-2 inset-x-2 h-10 flex items-center px-4 z-10 rounded-lg transition-all duration-500 border"
                                         style={{
-                                            background: isDark ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)',
+                                            background: isDark ? 'var(--widget-picker-pill-tint)' : 'var(--widget-picker-pill-tint)',
                                             backdropFilter: 'blur(2px) saturate(160%)',
                                             WebkitBackdropFilter: 'blur(2px) saturate(160%)',
+                                            borderColor: 'var(--widget-picker-card-border)',
                                             boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.03)'
                                         }}>
                                         <div className="flex-1">
-                                            <span className="font-bold text-[11px] uppercase tracking-[0.14em] text-[#050a1a] dark:text-white group-hover:opacity-100 transition-opacity drop-shadow-sm">
+                                            <span className="font-bold uppercase group-hover:opacity-100 transition-opacity drop-shadow-sm"
+                                                style={{ fontSize: 'var(--text-ultra-label)', letterSpacing: '0.14em', color: isDark ? 'var(--white)' : 'var(--widget-picker-label-light)' }}
+                                            >
                                                 {item.label}
                                             </span>
                                         </div>
-                                        <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-all duration-500 text-[#050a1a] dark:text-white transform translate-x-2 group-hover:translate-x-0" />
+                                        <ChevronRight
+                                            className="w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-all duration-500 transform translate-x-2 group-hover:translate-x-0"
+                                            style={{ color: isDark ? 'var(--white)' : 'var(--widget-picker-label-light)' }}
+                                        />
                                     </div>
                                 </button>
                             ))}
@@ -215,12 +245,13 @@ const WidgetPicker: React.FC<WidgetPickerProps> = ({ isOpen, onClose, onSelect, 
 
                 {/* Footer Bar: Slim Padding */}
                 <div className="px-8 py-3.5 border-t flex items-center justify-between shrink-0 z-10" style={{ borderColor: 'var(--modal-border)', backgroundColor: 'var(--modal-sidebar-bg)' }}>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-15">
+                    <p className="font-bold uppercase opacity-15" style={{ fontSize: 'var(--text-caption)', letterSpacing: '0.6em' }}>
                         AURORA CORE V2.0
                     </p>
                     <button
                         onClick={onClose}
-                        className="text-[11px] font-bold uppercase tracking-[0.2em] opacity-25 hover:opacity-100 transition-all underline underline-offset-4 decoration-current/20 hover:decoration-current"
+                        className="font-bold uppercase opacity-25 hover:opacity-100 transition-all underline underline-offset-4 decoration-current/20 hover:decoration-current"
+                        style={{ fontSize: 'var(--text-ultra-label)', letterSpacing: '0.2em' }}
                     >
                         TERMINAL EXIT
                     </button>

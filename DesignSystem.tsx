@@ -258,6 +258,58 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--glass-border', (variant && tokenValue(variant.border)) || (isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.6)'));
                 root.style.setProperty('--glass-blur', blur);
             }
+
+            // AI Assistant FAB
+            const aiFab = (components as any).ai_fab;
+            if (aiFab) {
+                root.style.setProperty('--ai-fab-size', tokenValue(aiFab.size));
+                root.style.setProperty('--ai-fab-z-index', String(aiFab.z_index?.value ?? 100));
+                root.style.setProperty('--ai-fab-gradient', tokenValue(aiFab.gradient));
+                root.style.setProperty('--ai-fab-glow', tokenValue(aiFab.glow));
+                root.style.setProperty('--ai-fab-inner-glow', tokenValue(aiFab.inner_glow));
+                root.style.setProperty('--ai-fab-blur', tokenValue(aiFab.blur));
+                root.style.setProperty('--ai-fab-outer-glow-bg', tokenValue(aiFab.outer_glow_bg));
+                root.style.setProperty('--ai-fab-glass-bg', tokenValue(aiFab.glass_bg));
+                root.style.setProperty('--ai-fab-glass-border', tokenValue(aiFab.glass_border));
+                root.style.setProperty('--ai-fab-hover-ring-border', tokenValue(aiFab.hover_ring_border));
+                root.style.setProperty('--ai-fab-swirl-a', tokenValue(aiFab.swirl_a));
+                root.style.setProperty('--ai-fab-swirl-b', tokenValue(aiFab.swirl_b));
+            }
+
+            // Widget Picker Modal
+            const widgetPicker = (components as any).widget_picker;
+            if (widgetPicker) {
+                root.style.setProperty('--widget-picker-z-index', String(widgetPicker.z_index?.value ?? 1000));
+                root.style.setProperty('--widget-picker-backdrop-bg', tokenValue(widgetPicker.backdrop_bg));
+                root.style.setProperty('--widget-picker-backdrop-blur', tokenValue(widgetPicker.backdrop_blur));
+                root.style.setProperty('--widget-picker-modal-max-width', tokenValue(widgetPicker.modal_max_width));
+                root.style.setProperty('--widget-picker-modal-height', tokenValue(widgetPicker.modal_height));
+                root.style.setProperty('--widget-picker-modal-blur', tokenValue(widgetPicker.modal_blur));
+                root.style.setProperty('--widget-picker-modal-glow', tokenValue(widgetPicker.modal_glow));
+                root.style.setProperty('--widget-picker-top-accent-height', tokenValue(widgetPicker.top_accent_height));
+                root.style.setProperty('--widget-picker-top-accent-opacity', String(widgetPicker.top_accent_opacity?.value ?? 0.6));
+                root.style.setProperty('--widget-picker-top-accent-shadow', tokenValue(widgetPicker.top_accent_shadow));
+                root.style.setProperty('--widget-picker-shimmer-color', tokenValue(widgetPicker.shimmer_color));
+                root.style.setProperty('--widget-picker-sidebar-tint', tokenValue(widgetPicker.sidebar_tint));
+                root.style.setProperty('--widget-picker-pill-tint', isDark ? tokenValue(widgetPicker.pill_tint_dark) : tokenValue(widgetPicker.pill_tint_light));
+                root.style.setProperty('--widget-picker-pill-tint-active', isDark ? tokenValue(widgetPicker.pill_tint_active_light) : tokenValue(widgetPicker.pill_tint_active_light));
+                root.style.setProperty('--widget-picker-pill-border-active', tokenValue(widgetPicker.pill_border_active));
+                root.style.setProperty('--widget-picker-pill-border-hover', tokenValue(widgetPicker.pill_border_hover));
+                root.style.setProperty('--widget-picker-pill-shadow-active', tokenValue(widgetPicker.pill_shadow_active));
+                root.style.setProperty('--widget-picker-card-border', isDark ? tokenValue(widgetPicker.card_border_dark) : tokenValue(widgetPicker.card_border));
+                root.style.setProperty('--widget-picker-card-shadow-base', tokenValue(widgetPicker.card_shadow_base));
+                root.style.setProperty('--widget-picker-card-shadow-hover', tokenValue(widgetPicker.card_shadow_hover));
+                root.style.setProperty('--widget-picker-label-light', tokenValue(widgetPicker.label_light));
+                root.style.setProperty('--widget-picker-close-hover-bg', isDark ? tokenValue(widgetPicker.close_hover_bg_dark) : tokenValue(widgetPicker.close_hover_bg_light));
+            }
+
+            // Widget error fallback UI
+            const widgetError = (components as any).widget_error;
+            if (widgetError) {
+                root.style.setProperty('--widget-error-min-height', tokenValue(widgetError.min_height));
+                root.style.setProperty('--widget-error-text', tokenValue(widgetError.text));
+                root.style.setProperty('--widget-error-bg', tokenValue(widgetError.bg));
+            }
         }
 
         // Mode Classes (on the same element we're theming)
