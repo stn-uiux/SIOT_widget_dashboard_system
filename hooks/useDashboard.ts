@@ -808,6 +808,8 @@ export const useDashboard = () => {
   };
 };
 
+export type UseDashboardApi = ReturnType<typeof useDashboard>;
+
 export const sane = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
 export const saneNum = (n: number, def: number) => (typeof n === "number" && Number.isFinite(n) ? n : def);
 
