@@ -292,3 +292,14 @@ export interface LayoutConfig {
   /** 배경 이미지 숨쉬기(페이드 인/아웃) 애니메이션 설정 */
   backgroundAnimation?: boolean;
 }
+
+/** Re-export RGL layout cell type for app storage and hooks. */
+export type { LayoutItem } from "react-grid-layout";
+
+/** Page-level persisted layout: flat list or breakpoint-keyed map. */
+export type StoredPageLayout =
+  | import("react-grid-layout").LayoutItem[]
+  | Record<string, import("react-grid-layout").LayoutItem[]>;
+
+/** projectId → pageId → RGL layout snapshot */
+export type LayoutStore = Record<string, Record<string, StoredPageLayout>>;

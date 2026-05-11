@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, type ChangeEvent } from 'react';
 // v1.1.5 - Forced reload for HMR sync
 import { 
   Project, 
@@ -30,6 +30,7 @@ import {
 import { 
   DEFAULT_PAGE,
   DEFAULT_THEME,
+  DEFAULT_HEADER,
   THEME_PRESETS,
   TYPE_DEFAULT_DATA,
   MOCK_CHART_DATA
@@ -631,7 +632,7 @@ export const useDashboard = () => {
     }
   }, [activeProjectId, currentPage?.header, currentProject, theme, replaceActiveProject, setLayoutStore]);
 
-  const handleImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !importTarget) return;
