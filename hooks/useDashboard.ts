@@ -22,7 +22,10 @@ import {
   migrateProjects,
   savePresets,
   loadPresetsSync,
-  dbLoad
+  dbLoad,
+  dbDelete,
+  hasPersistedProjectList,
+  clearInitialProjectsStateCache,
 } from '../lib/storage';
 import { 
   DEFAULT_PAGE,
@@ -38,6 +41,30 @@ const proj1Zip = new URL("../assets/New_Project_1_2026-04-08.zip", import.meta.u
 const proj2Zip = new URL("../assets/new_project_2_2026-04-08.zip", import.meta.url).href;
 const proj3Zip = new URL("../assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
 const proj4Zip = new URL("../assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
+
+async function importBundledSampleProjects(): Promise<{ migrated: Project[]; layouts: LayoutStore } | null> {
+  const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
+  const loadedProjects: Project[] = [];
+  const loadedLayouts: LayoutStore = {};
+
+  for (const url of zipUrls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      const file = new File([blob], "initial_project.zip", { type: "application/zip" });
+      const { project, layoutPositions } = await importProjectFromZip(file);
+      loadedProjects.push(project);
+      loadedLayouts[project.id] = layoutPositions;
+    } catch (e) {
+      console.error("[STN] Onboarding failed:", url, e);
+    }
+  }
+
+  if (loadedProjects.length === 0) return null;
+  const migrated = migrateProjects(loadedProjects);
+  return { migrated, layouts: loadedLayouts };
+}
 
 export const useDashboard = () => {
   const [projects, setProjects] = useState<Project[]>(() => getInitialProjectsState().projects);
@@ -72,45 +99,38 @@ export const useDashboard = () => {
     let cancelled = false;
     const hydrateAndOnboard = async () => {
       try {
-        const saved = await dbLoad<any>(PROJECTS_STORAGE_KEY);
+        const saved = await dbLoad<{ projects?: Project[]; activeProjectId?: string }>(PROJECTS_STORAGE_KEY);
         const projectsRaw = localStorage.getItem(PROJECTS_STORAGE_KEY);
 
-        if (!cancelled && saved?.projects?.length > 0) {
-          const migrated = migrateProjects(saved.projects);
-          setProjects(migrated);
-          if (saved.activeProjectId) setActiveProjectId(saved.activeProjectId);
-        } else if (!cancelled && !projectsRaw) {
-          const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
-          const loadedProjects: Project[] = [];
-          const loadedLayouts: LayoutStore = {};
-
-          for (const url of zipUrls) {
-            try {
-              const res = await fetch(url);
-              if (!res.ok) continue;
-              const blob = await res.blob();
-              const file = new File([blob], "initial_project.zip", { type: "application/zip" });
-              const { project, layoutPositions } = await importProjectFromZip(file);
-              loadedProjects.push(project);
-              loadedLayouts[project.id] = layoutPositions;
-            } catch (e) {
-              console.error("[STN] Onboarding failed:", url, e);
+        if (!cancelled && hasPersistedProjectList(projectsRaw, saved)) {
+          const fromIdb = Array.isArray(saved?.projects) && saved!.projects!.length > 0;
+          const payload = fromIdb
+            ? { projects: saved!.projects!, activeProjectId: saved!.activeProjectId }
+            : (JSON.parse(projectsRaw!) as { projects: Project[]; activeProjectId?: string });
+          const migrated = migrateProjects(payload.projects);
+          if (migrated.length > 0) {
+            setProjects(migrated);
+            if (payload.activeProjectId && migrated.some((p) => p.id === payload.activeProjectId)) {
+              setActiveProjectId(payload.activeProjectId);
+            } else {
+              setActiveProjectId(migrated[0].id);
             }
           }
-
-          if (!cancelled && loadedProjects.length > 0) {
-            const migrated = migrateProjects(loadedProjects);
+        } else if (!cancelled) {
+          const bundled = await importBundledSampleProjects();
+          if (!cancelled && bundled) {
+            const { migrated, layouts } = bundled;
             setProjects(migrated);
             setActiveProjectId(migrated[0].id);
-            setLayoutStore(prev => ({ ...prev, ...loadedLayouts }));
+            setLayoutStore((prev) => ({ ...prev, ...layouts }));
             saveProjectsState(migrated, migrated[0].id);
-            saveLayoutStore(loadedLayouts);
+            saveLayoutStore(layouts);
           }
         }
 
         const savedLayout = await dbLoad<LayoutStore>(LAYOUT_STORAGE_KEY);
         if (!cancelled && savedLayout) {
-          setLayoutStore(prev => ({ ...prev, ...savedLayout }));
+          setLayoutStore((prev) => ({ ...prev, ...savedLayout }));
         }
 
         setIsHydrated(true);
@@ -707,6 +727,27 @@ export const useDashboard = () => {
     }
   }, [capturingForExport, exportTarget, activeProjectId, currentProject, layoutStore]);
 
+  const reloadSampleProjects = useCallback(async (): Promise<boolean> => {
+    await dbDelete(PROJECTS_STORAGE_KEY);
+    await dbDelete(LAYOUT_STORAGE_KEY);
+    try {
+      localStorage.removeItem(PROJECTS_STORAGE_KEY);
+      localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    clearInitialProjectsStateCache();
+    const bundled = await importBundledSampleProjects();
+    if (!bundled) return false;
+    const { migrated, layouts } = bundled;
+    setProjects(migrated);
+    setActiveProjectId(migrated[0].id);
+    setLayoutStore(() => ({ ...layouts }));
+    await saveProjectsState(migrated, migrated[0].id);
+    saveLayoutStore(layouts);
+    return true;
+  }, []);
+
   return {
     projects,
     setProjects,
@@ -764,7 +805,8 @@ export const useDashboard = () => {
     pendingImportFile, setPendingImportFile,
     hideBarForCapture, setHideBarForCapture,
 
-    save
+    save,
+    reloadSampleProjects,
   };
 };
 

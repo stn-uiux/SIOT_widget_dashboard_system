@@ -74,6 +74,7 @@ import WidgetPicker from "./components/WidgetPicker";
 import ModeToggle from "./components/ModeToggle";
 import GlobeBackground from "./components/GlobeBackground";
 import FloatingAssistantButton from "./components/FloatingAssistantButton";
+import LoadingScreen from "./components/app/LoadingScreen";
 import { 
   dbSave, 
   dbLoad, 
@@ -1068,51 +1069,6 @@ const HeaderWidgetLayer: React.FC<HeaderWidgetLayerProps> = ({
   );
 };
 
-// Loading UI Component (Reusable)
-const LoadingScreen = ({ message }: { message: string }) => (
-  <div className="fixed inset-0 bg-[var(--loading-bg)] flex items-center justify-center" style={{ zIndex: 'var(--loading-z)' }}>
-    <div className="relative flex flex-col items-center">
-      <div 
-        className="absolute rounded-full animate-pulse" 
-        style={{
-          inset: 'var(--loading-glow-inset-outer)',
-          backgroundColor: 'var(--loading-glow-1)', 
-          filter: 'blur(var(--loading-blur-1))' 
-        }} 
-      />
-      <div 
-        className="absolute rounded-full animate-pulse [animation-delay:700ms]" 
-        style={{
-          inset: 'var(--loading-glow-inset-inner)',
-          backgroundColor: 'var(--loading-glow-2)', 
-          filter: 'blur(var(--loading-blur-2))' 
-        }} 
-      />
-      <div className="flex flex-col items-center">
-        <div 
-          className="rounded-full animate-spin"
-          style={{ 
-            width: 'var(--loading-spinner-size)', 
-            height: 'var(--loading-spinner-size)',
-            borderWidth: 'var(--loading-spinner-border-width)',
-            marginBottom: 'var(--spacing-xl)',
-            borderColor: 'var(--loading-spinner-track)',
-            borderTopColor: 'var(--loading-spinner-color)'
-          }} 
-        />
-        <div className="text-center">
-          <span className="uppercase tracking-[0.4em] font-black animate-pulse" style={{ fontSize: 'var(--text-small)', color: 'var(--loading-text-1)' }}>
-            STN Dashboard
-          </span>
-          <p className="tracking-widest uppercase" style={{ marginTop: 'var(--spacing-xs)', fontSize: 'var(--text-tiny)', color: 'var(--loading-text-2)' }}>
-            {message}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 const App: React.FC = () => {
   const { user, profile, logout } = useAuth();
   const {
@@ -1166,7 +1122,8 @@ const App: React.FC = () => {
     handleImportChange,
     executeImport,
     performExportCapture,
-    save
+    save,
+    reloadSampleProjects,
   } = useDashboard();
 
   const isAdmin = profile?.role === 'admin' || user?.email?.toLowerCase().startsWith('admin');
@@ -1181,30 +1138,6 @@ const App: React.FC = () => {
       setIsPreviewMode(true);
     }
   }, [user, isAdmin]);
-
-  // 1. Immediate Reset Check (Pre-render)
-  if (typeof window !== 'undefined' && window.location.search.includes("reset=true")) {
-    // Schedule reset
-    useEffect(() => {
-      const doReset = async () => {
-        localStorage.clear();
-        const req = indexedDB.deleteDatabase("siot_dashboard_db");
-        req.onsuccess = () => {
-          window.location.href = window.location.pathname;
-        };
-        req.onerror = () => {
-          window.location.href = window.location.pathname;
-        };
-        req.onblocked = () => {
-          window.location.href = window.location.pathname;
-        };
-      };
-
-      doReset();
-    }, []);
-
-    return <LoadingScreen message="Resetting System..." />;
-  }
 
   // Navigation & Project State (저장된 값이 있으면 새로고침 후에도 유지)
   const [isEditMode, setIsEditMode] = useState(false);
@@ -2084,15 +2017,36 @@ const App: React.FC = () => {
                               </button>
 
                               {isAdmin && (
-                                <button
-                                  onClick={addProject}
-                                  className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
-                                >
-                                  <Plus className="w-4 h-4" />{" "}
-                                  <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
-                                    New Project
-                                  </span>
-                                </button>
+                                <>
+                                  <button
+                                    onClick={addProject}
+                                    className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
+                                  >
+                                    <Plus className="w-4 h-4" />{" "}
+                                    <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
+                                      New Project
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (!window.confirm("저장된 프로젝트·레이아웃을 지우고 번들 샘플 프로젝트 4개를 다시 불러올까요? 이 작업은 되돌릴 수 없습니다.")) {
+                                        return;
+                                      }
+                                      const ok = await reloadSampleProjects();
+                                      setIsProjectDropdownOpen(false);
+                                      showToast(
+                                        ok ? "샘플 프로젝트 4개를 불러왔습니다." : "샘플 불러오기에 실패했습니다. 콘솔과 네트워크를 확인해 주세요.",
+                                        ok ? "success" : "error",
+                                      );
+                                    }}
+                                    className="btn-base btn-ghost w-full px-4 py-2.5 rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-[var(--border-base)]"
+                                  >
+                                    <span className="font-bold uppercase text-[var(--text-muted)]" style={{ fontSize: 'var(--text-micro)' }}>
+                                      샘플 프로젝트 4개로 리셋하기
+                                    </span>
+                                  </button>
+                                </>
                               )}
                             </div>
                           </div>

@@ -158,6 +158,22 @@ export function migrateProjects(projects: Project[]): Project[] {
     });
 }
 
+/** IndexedDB / localStorage 중 실제로 복원할 프로젝트 행이 있는지 (빈 배열 JSON은 "없음"으로 취급) */
+export function hasPersistedProjectList(
+    projectsRaw: string | null,
+    idbPayload: { projects?: unknown[] } | null | undefined
+): boolean {
+    const idbLen = Array.isArray(idbPayload?.projects) ? idbPayload!.projects!.length : 0;
+    if (idbLen > 0) return true;
+    if (!projectsRaw || !projectsRaw.trim()) return false;
+    try {
+        const p = JSON.parse(projectsRaw) as { projects?: unknown[] };
+        return Array.isArray(p.projects) && p.projects.length > 0;
+    } catch {
+        return false;
+    }
+}
+
 /** 동기 로드 — 앱 최초 렌더 시 localStorage에서 불러옴 */
 export function loadProjectsStateSync(initial: Project[]): ProjectsState {
     try {
@@ -166,6 +182,9 @@ export function loadProjectsStateSync(initial: Project[]): ProjectsState {
         const parsed = JSON.parse(raw) as ProjectsState;
 
         const projects = migrateProjects(parsed.projects || initial);
+        if (projects.length === 0) {
+            return { projects: migrateProjects(initial), activeProjectId: initial[0]?.id ?? "project_1" };
+        }
         const activeProjectId = (parsed.activeProjectId && projects.some(p => p.id === parsed.activeProjectId))
             ? parsed.activeProjectId
             : (projects[0]?.id ?? "project_1");
@@ -183,6 +202,11 @@ export function getInitialProjectsState(): ProjectsState {
         _cachedProjectsState = loadProjectsStateSync(INITIAL_PROJECT_LIST);
     }
     return _cachedProjectsState;
+}
+
+/** 샘플 재로드 등 이후 동기 초기값이 오래된 캐시를 쓰지 않도록 */
+export function clearInitialProjectsStateCache(): void {
+    _cachedProjectsState = null;
 }
 
 // HMR(핫 리로드) 또는 재시작 시 캐시 초기화 (항상 최신 localStorage 반영)
