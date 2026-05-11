@@ -96,46 +96,8 @@ import { exportWidgetsToZip, getWidgetCaptureFileInfo } from "./lib/exportWidget
 import { supabase, getProfile, getSession, Profile } from './lib/supabase';
 import { User as AuthUser } from "@supabase/supabase-js";
 import LoginPage from "./components/LoginPage";
-// Assets - Use safer path references to avoid Vite module transformation issues with spaces/special chars
-const logoB = new URL("./assets/logo-b-1 1.png", import.meta.url).href;
-const logoW = new URL("./assets/logo-w-1 1.png", import.meta.url).href;
-
-const proj1Zip = new URL("./assets/New_Project_1_2026-04-08.zip", import.meta.url).href;
-const proj2Zip = new URL("./assets/new_project_2_2026-04-08.zip", import.meta.url).href;
-const proj3Zip = new URL("./assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
-const proj4Zip = new URL("./assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
-
+import { STN_LOGO_DARK_SRC, STN_LOGO_LIGHT_SRC } from "./lib/appAssetUrls";
 import { useDashboard, sane, saneNum, normalizeImportedProject } from "./hooks/useDashboard";
-
-
-
-/** 위젯 배열에서 순차 배치 초기 레이아웃을 계산 */
-const computeInitialLayout = (
-  pageWidgets: Widget[],
-  cols: number,
-): LayoutItem[] => {
-  let curX = 0,
-    curY = 0,
-    rowH = 0;
-  return pageWidgets.map((w) => {
-    const wCols = Math.min(w.colSpan, cols);
-    if (curX + wCols > cols) {
-      curX = 0;
-      curY += rowH;
-      rowH = 0;
-    }
-    rowH = Math.max(rowH, w.rowSpan);
-    const item: LayoutItem = {
-      i: w.id,
-      x: curX,
-      y: curY,
-      w: wCols,
-      h: w.rowSpan,
-    };
-    curX += wCols;
-    return item;
-  });
-};
 
 /** Dashboard grid with its own useContainerWidth so it re-measures when we return from project_2. */
 const DashboardGrid: React.FC<{
@@ -1801,7 +1763,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <img
-                src={theme.mode === ThemeMode.DARK ? logoW : logoB}
+                src={theme.mode === ThemeMode.DARK ? STN_LOGO_DARK_SRC : STN_LOGO_LIGHT_SRC}
                 className="h-7 w-auto object-contain"
                 alt="STN Logo"
               />

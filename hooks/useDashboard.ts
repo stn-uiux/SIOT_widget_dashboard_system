@@ -36,14 +36,11 @@ import {
 } from '../constants';
 import { getSmartColorForMode } from '../design-tokens/themeFromTokens';
 import { importProjectFromZip, exportProjectToZip } from '../lib/exportImport';
-// Static assets for onboarding
-const proj1Zip = new URL("../assets/New_Project_1_2026-04-08.zip", import.meta.url).href;
-const proj2Zip = new URL("../assets/new_project_2_2026-04-08.zip", import.meta.url).href;
-const proj3Zip = new URL("../assets/New_Project_3_2026-04-08.zip", import.meta.url).href;
-const proj4Zip = new URL("../assets/New_Project_4_2026-04-09.zip", import.meta.url).href;
+import { BUNDLED_SAMPLE_PROJECT_ZIP_URLS } from '../lib/appAssetUrls';
+import { computeInitialLayout } from '../lib/gridLayoutUtils';
 
 async function importBundledSampleProjects(): Promise<{ migrated: Project[]; layouts: LayoutStore } | null> {
-  const zipUrls = [proj1Zip, proj2Zip, proj3Zip, proj4Zip];
+  const zipUrls = BUNDLED_SAMPLE_PROJECT_ZIP_URLS;
   const loadedProjects: Project[] = [];
   const loadedLayouts: LayoutStore = {};
 
@@ -896,22 +893,3 @@ export const normalizeImportedProject = (
     activePageId 
   };
 };
-
-function computeInitialLayout(widgets: Widget[], cols: number): LayoutItem[] {
-  let nextX = 0;
-  let nextY = 0;
-  let maxHInRow = 0;
-  return widgets.map((w) => {
-    const wVal = sane(Number(w.colSpan), 4);
-    const hVal = sane(Number(w.rowSpan), 4);
-    if (nextX + wVal > cols) {
-      nextX = 0;
-      nextY += maxHInRow;
-      maxHInRow = 0;
-    }
-    const item = { i: w.id, x: nextX, y: nextY, w: wVal, h: hVal };
-    nextX += wVal;
-    maxHInRow = Math.max(maxHInRow, hVal);
-    return item;
-  });
-}
