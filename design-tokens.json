@@ -688,12 +688,10 @@
                 "pill_tint_dark": { "value": "rgba(255, 255, 255, 0.05)", "type": "color" },
                 "pill_tint_active_light": { "value": "rgba(59, 130, 246, 0.1)", "type": "color" },
                 "pill_border_active": { "value": "rgba(59, 130, 246, 0.2)", "type": "color" },
-                "pill_border_hover": { "value": "rgba(59, 130, 246, 0.3)", "type": "color" },
                 "pill_shadow_active": { "value": "0 0 12px rgba(59, 130, 246, 1)", "type": "string" },
                 "card_border": { "value": "rgba(255, 255, 255, 0.2)", "type": "color" },
                 "card_border_dark": { "value": "rgba(255, 255, 255, 0.05)", "type": "color" },
                 "card_shadow_base": { "value": "0 6px 20px rgba(0, 0, 0, 0.03)", "type": "string" },
-                "card_shadow_hover": { "value": "0 15px 40px rgba(0, 0, 0, 0.1)", "type": "string" },
                 "label_light": { "value": "#050a1a", "type": "color" },
                 "close_hover_bg_light": { "value": "rgba(0, 0, 0, 0.05)", "type": "color" },
                 "close_hover_bg_dark": { "value": "rgba(255, 255, 255, 0.05)", "type": "color" }

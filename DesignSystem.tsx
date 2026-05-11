@@ -294,11 +294,9 @@ const DesignSystem: React.FC<DesignSystemProps> = ({ theme, targetRef }) => {
                 root.style.setProperty('--widget-picker-pill-tint', isDark ? tokenValue(widgetPicker.pill_tint_dark) : tokenValue(widgetPicker.pill_tint_light));
                 root.style.setProperty('--widget-picker-pill-tint-active', isDark ? tokenValue(widgetPicker.pill_tint_active_light) : tokenValue(widgetPicker.pill_tint_active_light));
                 root.style.setProperty('--widget-picker-pill-border-active', tokenValue(widgetPicker.pill_border_active));
-                root.style.setProperty('--widget-picker-pill-border-hover', tokenValue(widgetPicker.pill_border_hover));
                 root.style.setProperty('--widget-picker-pill-shadow-active', tokenValue(widgetPicker.pill_shadow_active));
                 root.style.setProperty('--widget-picker-card-border', isDark ? tokenValue(widgetPicker.card_border_dark) : tokenValue(widgetPicker.card_border));
                 root.style.setProperty('--widget-picker-card-shadow-base', tokenValue(widgetPicker.card_shadow_base));
-                root.style.setProperty('--widget-picker-card-shadow-hover', tokenValue(widgetPicker.card_shadow_hover));
                 root.style.setProperty('--widget-picker-label-light', tokenValue(widgetPicker.label_light));
                 root.style.setProperty('--widget-picker-close-hover-bg', isDark ? tokenValue(widgetPicker.close_hover_bg_dark) : tokenValue(widgetPicker.close_hover_bg_light));
             }

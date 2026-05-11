@@ -414,11 +414,9 @@
     --widget-picker-pill-tint: rgba(0, 0, 0, 0.05);
     --widget-picker-pill-tint-active: color-mix(in srgb, var(--primary-color) 10%, transparent);
     --widget-picker-pill-border-active: rgba(var(--primary-color-rgb), 0.2);
-    --widget-picker-pill-border-hover: rgba(var(--primary-color-rgb), 0.3);
     --widget-picker-pill-shadow-active: 0 0 12px rgba(var(--primary-color-rgb), 1);
     --widget-picker-card-border: rgba(255, 255, 255, 0.2);
     --widget-picker-card-shadow-base: 0 6px 20px rgba(0, 0, 0, 0.03);
-    --widget-picker-card-shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.1);
     --widget-picker-label-light: #050a1a;
 
     /* Widget Error */
