@@ -5,80 +5,17 @@ import {
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
   Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
-  Hexagon, Monitor, MoveVertical, CloudSun, Image, MapPin, Eye, EyeOff, Workflow,
-  RotateCcw, GripVertical, CheckCircle2, Minus, Settings
+  Hexagon, Monitor, CloudSun, Image, MapPin, Eye, EyeOff,
+  RotateCcw, GripVertical, Minus, Settings
 } from 'lucide-react';
 import { Widget, WidgetType, LayoutConfig, ChartSeries, DashboardTheme, ThemeMode, ChartLibrary } from '../types';
 import { BRAND_COLORS, TYPE_DEFAULT_DATA, WIDGET_METADATA, GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import { DEFAULT_WIDGET_PREVIEW, getWidgetPreviewPaths } from '../lib/widgetPreviewAssets';
 import Switch from './Switch';
-
-/** 루트 CSS 변수(px) 해석 — arbitrary 숫자 하드코딩 대신 변수 계산용 */
-function readCssLengthPx(cssVarName: string, fallbackPx: number): number {
-  if (typeof document === 'undefined') return fallbackPx;
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(cssVarName).trim();
-  const n = Number.parseFloat(raw);
-  return Number.isFinite(n) ? n : fallbackPx;
-}
-
-function computeWidgetPreviewPopoverPosition(rect: DOMRect): { top: number; left: number } {
-  const gap = readCssLengthPx('--spacing-sm', 8);
-  const popoverW = readCssLengthPx('--widget-settings-preview-popover-width', 168);
-  const thumbMax = readCssLengthPx('--widget-settings-preview-thumb-max-height', 132);
-  const estH =
-    thumbMax + readCssLengthPx('--spacing-xl', 24) + readCssLengthPx('--spacing-md', 16) + gap * 4;
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 720;
-
-  let left = rect.right + gap;
-  if (left + popoverW > vw - gap) {
-    left = Math.max(gap, rect.left - popoverW - gap);
-  }
-  if (left < gap) left = gap;
-
-  let top = rect.top;
-  if (top + estH > vh - gap) {
-    top = Math.max(gap, vh - estH - gap);
-  }
-  if (top < gap) top = gap;
-
-  return { top, left };
-}
-
-function shadeColor(hex: string, percent: number): string {
-  if (!hex || !hex.startsWith('#')) return hex;
-  let R = parseInt(hex.slice(1, 3), 16);
-  let G = parseInt(hex.slice(3, 5), 16);
-  let B = parseInt(hex.slice(5, 7), 16);
-  R = Math.min(255, Math.max(0, Math.floor(R * (100 + percent) / 100)));
-  G = Math.min(255, Math.max(0, Math.floor(G * (100 + percent) / 100)));
-  B = Math.min(255, Math.max(0, Math.floor(B * (100 + percent) / 100)));
-  return '#' + [R, G, B].map(x => x.toString(16).padStart(2, '0')).join('');
-}
-
-const resolveColor = (colorStr: string | undefined, fallback: string, primaryHex?: string) => {
-  if (!colorStr) return fallback;
-  if (colorStr.startsWith('var(')) {
-    const varName = colorStr.match(/var\(([^)]+)\)/)?.[1]?.trim();
-    if (varName && primaryHex && primaryHex.startsWith('#')) {
-      if (varName === '--primary-color') return primaryHex;
-      const primaryShade = varName.match(/^--primary-(\d+)$/)?.[1];
-      if (primaryShade) {
-        const step = parseInt(primaryShade, 10);
-        return shadeColor(primaryHex, (step - 50) * -1.5);
-      }
-    }
-    return primaryHex || fallback;
-  }
-  return colorStr;
-};
-
-const getSeriesColorsForMode = (series: ChartSeries, mode: ThemeMode) => {
-  const isDark = mode === ThemeMode.DARK;
-  const color = isDark ? (series.colorDark ?? series.color) : (series.colorLight ?? series.color);
-  const endColor = isDark ? (series.endColorDark ?? series.endColor) : (series.endColorLight ?? series.endColor);
-  return { color, endColor };
-};
+import SidebarLayoutSettings from './sidebar/SidebarLayoutSettings';
+import { computeWidgetPreviewPopoverPosition, getSeriesColorsForMode, resolveColor, readCssLengthPx } from './sidebar/sidebarUtils';
+import { createWidgetUpdater } from '../lib/widgetUpdaterScope';
+import { isVizDataCompatibleType, widgetSupportsManualDataGrid } from '../lib/widgetBindingRules';
 
 interface SidebarProps {
   theme: DashboardTheme;
@@ -95,8 +32,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpdateWidget, onUpdateLayout, onUpdateTheme, onBatchUpdateWidgets, onClose, onDragStart, onSave }) => {
   const [activeDualTab, setActiveDualTab] = React.useState<0 | 1>(0);
-  const [batchW, setBatchW] = React.useState<number>(6);
-  const [batchH, setBatchH] = React.useState<number>(10);
   const [widgetTypePreviewPopover, setWidgetTypePreviewPopover] = React.useState<{
     type: WidgetType;
     top: number;
@@ -190,230 +125,22 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     setWidgetTypePreviewPopover(null);
   };
 
+  const updateCurrentWidget = React.useMemo(
+    () => createWidgetUpdater(onUpdateWidget, selectedWidget?.id ?? null),
+    [onUpdateWidget, selectedWidget?.id]
+  );
+
   if (!selectedWidget) return (
-    <div className={`flex flex-col overflow-hidden transition-all duration-500 border ${theme.mode === ThemeMode.LIGHT ? "text-slate-800" : "text-slate-50"
-      }`} style={{
-        width: 'var(--panel-width)',
-        maxHeight: '100%',
-        borderRadius: 'var(--panel-radius)',
-        border: 'var(--floating-panel-border)',
-      }}>
-      <header className="flex items-center justify-between border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" 
-        style={{ 
-          height: 'var(--panel-header-height)',
-          paddingLeft: 'var(--panel-header-padding-x)',
-          paddingRight: 'var(--panel-header-padding-x)'
-        }}
-        onMouseDown={onDragStart}
-      >
-        <div className="flex items-center gap-3">
-          <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
-          <LayoutGrid className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Layout Settings</h2>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-[var(--white)] hover:brightness-110 shadow-lg" style={{ boxShadow: 'var(--success-button-glow)' }} title="저장하기">
-            <Check className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl transition-all text-muted hover:text-main"
-            style={{ backgroundColor: 'transparent' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--action-hover-bg)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar" style={{
-        padding: 'var(--panel-padding)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--panel-content-gap)',
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)'
-      }}>
-        <div className="space-y-4">
-          <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" /> Layout Config
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <span className="text-xs text-muted font-medium flex items-center gap-1.5">
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="6" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="11" y="1" width="4" height="14" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
-                Columns
-              </span>
-              <input
-                type="number" min="1" max="96"
-                value={layout.columns}
-                onChange={(e) => onUpdateLayout({ columns: parseInt(e.target.value) || 1 })}
-                className={`w-full p-2 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] outline-none focus:ring-1 focus:ring-[var(--primary-color)] transition-all rounded-[var(--radius-md)] glass-item`}
-              />
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-muted font-medium flex items-center gap-1.5 grayscale opacity-50">
-                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 opacity-70"><rect x="1" y="1" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="1" y="6" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="1" y="11" width="14" height="4" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
-                Rows (Auto)
-              </span>
-              <div className="relative group">
-                <input
-                  type="text"
-                  value="AUTO"
-                  disabled
-                  className="w-full p-2 text-[var(--text-muted)] border border-[var(--border-base)] rounded-[var(--radius-md)] cursor-not-allowed font-bold text-center text-xs tracking-widest opacity-60"
-                  style={{ backgroundColor: 'var(--surface-muted)' }}
-                />
-                <div className="absolute inset-0 bg-transparent" title="Layout rows are currently calculated automatically." />
-              </div>
-            </div>
-          </div>
-
-
-          {/* Row Height Config */}
-          <div className="space-y-1 pt-1">
-            <span className="text-caption uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
-              <MoveVertical className="w-3 h-3" /> Default Row Height (px)
-            </span>
-            <input
-              type="number"
-              min="10"
-              max="200"
-              step="5"
-              value={layout.defaultRowHeight}
-              onChange={(e) => onUpdateLayout({ defaultRowHeight: Math.max(10, parseInt(e.target.value, 10) || 20) })}
-              className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)] glass-item`}
-            />
-          </div>
-
-          {/* Widget Gaps */}
-          {onUpdateTheme && (
-            <div className="space-y-1 pt-1">
-              <span className="text-caption uppercase font-bold text-muted ml-1 flex items-center gap-1.5">
-                Default Widget Gap (px)
-              </span>
-              <input
-                type="number"
-                min={0}
-                max={40}
-                step={1}
-                value={theme.spacing ?? 16}
-                onChange={(e) => onUpdateTheme({ spacing: Math.max(0, Math.min(40, parseInt(e.target.value, 10) || 0)) })}
-                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] transition-all font-mono rounded-[var(--radius-xl)] glass-item`}
-              />
-            </div>
-          )}
-
-          {/* 그리드 사용 */}
-          <div
-            className="flex items-center justify-between px-4 py-3 border border-[var(--border-base)] rounded-[var(--radius-xl)] transition-all cursor-pointer glass-item"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title={layout.useGrid !== false ? '칸 단위 스냅' : '픽셀 자유'}>
-                {layout.useGrid !== false ? (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="1" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="7" y="1" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="13" y="1" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="1" y="7" width="5" height="5" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity="0.6" rx="0.5" /><rect x="13" y="7" width="5" height="5" fill="currentColor" opacity="0.4" rx="0.5" /></svg>
-                ) : (
-                  <svg viewBox="0 0 20 20" className="w-full h-full text-primary"><rect x="2" y="2" width="5" height="4" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="8" y="2" width="6" height="7" fill="currentColor" opacity="0.5" rx="0.5" /><rect x="15" y="2" width="3" height="3" fill="currentColor" opacity="0.35" rx="0.5" /><rect x="2" y="7" width="4" height="5" fill="currentColor" opacity="0.45" rx="0.5" /><rect x="7" y="10" width="6" height="4" fill="currentColor" opacity="0.5" rx="0.5" /></svg>
-                )}
-              </div>
-              <span className="text-xs font-bold text-secondary">그리드 사용</span>
-            </div>
-            <Switch
-              checked={layout.useGrid !== false}
-              onChange={(checked) => onUpdateLayout({ useGrid: checked })}
-            />
-          </div>
-
-          {/* 위젯 일괄 적용 (Grid Only) */}
-          {layout.useGrid !== false && (
-            <div className={`p-4 mt-2 space-y-4 rounded-[1.25rem] border overflow-hidden relative group transition-all duration-300 bg-transparent border-[var(--primary-color)]/10 shadow-sm glass-item`}>
-              {/* Subtle accent line */}
-              <div className={`absolute top-0 left-0 w-1 h-full bg-[var(--primary-color)]/40`} />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg bg-[var(--primary-color)]/10 text-primary`}>
-                    <Workflow className="w-3.5 h-3.5" />
-                  </div>
-                  <span className={`text-caption font-black uppercase tracking-[0.15em] text-primary`}>Batch Size Sync</span>
-                </div>
-                <div className={`px-1.5 py-0.5 rounded text-nano font-bold uppercase tracking-tight glass-item`}>
-                  Grid Only
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 p-1 bg-transparent rounded-xl border border-white/10 glass-item">
-                {/* Width Input Group */}
-                <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
-                  <span className="text-nano font-black text-muted uppercase tracking-widest pl-0.5">Width (Cols)</span>
-                  <div className="flex items-center gap-1.5">
-                    <LayoutGrid className="w-3 h-3 text-muted/60" />
-                    <input
-                      type="number" min="1" max={layout.columns}
-                      value={batchW}
-                      onChange={(e) => setBatchW(parseInt(e.target.value, 10) || 1)}
-                      className="w-full bg-transparent text-sm font-mono font-bold text-main outline-none placeholder:text-muted/30"
-                      placeholder="W"
-                    />
-                  </div>
-                </div>
-
-                <div className="w-px h-8 shrink-0" style={{ backgroundColor: 'var(--border-muted)' }} />
-
-                {/* Height Input Group */}
-                <div className="flex-1 flex flex-col gap-1 px-2 py-1.5 group/input transition-all">
-                  <span className="text-nano font-black text-muted uppercase tracking-widest pl-0.5">Height (Rows)</span>
-                  <div className="flex items-center gap-1.5">
-                    <Layers className="w-3 h-3 text-muted/60" />
-                    <input
-                      type="number" min="1" max={100}
-                      value={batchH}
-                      onChange={(e) => setBatchH(parseInt(e.target.value, 10) || 1)}
-                      className="w-full bg-transparent text-sm font-mono font-bold text-main outline-none placeholder:text-muted/30"
-                      placeholder="H"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => onBatchUpdateWidgets?.({ colSpan: batchW, rowSpan: batchH })}
-                className={`w-full group/btn relative overflow-hidden py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-lg bg-[var(--primary-color)] text-white text-xs font-bold hover:brightness-110 hover:shadow-[var(--primary-color)]/25`}
-              >
-                {/* Hover shine effect */}
-                <div className="absolute inset-0 w-full h-full transform -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-
-                <CheckCircle2 className={`w-4 h-4 transition-transform group-hover/btn:scale-110 text-white`} />
-                <span>일괄 적용하기</span>
-              </button>
-
-              <div className="flex items-start gap-1.5 px-1 py-0.5">
-                <div className={`w-1 h-1 rounded-full mt-1.5 shrink-0 bg-primary/40`} />
-                <p className="text-micro text-muted font-medium leading-[1.3] italic">
-                  현재 페이지의 모든 위젯 규격을 {batchW}×{batchH} 그리드 칸으로 정렬합니다.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* 자유 배치 (Free Position) */}
-          <div
-            className={`flex items-center justify-between px-4 py-3 border border-[var(--border-base)] cursor-pointer transition-all group rounded-[var(--radius-xl)] glass-item`}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 shrink-0 rounded-lg bg-transparent border border-[var(--border-muted)] flex items-center justify-center p-1" title="위로 쏠리지 않고 고정">
-                <svg viewBox="0 0 20 20" className="w-full h-full text-primary/70"><rect x="1" y="2" width="18" height="5" fill="currentColor" opacity="0.4" rx="0.5" /><rect x="3" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5" /><rect x="11" y="9" width="6" height="5" fill="currentColor" opacity="0.35" rx="0.5" /></svg>
-              </div>
-              <span className="text-xs font-bold text-secondary">자유 배치 (FREE POSITION)</span>
-            </div>
-            <Switch
-              checked={layout.freePosition ?? false}
-              onChange={(checked) => onUpdateLayout({ freePosition: checked })}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <SidebarLayoutSettings
+      theme={theme}
+      layout={layout}
+      onUpdateLayout={onUpdateLayout}
+      onUpdateTheme={onUpdateTheme}
+      onBatchUpdateWidgets={onBatchUpdateWidgets}
+      onClose={onClose}
+      onDragStart={onDragStart}
+      onSave={onSave}
+    />
   );
 
   const isSec = false;
@@ -423,10 +150,6 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
   const currentData = selectedWidget.data || [];
   const currentMainValue = selectedWidget.mainValue || '0';
   const currentSubValue = selectedWidget.subValue || '';
-
-  const updateCurrentWidget = (updates: Partial<Widget>) => {
-    onUpdateWidget(selectedWidget.id, updates);
-  };
 
   const commitMainValueDraft = React.useCallback(() => {
     if (!selectedWidget) return;
@@ -492,21 +215,8 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     const defaultData = TYPE_DEFAULT_DATA[newType];
     const oldType = selectedWidget.type;
 
-    // 데이터 구조가 호환되는 시각화 타입들 (차트, 테이블, 랭킹 리스트 등)
-    const vizTypes = [
-      WidgetType.CHART_BAR,
-      WidgetType.CHART_BAR_HORIZONTAL,
-      WidgetType.CHART_LINE,
-      WidgetType.CHART_AREA,
-      WidgetType.CHART_PIE,
-      WidgetType.CHART_RADAR,
-      WidgetType.CHART_TREEMAP,
-      WidgetType.CHART_COMPOSED,
-      WidgetType.TABLE
-    ];
-
-    const isOldViz = vizTypes.includes(oldType);
-    const isNewViz = vizTypes.includes(newType);
+    const isOldViz = isVizDataCompatibleType(oldType);
+    const isNewViz = isVizDataCompatibleType(newType);
 
     if (defaultData) {
       const updates: any = { type: newType };
@@ -665,7 +375,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
 
   const isChart = String(currentType).includes('CHART') || isTable || [WidgetType.DASH_EQUIP_PERF_TOP5, WidgetType.DASH_RANK_LIST, WidgetType.DASH_FAILURE_STATS, WidgetType.DASH_TRAFFIC_STATUS, WidgetType.DASH_NET_TRAFFIC, WidgetType.DASH_TRAFFIC_TOP5, WidgetType.DASH_SECURITY_STATUS, WidgetType.DASH_SECURITY_STATUS_V2, WidgetType.DASH_VDI_STATUS].includes(currentType);
 
-  const hasDataRows = isChart || isSummaryChart || isEarningTrend || isPremiumSummary;
+  const hasDataRows = widgetSupportsManualDataGrid(currentType);
 
   const isAxisChart = [
     WidgetType.CHART_BAR,
