@@ -220,7 +220,7 @@ export const DashboardGrid: React.FC<{
                 maxWidth: "var(--empty-state-max-width)",
                 minHeight: "var(--empty-state-min-height)",
               }}
-              className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-surface/30 text-muted hover:bg-[var(--primary-subtle)] hover:border-primary transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
+              className={`flex flex-col items-center justify-center border-2 border-dashed border-main bg-[var(--dashboard-empty-state-surface)] text-muted hover:bg-[var(--primary-subtle)] hover:border-[var(--primary-color)] transition-all group ${layout.backgroundGlobe ? "pointer-events-auto" : ""}`}
             >
               <div className="w-16 h-16 rounded-full bg-[var(--border-muted)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Plus className="w-8 h-8 text-primary" />
@@ -512,7 +512,7 @@ export const DashboardGrid: React.FC<{
                     rounded-full overflow-hidden transition-all duration-500
                     hover:scale-105 hover:px-8 active:scale-95
                     shadow-[var(--shadow-header-bar)]
-                    before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity
+                    before:absolute before:inset-0 before:bg-gradient-to-r before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:from-[var(--add-widget-pill-shimmer-from)]
                   `}
                   style={{
                     height: 'var(--add-widget-pill-height)',
@@ -523,7 +523,7 @@ export const DashboardGrid: React.FC<{
                   >
                     {/* Glowing Animated Ring */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                      <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent,var(--primary-color),transparent)] animate-[spin_4s_linear_infinite] opacity-40" />
+                      <div className="absolute inset-[-100%] add-widget-pill-conic-ring" />
                     </div>
 
                     {/* Icon with hover rotation */}
@@ -531,7 +531,7 @@ export const DashboardGrid: React.FC<{
                       className="relative z-10 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-700"
                       style={{ width: 'var(--add-widget-icon-wrap-size)', height: 'var(--add-widget-icon-wrap-size)', backgroundColor: 'var(--primary-color)' }}
                     >
-                      <Plus className="w-5 h-5 text-white" style={{ strokeWidth: 'var(--icon-stroke-bold)' }} />
+                      <Plus className="w-5 h-5" style={{ strokeWidth: 'var(--icon-stroke-bold)', color: 'var(--white)' }} />
                     </div>
 
                     {/* Text with letter spacing animation */}

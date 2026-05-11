@@ -471,12 +471,18 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
     }}>
       <header className="flex items-center justify-between px-4 border-b border-[var(--border-base)] bg-transparent shrink-0 cursor-move" style={{ height: 'var(--panel-header-height)' }} onMouseDown={onDragStart}>
         <div className="flex items-center gap-3">
-          <GripVertical className="w-4 h-4 text-muted/30 cursor-move" />
+          <GripVertical className="w-4 h-4 text-[var(--text-muted-icon-faint)] cursor-move" />
           <Settings className="w-5 h-5 text-primary" />
           <h2 className="text-xl font-bold tracking-tighter text-main leading-none">Widget Settings</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={onSave} className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] text-white hover:brightness-110 shadow-lg shadow-[var(--success)]/20" title="저장하기" onMouseDown={(e) => e.stopPropagation()}>
+          <button
+            onClick={onSave}
+            className="p-1.5 rounded-xl transition-all hover:scale-110 active:scale-95 bg-[var(--success)] hover:brightness-110"
+            style={{ color: "var(--white)", boxShadow: "var(--success-save-fab-shadow)" }}
+            title="저장하기"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <Check className="w-4 h-4" />
           </button>
           <button
@@ -731,7 +737,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                           <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Category bars</span>
                           <button
                             onClick={() => updateCurrentWidget({ categoryItems: [...items, { label: 'New', value: 10 }] })}
-                            className="p-1 hover:bg-primary/10 rounded text-primary transition-colors flex items-center gap-1"
+                            className="p-1 hover:bg-[var(--project-picker-row-active-bg)] rounded text-primary transition-colors flex items-center gap-1"
                             title="Add Category"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -943,7 +949,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                           reader.readAsDataURL(file);
                         }
                       }}
-                      className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 glass-item`}
+                      className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--primary-color)] file:text-[var(--white)] hover:file:bg-[var(--file-input-button-hover-bg)] glass-item`}
                     />
                   </div>
                 </div>
@@ -963,7 +969,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         (e.currentTarget as HTMLInputElement).blur();
                       }
                     }}
-                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
+                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all font-semibold glass-item`}
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
@@ -983,7 +989,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         (e.currentTarget as HTMLInputElement).blur();
                       }
                     }}
-                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold glass-item`}
+                    className={`w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all font-semibold glass-item`}
                     placeholder="Image description..."
                   />
                 </div>
@@ -1219,7 +1225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                             (e.currentTarget as HTMLInputElement).blur();
                           }
                         }}
-                        className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-white"
+                        className="w-full bg-transparent border-none p-0 text-xs font-bold focus:ring-0 outline-none dark:text-[var(--white)]"
                       />
                     </div>
 
@@ -1259,7 +1265,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         (e.currentTarget as HTMLInputElement).blur();
                       }
                     }}
-                    className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold glass-item`}
+                    className={`w-full p-2.5 pl-9 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all font-bold glass-item`}
                     placeholder="e.g. Month, Project Name"
                   />
                   <Heading className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary" />
@@ -1318,7 +1324,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                         (e.currentTarget as HTMLInputElement).blur();
                       }
                     }}
-                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono font-bold glass-item"
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all font-mono font-bold glass-item"
                     />
                   </div>
                 )}
@@ -1337,7 +1343,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                           (e.currentTarget as HTMLInputElement).blur();
                         }
                       }}
-                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all glass-item"
+                      className="w-full p-2.5 bg-transparent border border-[var(--border-base)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[var(--focus-ring-soft-primary)] transition-all glass-item"
                     />
                   </div>
                 )}
@@ -1446,7 +1452,7 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
                               (e.currentTarget as HTMLInputElement).blur();
                             }
                           }}
-                          className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-white glass-item"
+                          className="w-20 p-1 bg-transparent border border-[var(--border-base)] rounded text-xs text-right font-mono font-bold dark:text-[var(--white)] glass-item"
                         />
                       </div>
                     ))}

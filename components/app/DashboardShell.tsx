@@ -317,7 +317,7 @@ const {
 
       {/* 내보내기/불러오기 로딩 바 */}
       {(capturingForExport || isImporting) && !hideBarForCapture && (
-        <div className="fixed top-0 left-0 right-0 z-[100] flex flex-col bg-[var(--surface)] border-b border-[var(--border-base)] shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-[var(--gnb-z-index)] flex flex-col bg-[var(--surface)] border-b border-[var(--border-base)] shadow-lg">
           <div className="flex items-center justify-between" style={{ padding: 'var(--spacing-sm) var(--spacing-md)' }}>
             <span className="font-medium text-[var(--text-main)]" style={{ fontSize: 'var(--text-small)' }}>
               {isImporting ? "프로젝트 불러오기 중..." : (
@@ -363,7 +363,7 @@ const {
               name: currentMode === ThemeMode.DARK ? "Dark Mode" : currentMode === ThemeMode.LIGHT ? "Light Mode" : currentName
             });
           }}
-          className="fixed z-[100] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-premium group border-2 border-[var(--primary-color)]"
+          className="fixed z-[var(--gnb-z-index)] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 shadow-premium group border-2 border-[var(--primary-color)]"
           style={{
             bottom: 'var(--spacing-xl)',
             right: 'var(--spacing-xl)',
@@ -376,7 +376,7 @@ const {
           }}
           title="Exit Preview"
         >
-          <div className="absolute inset-0 bg-[var(--primary-color)]/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
+          <div className="absolute inset-0 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" style={{ backgroundColor: 'var(--primary-focus-ring-bg)' }} />
           <EyeOff
             className="w-7 h-7 text-[var(--primary-color)] drop-shadow-md"
           />
@@ -386,7 +386,7 @@ const {
       {/* Floating GNB Capsule (Triggered by AI FAB) */}
       {user && (
         <div
-          className={`fixed z-[99] transition-all duration-500 flex items-center ${isFloatingGnbOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
+          className={`fixed z-[var(--gnb-floating-stack-z-index)] transition-all duration-500 flex items-center ${isFloatingGnbOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}
           style={{
             bottom: 'var(--spacing-xl)',
             right: 'calc(var(--ai-fab-size) + var(--spacing-xl) + var(--spacing-md))',
@@ -440,7 +440,7 @@ const {
                             {projects.map((p) => (
                               <div
                                 key={p.id}
-                                className={`flex items-center group/proj gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--primary-color)]/10 border-[var(--primary-color)]/30" : "border-transparent hover:bg-[var(--border-muted)]/50"}`}
+                                className={`flex items-center group/proj gap-2 w-full px-4 py-2.5 mb-1 rounded-sm border transition-colors ${activeProjectId === p.id ? "bg-[var(--project-picker-row-active-bg)] border-[var(--project-picker-row-active-border)]" : "border-transparent hover:bg-[var(--project-picker-row-hover-bg)]"}`}
                               >
                                 {editingProjectId === p.id ? (
                                   <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -621,7 +621,7 @@ const {
                                 <>
                                   <button
                                     onClick={addProject}
-                                    className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-primary/20"
+                                    className="btn-base btn-ghost w-full px-4 py-2.5 text-primary rounded-sm flex items-center justify-center gap-2 border border-transparent hover:border-[var(--btn-outline-primary-hover-border)]"
                                   >
                                     <Plus className="w-4 h-4" />{" "}
                                     <span className="font-bold uppercase" style={{ fontSize: 'var(--text-caption)' }}>
@@ -681,7 +681,7 @@ const {
                         <currentLibrary.icon className="w-3.5 h-3.5" />
                       </div>
                       <span className="font-bold" style={{ fontSize: 'var(--text-small)' }}>{currentLibrary.label}</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-muted/60 group-hover:text-primary`} />
+                      <ChevronDown className={`w-3 h-3 transition-transform ${isLibraryDropdownOpen ? 'rotate-180' : ''} text-[var(--text-muted-icon-dim)] group-hover:text-primary`} />
                     </button>
 
                     {isLibraryDropdownOpen && (
@@ -1344,7 +1344,7 @@ const {
                 취소
               </button>
               <button
-                className="btn-base widget-capture-btn-confirm text-white"
+                className="btn-base widget-capture-btn-confirm"
                 style={{ backgroundColor: 'var(--primary-color)' }}
                 onClick={handleConfirmWidgetScreensExport}
                 disabled={selectedCaptureWidgetIds.length === 0}
@@ -1365,7 +1365,7 @@ const {
       )}
 
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--gnb-z-index)] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="flex items-center gap-3 px-6 py-4 bg-[var(--surface)] border border-[var(--border-base)] shadow-premium rounded min-w-[var(--panel-min-width)]">
             <div
               className="w-10 h-10 rounded-sm flex items-center justify-center"
@@ -1402,10 +1402,10 @@ const {
       )}
 
       {isCapturingWidgets && widgetCaptureProgress && (
-        <div className="fixed inset-0 z-[120] pointer-events-none">
+        <div className="fixed inset-0 z-[var(--add-widget-pill-z-index)] pointer-events-none">
           <div className="absolute inset-0" style={{ backgroundColor: 'color-mix(in srgb, var(--black) 25%, transparent)' }} />
           <div className="absolute left-1/2 top-10 -translate-x-1/2 pointer-events-none">
-            <div className="px-6 py-4 rounded shadow-premium border border-[var(--border-base)] bg-[var(--surface)] min-w-[320px]">
+            <div className="px-6 py-4 rounded shadow-premium border border-[var(--border-base)] bg-[var(--surface)] min-w-[var(--panel-min-width)]">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full animate-spin"

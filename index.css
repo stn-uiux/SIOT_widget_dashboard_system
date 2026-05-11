@@ -390,6 +390,7 @@
 
     /* GNB Capsule */
     --gnb-z-index: 100;
+    --gnb-floating-stack-z-index: 99;
     --add-widget-pill-z-index: 120;
     --widget-resize-hint-z-index: 100;
     --widget-map-badge-z-index: 1000;
@@ -404,6 +405,18 @@
     --add-widget-pill-blur: 16px;
     --add-widget-icon-wrap-size: 32px;
     --add-widget-glow: rgba(var(--primary-color-rgb), 0.2);
+    --add-widget-pill-shimmer-from: color-mix(in srgb, var(--primary-color) 20%, transparent);
+    --primary-focus-ring-bg: color-mix(in srgb, var(--primary-color) 5%, transparent);
+    --project-picker-row-active-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    --project-picker-row-active-border: color-mix(in srgb, var(--primary-color) 30%, transparent);
+    --project-picker-row-hover-bg: color-mix(in srgb, var(--border-muted) 50%, transparent);
+    --btn-outline-primary-hover-border: rgba(var(--primary-color-rgb), 0.2);
+    --focus-ring-soft-primary: rgba(var(--primary-color-rgb), 0.2);
+    --file-input-button-hover-bg: color-mix(in srgb, var(--primary-color) 90%, transparent);
+    --text-muted-icon-dim: color-mix(in srgb, var(--text-muted) 60%, transparent);
+    --text-muted-icon-faint: color-mix(in srgb, var(--text-muted) 30%, transparent);
+    --dashboard-empty-state-surface: color-mix(in srgb, var(--surface) 30%, transparent);
+    --success-save-fab-shadow: 0 10px 15px -3px color-mix(in srgb, var(--success) 20%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--success) 15%, transparent);
 
     --overlay-strong: rgba(0, 0, 0, 0.9);
     --overlay-soft: rgba(0, 0, 0, 0.2);
@@ -1403,6 +1416,10 @@ body {
     border-radius: var(--radius-sm);
 }
 
+.widget-capture-btn-confirm {
+    color: var(--white);
+}
+
 .widget-capture-refresh-progress-wrap {
     width: 100%;
     height: var(--widget-capture-refresh-track-height, 2px);
@@ -1645,6 +1662,18 @@ html[data-widget-capture="1"] .widget-header-row .widget-header-title-input {
 /* Dark mode override for inactive track */
 .dark .stn-switch-track {
     background-color: #334155;
+}
+
+@keyframes add-widget-pill-conic-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.add-widget-pill-conic-ring {
+    background: conic-gradient(from 0deg, transparent, var(--primary-color), transparent);
+    animation: add-widget-pill-conic-spin 4s linear infinite;
+    opacity: 0.4;
 }
 
 @keyframes shimmer {
