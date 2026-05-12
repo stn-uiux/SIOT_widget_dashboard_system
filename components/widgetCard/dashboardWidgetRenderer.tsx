@@ -38,6 +38,8 @@ interface DashboardWidgetRendererProps {
   theme: DashboardTheme;
   isDark: boolean;
   widget: Widget;
+  /** Used so embedded titles stay in sync when the card chrome header is hidden in view mode. */
+  isEditMode?: boolean;
   renderLegend: (props: any) => React.ReactElement | null;
   renderSymbolIcon: (iconName: string | undefined, opts?: { className?: string; size?: string; style?: React.CSSProperties }) => React.ReactNode;
   renderGoogleIcon: (iconName?: string) => React.ReactNode;
@@ -66,6 +68,7 @@ export const renderDashboardWidget = (props: DashboardWidgetRendererProps): Reac
     theme,
     isDark,
     widget,
+    isEditMode = false,
     renderLegend,
     renderSymbolIcon,
     renderGoogleIcon,
@@ -139,9 +142,14 @@ export const renderDashboardWidget = (props: DashboardWidgetRendererProps): Reac
     case WidgetType.DASH_FACILITY_2_FIGMA: {
       const isDarkFacility = theme.mode === 'dark';
       const facilityBgSrc = isDarkFacility ? FACILITY_BG_DARK_SRC : FACILITY_BG_LIGHT_SRC;
+      const showEmbeddedTitle = Boolean(widget.hideHeader && !isEditMode);
       return (
         <div className="h-full flex flex-col" style={{ gap: 'calc(var(--spacing-sm) + var(--spacing-xs))', padding: 'calc(var(--spacing-sm) + var(--spacing-xs))' }}>
-          <div className="text-main" style={{ fontSize: 'var(--title-size)', fontWeight: 'var(--title-weight)' }}>시설 현황</div>
+          {showEmbeddedTitle && (
+            <div className="text-main" style={{ fontSize: 'var(--title-size)', fontWeight: 'var(--title-weight)' }}>
+              {widget.title}
+            </div>
+          )}
           <div className="flex-1 flex flex-col justify-center border-main rounded-md" style={{ padding: 'var(--spacing-lg)', gap: 'var(--spacing-lg)', backgroundColor: 'var(--surface)', backgroundImage: isDarkFacility ? `url("${FACILITY_CARD_DARK_SRC}")` : `url("${facilityBgSrc}")`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}>
             {currentData.map((d: any, idx: number) => {
               const isServer = String(d?.icon ?? d?.name ?? '').toLowerCase().includes('database') || String(d?.name ?? '').includes('서버');
@@ -349,16 +357,16 @@ export const renderDashboardWidget = (props: DashboardWidgetRendererProps): Reac
       const rowAltBg = 'color-mix(in srgb, var(--border-muted) 70%, transparent)';
       const rowBaseBg = 'color-mix(in srgb, var(--surface) 50%, transparent)';
       return (
-        <div className="h-full flex items-center" style={{ gap: 'var(--spacing-sm)' }}>
+        <div className="h-full flex items-center" style={{ gap: 'var(--spacing-xs)' }}>
           <div
-            className="flex flex-col items-center justify-center"
+            className="flex flex-col items-center justify-center shrink-0"
             style={{
-              width: '130px',
-              gap: 'calc(var(--spacing-sm) + var(--spacing-xs))',
+              width: 'calc(var(--spacing-sm) * 15)',
+              gap: 'var(--spacing-xs)',
               height: '100%',
             }}
           >
-            <div className="flex flex-col items-center justify-center" style={{ gap: 'calc(var(--spacing-sm) + var(--spacing-xs))' }}>
+            <div className="flex flex-col items-center" style={{ gap: 'var(--spacing-nano)' }}>
               <div className="text-muted fw-bold" style={{ fontSize: 'var(--text-small)' }}>
                 보안침해/탐지
               </div>
@@ -468,21 +476,30 @@ export const renderDashboardWidget = (props: DashboardWidgetRendererProps): Reac
         </div>
       );
     }
-    case WidgetType.DASH_VDI_STATUS:
+    case WidgetType.DASH_VDI_STATUS: {
+      const vdiMeasureKey = currentConfig.yAxisKey || localSeries[0]?.key || 'value';
+      const vdiNameKey = xAxisKey || 'name';
+      const vdiLabel = (d: any) => String(d?.[vdiNameKey] ?? d?.name ?? '');
+      const vdiMeasure = (d: any) => {
+        const raw = d?.[vdiMeasureKey] ?? d?.value;
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : 0;
+      };
       return (
         <div className="h-full flex flex-col justify-center gap-4">
           {currentData.map((d: any, idx: number) => (
             <div key={idx} className="relative group overflow-hidden bg-[var(--surface-muted)] border border-[var(--border-base)] p-4 flex items-center justify-between transition-all hover:bg-[var(--surface)] hover:shadow-premium cursor-pointer" style={{ borderRadius: theme.chartRadius }}>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-              <span className="relative z-10 font-bold text-secondary uppercase tracking-tight" style={{ fontSize: 'var(--text-base)' }}>{d.name}</span>
+              <span className="relative z-10 font-bold text-secondary uppercase tracking-tight" style={{ fontSize: 'var(--text-base)' }}>{vdiLabel(d)}</span>
               <div className="relative z-10 flex items-baseline gap-1">
-                <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-lg)' }}>{d.value.toLocaleString()}</span>
+                <span className="font-black text-main group-hover:text-primary transition-colors" style={{ fontSize: 'var(--text-lg)' }}>{vdiMeasure(d).toLocaleString()}</span>
                 <span className="font-black text-muted uppercase" style={{ fontSize: 'var(--text-tiny)' }}>건</span>
               </div>
             </div>
           ))}
         </div>
       );
+    }
     default:
       return null;
   }

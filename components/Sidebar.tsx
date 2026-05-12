@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   X, Layers, BarChart3, TrendingUp, PieChart as PieIcon,
   Table as TableIcon, LayoutGrid, Plus, Trash2, Database,
-  Maximize2, AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
+  AreaChart as AreaIcon, Palette, ChevronUp, ChevronDown,
   Heading, Activity, Palette as PaletteIcon, Check, Smile, BarChartHorizontal,
   Hexagon, Monitor, CloudSun, Image, MapPin, Eye, EyeOff,
   RotateCcw, GripVertical, Minus, Settings
@@ -1466,31 +1466,6 @@ const Sidebar: React.FC<SidebarProps> = ({ theme, selectedWidget, layout, onUpda
           )}
         </section>
 
-        <section className="space-y-4 border-t border-[var(--border-base)] p-4">
-          <label className="text-xs font-bold text-muted uppercase tracking-widest flex items-center gap-2"><Maximize2 className="w-4 h-4" /> Layout Size</label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Width</span>
-              <select
-                value={selectedWidget.colSpan}
-                onChange={(e) => onUpdateWidget(selectedWidget.id, { colSpan: parseInt(e.target.value) })}
-                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
-              >
-                {Array.from({ length: layout.columns }, (_, i) => i + 1).map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Cols</option>))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <span className="text-caption uppercase font-bold text-[var(--text-muted)] ml-1">Height</span>
-              <select
-                value={selectedWidget.rowSpan}
-                onChange={(e) => onUpdateWidget(selectedWidget.id, { rowSpan: parseInt(e.target.value) })}
-                className={`w-full p-2.5 bg-transparent text-[var(--text-main)] border border-[var(--border-base)] rounded-[var(--radius-xl)] text-sm outline-none focus:ring-2 focus:ring-[var(--primary-subtle)] cursor-pointer glass-item`}
-              >
-                {[1, 2, 3, 4].map(val => (<option key={val} value={val} className="bg-[var(--surface)]">{val} Rows</option>))}
-              </select>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
     {widgetTypePreviewPopover !== null &&

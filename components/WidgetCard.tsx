@@ -5,7 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   ComposedChart, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Sankey, Label
 } from 'recharts';
-import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, Trash2, TrendingUp, User, CircleHelp } from 'lucide-react';
+import { Settings, GripVertical, FileSpreadsheet, Maximize2, X, MapPin, Image, Trash2, TrendingUp, User, CircleHelp, Database } from 'lucide-react';
 import { Widget, WidgetType, DashboardTheme, ThemeMode, ChartLibrary, ChartConfig, ChartSeries } from '../types';
 import { GENERAL_KPI_ICON_OPTIONS } from '../constants';
 import MapWidget from './MapWidget';
@@ -26,6 +26,7 @@ import {
 import { renderApexChart as renderApexLibraryChart, renderAmChart as renderAmLibraryChart } from './widgetCard/chartLibraryRenderers';
 import { renderRechartsCoreChart } from './widgetCard/rechartsCoreRenderer';
 import { renderDashboardWidget } from './widgetCard/dashboardWidgetRenderer';
+import { DbServiceExplorerModal } from './db/DbServiceExplorerModal';
 
 interface WidgetCardProps {
   widget: Widget;
@@ -70,6 +71,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
   const titleSize = widget.titleSize ?? theme.titleSize;
   const titleWeight = widget.titleWeight ?? theme.titleWeight;
   const [titleDraft, setTitleDraft] = React.useState(widget.title);
+  const [isDbExplorerOpen, setIsDbExplorerOpen] = React.useState(false);
 
   React.useEffect(() => {
     setTitleDraft(widget.title);
@@ -851,6 +853,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           theme,
           isDark,
           widget,
+          isEditMode,
           renderLegend,
           renderSymbolIcon,
           renderGoogleIcon,
@@ -881,6 +884,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
           theme,
           isDark,
           widget,
+          isEditMode,
           renderLegend,
           renderSymbolIcon,
           renderGoogleIcon,
@@ -1000,6 +1004,10 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
   const isInteracting = isResizing || isDragging;
 
+  /** 이미지·세로 네비는 시트/DB 탐색기와 맞지 않음 */
+  const hideSpreadsheetAndDbChrome =
+    widget.type === WidgetType.VERTICAL_NAV_CARD || widget.type === WidgetType.IMAGE;
+
   // Trigger ApexCharts resize on mount or theme change
   React.useEffect(() => {
     if (theme.chartLibrary === ChartLibrary.APEXCHARTS) {
@@ -1012,6 +1020,16 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
 
   return (
     <div className="h-full flex flex-col group relative">
+      {!hideSpreadsheetAndDbChrome && (
+        <DbServiceExplorerModal
+          open={isDbExplorerOpen}
+          onClose={() => setIsDbExplorerOpen(false)}
+          widgetTitle={widget.title}
+          widgetType={widget.type}
+          widget={widget}
+          theme={theme}
+        />
+      )}
       {isEditMode && (
         <div
           className="drag-handle absolute left-0 top-0 z-20 h-14 w-2 rounded-r-md cursor-pointer shrink-0"
@@ -1034,7 +1052,7 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
         style={glassStyleInline ?? cardStyle}
       >
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ paddingLeft: CHART_LEFT_INSET, paddingRight: CHART_LEFT_INSET }}>
-          {(widget.type !== WidgetType.DASH_FACILITY_2_FIGMA) && (!widget.hideHeader || isEditMode) && (
+          {(!widget.hideHeader || isEditMode) && (
             <div className="flex items-center justify-between mb-0 flex-shrink-0 gap-2 widget-header-row" style={{ ['--header-title-size' as string]: `${titleSize}px` }}>
               <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
                 {isEditMode ? (
@@ -1080,13 +1098,24 @@ const WidgetCard: React.FC<WidgetCardProps> = ({
                       >
                         <Settings className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => onOpenExcel(widget.id)}
-                        className="widget-action-btn"
-                        title="Open Data"
-                      >
-                        <FileSpreadsheet className="w-4 h-4" />
-                      </button>
+                      {!hideSpreadsheetAndDbChrome && (
+                        <button
+                          onClick={() => onOpenExcel(widget.id)}
+                          className="widget-action-btn"
+                          title="Open Data"
+                        >
+                          <FileSpreadsheet className="w-4 h-4" />
+                        </button>
+                      )}
+                      {!hideSpreadsheetAndDbChrome && (
+                        <button
+                          onClick={() => setIsDbExplorerOpen(true)}
+                          className="widget-action-btn"
+                          title="Open DB Explorer"
+                        >
+                          <Database className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onDelete(widget.id)}
                         className="widget-action-btn widget-action-btn-danger"
